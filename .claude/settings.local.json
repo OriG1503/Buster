@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(claude mcp:*)",
+      "Bash(cat:*)",
+      "Bash(xargs grep:*)",
+      "Read(//c/Users/Ori/**)",
+      "Read(//c/Users/Ori/AppData/Roaming/claude/**)",
+      "Bash(npx:*)",
+      "WebSearch",
+      "WebFetch(domain:neon.com)"
+    ]
+  }
+}
