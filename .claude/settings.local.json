@@ -13,7 +13,10 @@
       "Bash(node:*)",
       "Bash(git:*)",
       "Bash(rm:*)",
-      "Skill(commit-commands:commit-push-pr)"
+      "Skill(commit-commands:commit-push-pr)",
+      "mcp__neon__list_projects",
+      "mcp__neon__get_connection_string",
+      "Bash(ls:*)"
     ]
   }
 }
