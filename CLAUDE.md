@@ -1,9 +1,35 @@
-# CLAUDE.md
+# CLAUDE.md — Buster (Monorepo Root)
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+File loading and combining app — ingests Excel/CSV files and helps users find and merge the right columns/rows.
 
-## Project Status
+## Repository
+GitLab: `git@gitlab.com:ori.gritzman/buster.git`
 
-This is a new, empty repository ("Buster") hosted on GitLab at `git@gitlab.com:ori.gritzman/buster.git`. No technology stack, build tooling, or application code has been set up yet.
+## Monorepo Structure
+```
+app/
+├── client/     # Angular 19 client (not yet initialized)
+├── server/     # NestJS 11 API server  ← active
+└── service/    # Python Excel processing service (not yet initialized)
+```
 
-Update this file as the project takes shape — add build/test/lint commands, architecture notes, and key conventions once they are established.
+Each sub-project has its own `CLAUDE.md` with tech-specific conventions.
+
+## Sub-project Status
+| Project | Tech | Status |
+|---------|------|--------|
+| `app/server` | NestJS 11 | Initialized |
+| `app/client` | Angular 19 | Pending |
+| `app/service` | Python (TBD) | Pending |
+
+## Cross-project Conventions (from UIAI)
+- **Private members**: prefix with `_`
+- **Booleans**: prefix with `is`
+- **Constants**: UPPER_SNAKE_CASE in `consts/` folders
+- **No magic numbers / hardcoded strings**
+- **`type` over `interface`**
+- **File names**: lowercase kebab-case
+- **Explicit access modifiers** on all class members
+- **No `for`/`while` loops**: use `map`, `filter`, `forEach`, `reduce`
+- **Always brace `if` statements**
+- **SOLID**: Single Responsibility, Dependency Inversion, DRY
