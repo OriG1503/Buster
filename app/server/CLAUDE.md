@@ -1,11 +1,13 @@
 # CLAUDE.md — Server
 
-NestJS 11 server for the Buster monorepo. Handles file ingestion API and orchestrates the Python processing service.
+NestJS 11 server for Buster. Handles Excel file ingestion, entity parsing, data validation, and conflict detection for a robot manufacturing factory analysis tool.
 
 ## Tech Stack
 - NestJS 11
 - Node.js 20
 - TypeScript (strict mode)
+- PostgreSQL via **Neon** (serverless Postgres)
+- **TypeORM** for database access
 - npm
 
 ## Commands
@@ -15,9 +17,24 @@ npm run start:dev    # Watch mode (hot reload)
 npm run start:prod   # Production
 npm run build        # Compile to dist/
 npm run lint         # ESLint
-npm run test         # Unit tests (Jest)
-npm run test:e2e     # E2E tests
 ```
+
+## Domain — Entities
+| Entity | Notes |
+|--------|-------|
+| `Robot` | Main manufactured unit |
+| `Sensor` | Sensor component, child of Robot |
+| `Wiring` | Wiring component, child of Robot |
+| `Communication` | Communication module, child of Robot |
+| `Battery` | Battery component, child of Robot |
+| `Storage` | Storage component |
+| `Iron` | Raw material |
+| `Plastic` | Raw material |
+| `Cardboard` | Raw material |
+| `Sale` | Sale / order record |
+| `Conflict` | Detected data conflict / validation issue |
+
+Parent entities can contain child entities in the same Excel upload. The server must detect and split them correctly.
 
 ## Folder Structure
 ```
@@ -30,6 +47,7 @@ src/
 │       ├── <feature>.module.ts
 │       ├── <feature>.controller.ts
 │       ├── <feature>.service.ts
+│       ├── entities/        # TypeORM entities
 │       ├── types/           # Feature-specific types (one type per file)
 │       └── consts/          # Feature-specific constants
 └── shared/                  # Utilities used by 2+ modules
@@ -61,3 +79,9 @@ src/
 - Controllers handle routing only — business logic lives in services
 - Use DTOs for request/response shapes
 - Global prefix: `/api`
+
+## Database
+- **Neon** serverless PostgreSQL
+- **TypeORM** with decorators
+- Each entity has its own TypeORM entity class in its module's `entities/` folder
+- Migrations over `synchronize: true` in production

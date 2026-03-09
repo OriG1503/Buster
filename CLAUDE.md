@@ -1,6 +1,27 @@
 # CLAUDE.md — Buster (Monorepo Root)
 
-File loading and combining app — ingests Excel/CSV files and helps users find and merge the right columns/rows.
+## What the App Does
+Buster is a **robot manufacturing factory analysis tool**. Users upload Excel files containing data about factory entities (robots, parts, materials, etc.). The app ingests, parses, and analyzes the data to verify that robots and their components are correct and complete — flagging fields with missing or invalid data.
+
+## Excel Upload Model
+- A user can upload an Excel for a **single entity** (e.g., just robots).
+- A user can upload an Excel for a **parent entity that contains child entities** (e.g., a robot Excel that also includes its sensors and wiring).
+- The app maps Excel columns to the correct entity fields and validates the data.
+
+## Entities
+| Entity | Description |
+|--------|-------------|
+| `Robot` | The main manufactured unit being analyzed |
+| `Sensor` | Sensor components attached to a robot |
+| `Wiring` | Wiring components |
+| `Communication` | Communication modules |
+| `Battery` | Battery components |
+| `Storage` | Storage components |
+| `Iron` | Raw material — iron |
+| `Plastic` | Raw material — plastic |
+| `Cardboard` | Raw material — cardboard |
+| `Sale` | Sale/order records |
+| `Conflict` | Detected data conflicts / validation issues |
 
 ## Repository
 GitLab: `git@gitlab.com:ori.gritzman/buster.git`
@@ -18,7 +39,7 @@ Each sub-project has its own `CLAUDE.md` with tech-specific conventions.
 ## Sub-project Status
 | Project | Tech | Status |
 |---------|------|--------|
-| `app/server` | NestJS 11 | Initialized |
+| `app/server` | NestJS 11 + PostgreSQL (Neon) + TypeORM | Initialized |
 | `app/client` | Angular 19 | Pending |
 | `app/service` | Python (TBD) | Pending |
 
