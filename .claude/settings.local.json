@@ -9,7 +9,14 @@
       "Read(//c/Users/Ori/AppData/Roaming/claude/**)",
       "Bash(npx:*)",
       "WebSearch",
-      "WebFetch(domain:neon.com)"
+      "WebFetch(domain:neon.com)",
+      "Bash(node:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Skill(commit-commands:commit-push-pr)",
+      "Bash(rm:*)",
+      "Bash(git:*)"
     ]
   }
 }
