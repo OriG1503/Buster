@@ -11,12 +11,9 @@
       "WebSearch",
       "WebFetch(domain:neon.com)",
       "Bash(node:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git push:*)",
-      "Skill(commit-commands:commit-push-pr)",
+      "Bash(git:*)",
       "Bash(rm:*)",
-      "Bash(git:*)"
+      "Skill(commit-commands:commit-push-pr)"
     ]
   }
 }
