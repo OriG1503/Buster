@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BatteryModule } from './modules/battery/battery.module';
+import { PlasticModule } from './modules/plastic/plastic.module';
 
 @Module({
   imports: [
@@ -13,11 +14,12 @@ import { BatteryModule } from './modules/battery/battery.module';
         type: 'postgres',
         url: configService.get<string>('DATABASE_URL'),
         autoLoadEntities: true,
-        synchronize: false,
+        synchronize: configService.get<string>('NODE_ENV') !== 'production',
         ssl: { rejectUnauthorized: false },
       }),
     }),
     BatteryModule,
+    PlasticModule,
   ],
 })
 export class AppModule {}
