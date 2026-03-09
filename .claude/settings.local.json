@@ -13,7 +13,10 @@
       "Bash(node:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Skill(commit-commands:commit-push-pr)"
+      "Bash(git push:*)",
+      "Skill(commit-commands:commit-push-pr)",
+      "Bash(rm:*)",
+      "Bash(git:*)"
     ]
   }
 }
