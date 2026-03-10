@@ -1,6 +1,7 @@
 import { Column, Entity, OneToOne, JoinColumn, RelationId } from 'typeorm';
 import { BaseEntity } from '../../../shared/entities/base.entity';
 import { BatteryEntity } from '../../battery/entities/battery.entity';
+import { CommunicationEntity } from '../../communication/entities/communication.entity';
 
 @Entity('plastics')
 export class PlasticEntity extends BaseEntity {
@@ -13,4 +14,7 @@ export class PlasticEntity extends BaseEntity {
 
   @RelationId((plastic: PlasticEntity) => plastic.battery)
   public batteryId: string | null;
+
+  @OneToOne(() => CommunicationEntity, (communication) => communication.plastic)
+  public communication: CommunicationEntity | null;
 }
