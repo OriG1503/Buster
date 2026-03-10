@@ -11,6 +11,7 @@ import { CardboardModule } from './modules/cardboard/cardboard.module';
 import { RobotModule } from './modules/robot/robot.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { WiringModule } from './modules/wiring/wiring.module';
+import { ConflictModule } from './modules/conflict/conflict.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { WiringModule } from './modules/wiring/wiring.module';
     RobotModule,
     StorageModule,
     WiringModule,
+    ConflictModule,
   ],
 })
 export class AppModule {}
