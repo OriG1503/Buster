@@ -1,5 +1,6 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, OneToOne } from 'typeorm';
 import { BaseEntity } from '../../../shared/entities/base.entity';
+import { RobotEntity } from '../../robot/entities/robot.entity';
 
 @Entity('sales')
 export class SaleEntity extends BaseEntity {
@@ -29,4 +30,7 @@ export class SaleEntity extends BaseEntity {
 
   @Column({ type: 'varchar', nullable: true })
   public dataSource: string | null;
+
+  @OneToOne(() => RobotEntity, (robot) => robot.sale)
+  public robot: RobotEntity | null;
 }

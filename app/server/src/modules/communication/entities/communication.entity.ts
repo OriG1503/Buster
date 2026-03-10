@@ -2,6 +2,7 @@ import { Column, Entity, OneToOne, JoinColumn, RelationId } from 'typeorm';
 import { BaseEntity } from '../../../shared/entities/base.entity';
 import { PlasticEntity } from '../../plastic/entities/plastic.entity';
 import { IronEntity } from '../../iron/entities/iron.entity';
+import { RobotEntity } from '../../robot/entities/robot.entity';
 
 @Entity('communications')
 export class CommunicationEntity extends BaseEntity {
@@ -21,4 +22,7 @@ export class CommunicationEntity extends BaseEntity {
 
   @RelationId((communication: CommunicationEntity) => communication.iron)
   public ironId: string | null;
+
+  @OneToOne(() => RobotEntity, (robot) => robot.communication)
+  public robot: RobotEntity | null;
 }
