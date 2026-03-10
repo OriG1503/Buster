@@ -6,6 +6,7 @@ import { PlasticModule } from './modules/plastic/plastic.module';
 import { IronModule } from './modules/iron/iron.module';
 import { CommunicationModule } from './modules/communication/communication.module';
 import { SensorModule } from './modules/sensor/sensor.module';
+import { SaleModule } from './modules/sale/sale.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { SensorModule } from './modules/sensor/sensor.module';
     IronModule,
     CommunicationModule,
     SensorModule,
+    SaleModule,
   ],
 })
 export class AppModule {}
