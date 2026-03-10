@@ -13,7 +13,16 @@
       "Bash(node:*)",
       "Bash(git:*)",
       "Bash(rm:*)",
-      "Skill(commit-commands:commit-push-pr)"
+      "Skill(commit-commands:commit-push-pr)",
+      "mcp__neon__list_projects",
+      "mcp__neon__get_connection_string",
+      "Bash(ls:*)",
+      "mcp__neon__run_sql",
+      "Bash(npm run:*)",
+      "Bash(netstat -ano)",
+      "Bash(xargs -r taskkill //PID //F)",
+      "Bash(taskkill:*)",
+      "Bash(cmd:*)"
     ]
   }
 }

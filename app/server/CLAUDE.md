@@ -1,87 +1,72 @@
-# CLAUDE.md — Server
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 NestJS 11 server for Buster. Handles Excel file ingestion, entity parsing, data validation, and conflict detection for a robot manufacturing factory analysis tool.
 
 ## Tech Stack
-- NestJS 11
-- Node.js 20
-- TypeScript (strict mode)
-- PostgreSQL via **Neon** (serverless Postgres)
-- **TypeORM** for database access
+- NestJS 11 / Node.js 20 / TypeScript (strict mode)
+- PostgreSQL via **Neon** (serverless) — connection string in `.env` as `DATABASE_URL`
+- **TypeORM** — `synchronize: true` in non-production (auto-creates/alters tables on startup)
 - npm
 
 ## Commands
 ```bash
-npm run start        # Start dev server
 npm run start:dev    # Watch mode (hot reload)
-npm run start:prod   # Production
+npm run start        # Start once
 npm run build        # Compile to dist/
-npm run lint         # ESLint
+npm run lint         # ESLint with auto-fix
 ```
 
-## Domain — Entities
-| Entity | Notes |
-|--------|-------|
-| `Robot` | Main manufactured unit |
-| `Sensor` | Sensor component, child of Robot |
-| `Wiring` | Wiring component, child of Robot |
-| `Communication` | Communication module, child of Robot |
-| `Battery` | Battery component, child of Robot |
-| `Storage` | Storage component |
-| `Iron` | Raw material |
-| `Plastic` | Raw material |
-| `Cardboard` | Raw material |
-| `Sale` | Sale / order record |
-| `Conflict` | Detected data conflict / validation issue |
+## Architecture
 
-Parent entities can contain child entities in the same Excel upload. The server must detect and split them correctly.
+### Module structure
+Each feature lives in `src/modules/<feature>/` and owns:
+- `<feature>.module.ts` — registers TypeORM entity + exports service
+- `<feature>.controller.ts` — routing only, no business logic
+- `<feature>.service.ts` — business logic, injected repository
+- `entities/<feature>.entity.ts` — TypeORM entity
 
-## Folder Structure
-```
-src/
-├── main.ts                  # Bootstrap
-├── app.module.ts            # Root module
-├── core/                    # App-wide singletons (guards, interceptors, filters, pipes)
-├── modules/                 # Feature modules, each owns its own controllers/services/types
-│   └── <feature>/
-│       ├── <feature>.module.ts
-│       ├── <feature>.controller.ts
-│       ├── <feature>.service.ts
-│       ├── entities/        # TypeORM entities
-│       ├── types/           # Feature-specific types (one type per file)
-│       └── consts/          # Feature-specific constants
-└── shared/                  # Utilities used by 2+ modules
-    └── types/               # Cross-module types
-```
+Shared abstractions live in `src/shared/`.
+
+### BaseEntity pattern
+Two base entities in `src/shared/entities/`:
+
+- **`BaseEntity`** — used by all entities except Conflict. `id` is a user-provided string (`@PrimaryColumn`), set from the uploaded Excel data.
+- **`GeneratedBaseEntity`** — used only by `ConflictEntity`. `id` is auto-generated (`@PrimaryGeneratedColumn('increment')`). No `source` field.
+
+`BaseEntity` also provides:
+- `source` — `jsonb`, array of `{ column, value }` pairs from the uploaded Excel row
+
+Both provide:
+- `createdAt`, `updatedAt`, `deletedAt` — TypeORM-managed (soft delete via `deletedAt`)
+
+### Entity column order convention
+Because TypeORM puts parent-class columns first, the DB column order is always:
+`id → source → createdAt → updatedAt → deletedAt → [entity-specific columns]`
+
+### Relations
+Use `@OneToOne` / `@ManyToOne` with `@JoinColumn({ name: 'foreignKeyColumn' })` on the owning side.
+Use `@RelationId` to expose the FK value as a typed property without a redundant `@Column`.
+Always add the inverse side (`@OneToOne(() => X, (x) => x.y)`) on the related entity.
+
+## Domain Entities
+| Entity | Table | Notes |
+|--------|-------|-------|
+| `BatteryEntity` | `batteries` | sku, batteryType, batteryVersion, lithiumVersion |
+| `PlasticEntity` | `plastics` | plasticType, FK → batteries (1:1) |
+| Robot, Sensor, Wiring, Communication, Storage, Iron, Cardboard, Sale, Conflict | pending | |
 
 ## Conventions
-- **Strict TypeScript**: All members must have explicit types; no `any`
-- **Explicit access modifiers**: Every class member must have `public`, `private`, or `protected`
-- **Private members**: prefix with `_` (e.g., `_privateVar`)
-- **Booleans**: prefix with `is` (e.g., `isActive`)
-- **Constants**: UPPER_SNAKE_CASE, defined in `consts/` folders
-- **No magic numbers / hardcoded strings**: All constants in `consts/` files
-- **`type` over `interface`**: Prefer `type` for all type definitions
-- **No `let`, `for`, `while`**: Use `map`, `filter`, `forEach`, `reduce`
-- **Always use braces `{}`** for `if` statements — never single-line without braces
-- **File names**: lowercase kebab-case (e.g., `file-upload.controller.ts`)
+- **Strict TypeScript**: no `any`, explicit types everywhere
+- **Explicit access modifiers**: `public`, `private`, or `protected` on every class member
+- **Private members**: `_` prefix
+- **Booleans**: `is` prefix
+- **Constants**: UPPER_SNAKE_CASE in `consts/` folders
+- **`type` over `interface`**
+- **No `for`/`while`/`let`**: use `map`, `filter`, `forEach`, `reduce`
+- **Always brace `if` statements**
+- **File names**: lowercase kebab-case
 
-## SOLID Principles
-- **Single Responsibility**: Each controller/service has one clear purpose
-- **Dependency Inversion**: Depend on abstractions (types) not concrete implementations
-- **DRY**: Extract shared logic into `shared/` or `core/`
-
-## Prettier Config
-`semi: true`, `arrowParens: always`, `useTabs: false`, `bracketSpacing: true`, `printWidth: 120`, `singleQuote: true`, `trailingComma: "all"`, `tabWidth: 2`
-
-## NestJS Patterns
-- Use constructor injection (NestJS DI)
-- Controllers handle routing only — business logic lives in services
-- Use DTOs for request/response shapes
-- Global prefix: `/api`
-
-## Database
-- **Neon** serverless PostgreSQL
-- **TypeORM** with decorators
-- Each entity has its own TypeORM entity class in its module's `entities/` folder
-- Migrations over `synchronize: true` in production
+## Prettier
+`semi: true`, `singleQuote: true`, `trailingComma: "all"`, `printWidth: 120`, `tabWidth: 2`, `arrowParens: "always"`
