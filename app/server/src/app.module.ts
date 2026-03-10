@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BatteryModule } from './modules/battery/battery.module';
 import { PlasticModule } from './modules/plastic/plastic.module';
+import { IronModule } from './modules/iron/iron.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { PlasticModule } from './modules/plastic/plastic.module';
     }),
     BatteryModule,
     PlasticModule,
+    IronModule,
   ],
 })
 export class AppModule {}
