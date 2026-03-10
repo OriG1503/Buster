@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BatteryModule } from './modules/battery/battery.module';
 import { PlasticModule } from './modules/plastic/plastic.module';
@@ -15,17 +14,12 @@ import { ConflictModule } from './modules/conflict/conflict.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        url: configService.get<string>('DATABASE_URL'),
-        autoLoadEntities: true,
-        synchronize: configService.get<string>('NODE_ENV') !== 'production',
-        ssl: { rejectUnauthorized: false },
-      }),
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      url: process.env.DATABASE_URL,
+      autoLoadEntities: true,
+      synchronize: process.env.NODE_ENV !== 'production',
+      ssl: { rejectUnauthorized: false },
     }),
     BatteryModule,
     PlasticModule,
