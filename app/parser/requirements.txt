@@ -1,0 +1,3 @@
+dataclasses
+fastapi[standard]
+openpyxl
