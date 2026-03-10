@@ -7,6 +7,7 @@ import { IronModule } from './modules/iron/iron.module';
 import { CommunicationModule } from './modules/communication/communication.module';
 import { SensorModule } from './modules/sensor/sensor.module';
 import { SaleModule } from './modules/sale/sale.module';
+import { CardboardModule } from './modules/cardboard/cardboard.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { SaleModule } from './modules/sale/sale.module';
     CommunicationModule,
     SensorModule,
     SaleModule,
+    CardboardModule,
   ],
 })
 export class AppModule {}
