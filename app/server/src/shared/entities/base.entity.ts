@@ -1,11 +1,11 @@
-import { CreateDateColumn, DeleteDateColumn, PrimaryGeneratedColumn, UpdateDateColumn, Column } from 'typeorm';
+import { Column, CreateDateColumn, DeleteDateColumn, PrimaryColumn, UpdateDateColumn } from 'typeorm';
 
 export abstract class BaseEntity {
-  @PrimaryGeneratedColumn('increment')
-  public id: number;
+  @PrimaryColumn({ type: 'varchar' })
+  public id: string;
 
   @Column({ type: 'jsonb', nullable: true })
-  public source: Record<string, string>[];
+  public source: Record<string, string>[] | null;
 
   @CreateDateColumn()
   public createdAt: Date;

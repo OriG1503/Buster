@@ -12,5 +12,5 @@ export class PlasticEntity extends BaseEntity {
   public battery: BatteryEntity | null;
 
   @RelationId((plastic: PlasticEntity) => plastic.battery)
-  public batteryId: number | null;
+  public batteryId: string | null;
 }
