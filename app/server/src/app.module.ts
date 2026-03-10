@@ -11,9 +11,13 @@ import { RobotModule } from './modules/robot/robot.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { WiringModule } from './modules/wiring/wiring.module';
 import { ConflictModule } from './modules/conflict/conflict.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+     ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     TypeOrmModule.forRoot({
       type: 'postgres',
       url: process.env.DATABASE_URL,

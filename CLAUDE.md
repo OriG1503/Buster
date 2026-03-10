@@ -1,4 +1,8 @@
-# CLAUDE.md — Buster (Monorepo Root)
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Buster — Monorepo Root
 
 ## What the App Does
 Buster is a **robot manufacturing factory analysis tool**. Users upload Excel files containing data about factory entities (robots, parts, materials, etc.). The app ingests, parses, and analyzes the data to verify that robots and their components are correct and complete — flagging fields with missing or invalid data.
@@ -39,7 +43,7 @@ Each sub-project has its own `CLAUDE.md` with tech-specific conventions.
 ## Sub-project Status
 | Project | Tech | Status |
 |---------|------|--------|
-| `app/server` | NestJS 11 + PostgreSQL (Neon) + TypeORM | Initialized |
+| `app/server` | NestJS 11 + PostgreSQL (Neon) + TypeORM | Active — all entities defined |
 | `app/client` | Angular 19 | Pending |
 | `app/service` | Python (TBD) | Pending |
 

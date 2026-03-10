@@ -1,12 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { IronEntity } from './entities/iron.entity';
+import { IronRepository } from './iron.repository';
 
 @Injectable()
 export class IronService {
-  public constructor(
-    @InjectRepository(IronEntity)
-    private readonly _ironRepository: Repository<IronEntity>,
-  ) {}
+  public constructor(private readonly _repository: IronRepository) {}
 }
