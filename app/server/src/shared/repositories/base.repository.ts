@@ -9,7 +9,7 @@ export abstract class BaseRepository<T extends { id: TId }, TId extends string |
   }
 
   public findById(id: TId): Promise<T | null> {
-    return this._repository.findOneBy({ id } as FindOptionsWhere<T>);
+    return this._repository.findOne({ where: { id } as FindOptionsWhere<T>, loadRelationIds: true });
   }
 
   public async insert(entity: DeepPartial<T>): Promise<void> {

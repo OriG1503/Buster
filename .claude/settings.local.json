@@ -26,7 +26,8 @@
       "Bash(for module:*)",
       "Bash(grep -rl \"from './repositories/\" C:/Users/Ori/Desktop/Coding/buster/app/server/src/modules/)",
       "Bash(grep -rn \"from '.*shared/repositories\" C:/Users/Ori/Desktop/Coding/buster/app/server/src/modules/)",
-      "Bash(grep -rn \"from '../entities/\" C:/Users/Ori/Desktop/Coding/buster/app/server/src/modules/ --include=\"*.repository.ts\")"
+      "Bash(grep -rn \"from '../entities/\" C:/Users/Ori/Desktop/Coding/buster/app/server/src/modules/ --include=\"*.repository.ts\")",
+      "Bash(cd \"C:\\\\Users\\\\Ori\\\\Desktop\\\\Coding\\\\buster\\\\app\\\\server\" && npm test 2>&1)"
     ]
   }
 }
