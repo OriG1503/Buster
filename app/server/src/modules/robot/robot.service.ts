@@ -1,12 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { RobotEntity } from './entities/robot.entity';
+import { RobotRepository } from './robot.repository';
 
 @Injectable()
 export class RobotService {
-  public constructor(
-    @InjectRepository(RobotEntity)
-    private readonly _robotRepository: Repository<RobotEntity>,
-  ) {}
+  public constructor(private readonly _repository: RobotRepository) {}
 }

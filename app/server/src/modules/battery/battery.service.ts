@@ -1,12 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { BatteryEntity } from './entities/battery.entity';
+import { BatteryRepository } from './battery.repository';
 
 @Injectable()
 export class BatteryService {
-  public constructor(
-    @InjectRepository(BatteryEntity)
-    private readonly _batteryRepository: Repository<BatteryEntity>,
-  ) {}
+  public constructor(private readonly _repository: BatteryRepository) {}
 }

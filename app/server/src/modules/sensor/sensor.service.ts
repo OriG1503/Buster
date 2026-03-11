@@ -1,12 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { SensorEntity } from './entities/sensor.entity';
+import { SensorRepository } from './sensor.repository';
 
 @Injectable()
 export class SensorService {
-  public constructor(
-    @InjectRepository(SensorEntity)
-    private readonly _sensorRepository: Repository<SensorEntity>,
-  ) {}
+  public constructor(private readonly _repository: SensorRepository) {}
 }

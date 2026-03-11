@@ -22,12 +22,35 @@ npm run lint         # ESLint with auto-fix
 
 ### Module structure
 Each feature lives in `src/modules/<feature>/` and owns:
-- `<feature>.module.ts` — registers TypeORM entity + exports service
-- `<feature>.controller.ts` — routing only, no business logic
-- `<feature>.service.ts` — business logic, injected repository
+- `<feature>.module.ts` — registers TypeORM entity, provides and exports both repository and service
+- `<feature>.service.ts` — business logic; injects the custom repository (not `InjectRepository` directly)
+- `<feature>.repository.ts` — custom repository extending `BaseRepository`
 - `entities/<feature>.entity.ts` — TypeORM entity
 
 Shared abstractions live in `src/shared/`.
+
+### Repository layer
+`src/shared/repositories/base.repository.ts` — abstract `BaseRepository<T, TId>` with `findAll`, `findById`, `save`, `saveMany`, `softDelete`, `hardDelete`.
+
+Each module's repository extends it:
+```ts
+@Injectable()
+export class RobotRepository extends BaseRepository<RobotEntity> {
+  public constructor(@InjectRepository(RobotEntity) repository: Repository<RobotEntity>) {
+    super(repository);
+  }
+}
+```
+
+The module registers it as a provider and the service receives it via constructor injection:
+```ts
+// robot.module.ts
+providers: [RobotRepository, RobotService],
+exports: [RobotRepository, RobotService],
+
+// robot.service.ts
+public constructor(private readonly _repository: RobotRepository) {}
+```
 
 ### BaseEntity pattern
 Two base entities in `src/shared/entities/`:
@@ -51,11 +74,31 @@ Use `@RelationId` to expose the FK value as a typed property without a redundant
 Always add the inverse side (`@OneToOne(() => X, (x) => x.y)`) on the related entity.
 
 ## Domain Entities
-| Entity | Table | Notes |
-|--------|-------|-------|
-| `BatteryEntity` | `batteries` | sku, batteryType, batteryVersion, lithiumVersion |
-| `PlasticEntity` | `plastics` | plasticType, FK → batteries (1:1) |
-| Robot, Sensor, Wiring, Communication, Storage, Iron, Cardboard, Sale, Conflict | pending | |
+
+All entities extend `BaseEntity` (user-provided string `id`, `source` jsonb) except `ConflictEntity` which extends `GeneratedBaseEntity` (auto-increment `id`, no `source`).
+
+| Entity | Table | Key columns | Relations (owning side holds FK) |
+|--------|-------|-------------|----------------------------------|
+| `RobotEntity` | `robots` | — | OneToOne → Cardboard, Sensor, Communication, Sale; ManyToOne → Wiring |
+| `WiringEntity` | `wirings` | wiringType, district, municipality | OneToOne → Storage; OneToMany ← Robot |
+| `StorageEntity` | `storages` | storageType, storageVersion, isStockNetanya, isStockAfula | OneToOne ← Wiring |
+| `SensorEntity` | `sensors` | sensorType, sensorVersion | OneToOne ← Robot |
+| `CommunicationEntity` | `communications` | communicationType | OneToOne → Plastic, Iron; OneToOne ← Robot |
+| `PlasticEntity` | `plastics` | plasticType | OneToOne → Battery; OneToOne ← Communication |
+| `BatteryEntity` | `batteries` | sku, batteryType, batteryVersion, lithiumVersion | OneToOne ← Plastic |
+| `IronEntity` | `irons` | ironType, ironVersion, isHeatConductor | OneToOne ← Communication |
+| `CardboardEntity` | `cardboards` | cardboardType, cardboardVersion | OneToOne ← Robot |
+| `SaleEntity` | `sales` | carrier, onlineStoreName, salesperson, isPurchased, isStockAshdod, isStockTelAviv, isStockRehovot, notes, dataSource | OneToOne ← Robot |
+| `ConflictEntity` | `conflicts` | tableName, columnName, entityId, newValue, newSource, oldValue, oldSource, conflictCreator, conflictResolver, isSolved, notes | standalone |
+
+### Entity relationship chain
+```
+Sale ←── Robot ──→ Cardboard
+              ├──→ Sensor
+              ├──→ Communication ──→ Plastic ──→ Battery
+              │                 └──→ Iron
+              └──→ Wiring ──→ Storage
+```
 
 ## Conventions
 - **Strict TypeScript**: no `any`, explicit types everywhere

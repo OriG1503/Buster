@@ -22,7 +22,11 @@
       "Bash(netstat -ano)",
       "Bash(xargs -r taskkill //PID //F)",
       "Bash(taskkill:*)",
-      "Bash(cmd:*)"
+      "Bash(cmd:*)",
+      "Bash(for module:*)",
+      "Bash(grep -rl \"from './repositories/\" C:/Users/Ori/Desktop/Coding/buster/app/server/src/modules/)",
+      "Bash(grep -rn \"from '.*shared/repositories\" C:/Users/Ori/Desktop/Coding/buster/app/server/src/modules/)",
+      "Bash(grep -rn \"from '../entities/\" C:/Users/Ori/Desktop/Coding/buster/app/server/src/modules/ --include=\"*.repository.ts\")"
     ]
   }
 }
