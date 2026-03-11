@@ -22,8 +22,4 @@ export abstract class BaseRepository<T extends { id: TId }, TId extends string |
   public async softDelete(id: TId): Promise<void> {
     await this._repository.softDelete(id as string | number);
   }
-
-  public async hardDelete(id: TId): Promise<void> {
-    await this._repository.delete(id as string | number);
-  }
 }
