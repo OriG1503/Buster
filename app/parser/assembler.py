@@ -30,7 +30,7 @@ _UUID_FIELDS = {
 }
 
 
-def _build_entity(cls, row: dict, sheet_name: str):
+def _build_entity(cls, row: dict):
     # Skip the entity entirely if its UUID column is absent or empty
     if not row.get(_UUID_FIELDS[cls]):
         return None
@@ -40,41 +40,40 @@ def _build_entity(cls, row: dict, sheet_name: str):
     return cls(**data)
 
 
-def _build_hierarchy_from_row(row: dict, sheet_name: str) -> RobotHierarchy:
+def _build_hierarchy_from_row(row: dict) -> RobotHierarchy:
     # Each row can contain data for multiple entities; build each one and nest them
     return RobotHierarchy(
-        _build_entity(Robot, row, sheet_name),
+        _build_entity(Robot, row),
 
-        cardboard=_build_entity(Cardboard, row, sheet_name),
+        cardboard=_build_entity(Cardboard, row),
 
-        sensor=_build_entity(Sensor, row, sheet_name),
+        sensor=_build_entity(Sensor, row),
 
         communication=CommunicationHierarchy(
-            _build_entity(Communication, row, sheet_name),
+            _build_entity(Communication, row),
 
             plastic=PlasticHierarchy(
-                _build_entity(Plastic, row, sheet_name),
-                battery=_build_entity(Battery, row, sheet_name),
+                _build_entity(Plastic, row),
+                battery=_build_entity(Battery, row),
             ),
 
-            iron=_build_entity(Iron, row, sheet_name),
+            iron=_build_entity(Iron, row),
         ),
 
         wiring=WiringHierarchy(
-            _build_entity(Wiring, row, sheet_name),
+            _build_entity(Wiring, row),
 
-            storage=_build_entity(Storage, row, sheet_name),
+            storage=_build_entity(Storage, row),
         ),
 
-        sale=_build_entity(Sale, row, sheet_name),
+        sale=_build_entity(Sale, row),
     )
 
 
-def assemble(sheets: dict[str, list[dict]]) -> list[RobotHierarchy]:
-    # Only the first sheet is processed; fully empty rows are skipped
-    sheet_name, rows = next(iter(sheets.items()))
+def assemble(rows: list[dict]) -> list[RobotHierarchy]:
+    # Skip fully empty rows
     return [
-        _build_hierarchy_from_row(row, sheet_name)
+        _build_hierarchy_from_row(row)
         for row in rows
         if any(v is not None for v in row.values())
     ]

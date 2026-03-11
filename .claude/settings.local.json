@@ -23,6 +23,7 @@
       "Bash(xargs -r taskkill //PID //F)",
       "Bash(taskkill:*)",
       "Bash(cmd:*)",
+      "Bash(ls -la /c/Users/Raz/Desktop/buster/app/parser/ | grep -E '\\\\.py$')",
       "Bash(for module:*)",
       "Bash(grep -rl \"from './repositories/\" C:/Users/Ori/Desktop/Coding/buster/app/server/src/modules/)",
       "Bash(grep -rn \"from '.*shared/repositories\" C:/Users/Ori/Desktop/Coding/buster/app/server/src/modules/)",
