@@ -63,6 +63,7 @@ export class ParserRowMapper {
       wiringType: nullIfEmpty(raw.wiring_type),
       district: nullIfEmpty(raw.district),
       municipality: nullIfEmpty(raw.municipality),
+      storageId: raw.storage ? nullIfEmpty(raw.storage.storage_UUID) : null,
     };
   }
 
@@ -181,6 +182,7 @@ export class ParserRowMapper {
       id: nullIfEmpty(raw.plastic_UUID) as string,
       fileSource: raw.source,
       plasticType: nullIfEmpty(raw.plastic_type),
+      batteryId: raw.battery ? nullIfEmpty(raw.battery.battery_UUID) : null,
     };
   }
 
@@ -192,6 +194,8 @@ export class ParserRowMapper {
       id: nullIfEmpty(raw.communication_UUID) as string,
       fileSource: raw.source,
       communicationType: nullIfEmpty(raw.communication_type),
+      plasticId: raw.plastic ? nullIfEmpty(raw.plastic.plastic_UUID) : null,
+      ironId: raw.iron ? nullIfEmpty(raw.iron.iron_UUID) : null,
     };
   }
 }

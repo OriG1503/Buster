@@ -4,4 +4,5 @@ export type MappedWiring = {
   wiringType: string | null;
   district: string | null;
   municipality: string | null;
+  storageId: string | null;
 };
