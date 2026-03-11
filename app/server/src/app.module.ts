@@ -11,6 +11,7 @@ import { RobotModule } from './modules/robot/robot.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { WiringModule } from './modules/wiring/wiring.module';
 import { ConflictModule } from './modules/conflict/conflict.module';
+import { FileModule } from './modules/file/file.module';
 import { DataProcessorModule } from './modules/data-processor/data-processor.module';
 import { ConfigModule } from '@nestjs/config';
 
@@ -37,6 +38,7 @@ import { ConfigModule } from '@nestjs/config';
     StorageModule,
     WiringModule,
     ConflictModule,
+    FileModule,
     DataProcessorModule,
   ],
 })
