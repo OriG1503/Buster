@@ -14,9 +14,8 @@ async def parse_excel(body: ParseRequest):
 
     try:
         with open(body.path, encoding="utf-8") as f:
-            rows = list(csv.DictReader(f))
+            hierarchies = assemble(csv.DictReader(f))
+            return [flatten_hierarchy(h) for h in hierarchies]
+
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"File not found: {body.path}")
-
-    hierarchies = assemble(rows)
-    return [flatten_hierarchy(h) for h in hierarchies]
