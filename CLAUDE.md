@@ -55,16 +55,28 @@ npm run start:dev    # Watch mode (hot reload)
 npm run start        # Start once
 npm run build        # Compile to dist/
 npm run lint         # ESLint with auto-fix
+npm run test         # Integration tests (sequential, --runInBand, 60s timeout)
 ```
 
 The server reads `DATABASE_URL` from `.env` for the Neon PostgreSQL connection. TypeORM runs with `synchronize: true` in non-production (auto-migrates schema on startup).
 
+Tests live in `src/tests/` and use a real database via the full `AppModule`.
+
 ## Sub-project Status
 | Project | Tech | Status |
 |---------|------|--------|
-| `app/server` | NestJS 11 + PostgreSQL (Neon) + TypeORM | Active — all entities defined |
+| `app/server` | NestJS 11 + PostgreSQL (Neon) + TypeORM | Active — all entities + data-processor implemented |
 | `app/client` | Angular 19 | Pending |
 | `app/service` | Python (TBD) | Pending |
+
+## Server Architecture Summary
+The server has two key abstractions in `src/shared/`:
+- **`BaseRepository`** — generic CRUD + soft delete. No `save`/`update` by design: existing entity fields are never overwritten directly; conflicting data creates a `ConflictEntity` instead.
+- **`BaseService`** — wraps the repository and handles `source` field tracking (which Excel file each field value came from).
+
+The **`DataProcessorModule`** (`src/modules/data-processor/`) orchestrates ingestion: it receives `ParsedRow[]` from the Python parser, maps each row to typed entity data, then for each entity either inserts (new) or runs `ConflictService.detectConflicts()` (existing). Detected conflicts are bulk-inserted as `ConflictEntity` records; non-conflicting field updates are applied via `BaseService.update()`.
+
+See `app/server/CLAUDE.md` for the full entity relationship chain, column conventions, and TypeORM patterns.
 
 ## Cross-project Conventions (from UIAI)
 - **Private members**: prefix with `_`
