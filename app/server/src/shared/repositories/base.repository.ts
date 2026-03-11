@@ -1,4 +1,5 @@
 import { DeepPartial, FindOptionsWhere, Repository } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 
 export abstract class BaseRepository<T extends { id: TId }, TId extends string | number = string> {
   public constructor(protected readonly _repository: Repository<T>) {}
@@ -11,12 +12,12 @@ export abstract class BaseRepository<T extends { id: TId }, TId extends string |
     return this._repository.findOneBy({ id } as FindOptionsWhere<T>);
   }
 
-  public save(entity: DeepPartial<T>): Promise<T> {
-    return this._repository.save(entity);
+  public async insert(entity: DeepPartial<T>): Promise<void> {
+    await this._repository.insert(entity as QueryDeepPartialEntity<T>);
   }
 
-  public saveMany(entities: DeepPartial<T>[]): Promise<T[]> {
-    return this._repository.save(entities);
+  public async insertMany(entities: DeepPartial<T>[]): Promise<void> {
+    await this._repository.insert(entities as QueryDeepPartialEntity<T>[]);
   }
 
   public async softDelete(id: TId): Promise<void> {
