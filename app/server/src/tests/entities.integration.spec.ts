@@ -90,7 +90,7 @@ describe('Entity Integration Tests', () => {
         batteryType: 'Lithium',
         batteryVersion: 'v1',
         lithiumVersion: 'L1',
-        source: [{ column: 'sku', value: 'SKU-001' }],
+        source: { sku: 'SKU-001' },
       });
 
       const found = await batteryRepo.findById(`${T}-battery-1`);
@@ -101,8 +101,22 @@ describe('Entity Integration Tests', () => {
 
     it('should insert multiple batteries with insertMany', async () => {
       await batteryRepo.insertMany([
-        { id: `${T}-battery-2`, sku: 'SKU-002', batteryType: 'NiMH', batteryVersion: 'v2', lithiumVersion: null, source: null },
-        { id: `${T}-battery-3`, sku: 'SKU-003', batteryType: 'Solar', batteryVersion: 'v3', lithiumVersion: null, source: null },
+        {
+          id: `${T}-battery-2`,
+          sku: 'SKU-002',
+          batteryType: 'NiMH',
+          batteryVersion: 'v2',
+          lithiumVersion: null,
+          source: null,
+        },
+        {
+          id: `${T}-battery-3`,
+          sku: 'SKU-003',
+          batteryType: 'Solar',
+          batteryVersion: 'v3',
+          lithiumVersion: null,
+          source: null,
+        },
       ]);
 
       const b2 = await batteryRepo.findById(`${T}-battery-2`);

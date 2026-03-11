@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
+import { BaseService } from '../../shared/services/base.service';
 import { BatteryRepository } from './battery.repository';
+import { BatteryEntity } from './entities/battery.entity';
+import { BatteryInsertData } from './types/battery-insert-data.type';
 
 @Injectable()
-export class BatteryService {
-  public constructor(private readonly _repository: BatteryRepository) {}
+export class BatteryService extends BaseService<BatteryEntity, BatteryInsertData> {
+  public constructor(repository: BatteryRepository) {
+    super(repository);
+  }
 }

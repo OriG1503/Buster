@@ -11,11 +11,12 @@ import { RobotModule } from './modules/robot/robot.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { WiringModule } from './modules/wiring/wiring.module';
 import { ConflictModule } from './modules/conflict/conflict.module';
+import { DataProcessorModule } from './modules/data-processor/data-processor.module';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
-     ConfigModule.forRoot({
+    ConfigModule.forRoot({
       isGlobal: true,
     }),
     TypeOrmModule.forRoot({
@@ -36,6 +37,7 @@ import { ConfigModule } from '@nestjs/config';
     StorageModule,
     WiringModule,
     ConflictModule,
+    DataProcessorModule,
   ],
 })
 export class AppModule {}

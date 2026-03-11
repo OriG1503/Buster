@@ -20,7 +20,11 @@ export abstract class BaseRepository<T extends { id: TId }, TId extends string |
     await this._repository.insert(entities as QueryDeepPartialEntity<T>[]);
   }
 
+  public async update(id: TId, fields: QueryDeepPartialEntity<T>): Promise<void> {
+    await this._repository.update(id, fields);
+  }
+
   public async softDelete(id: TId): Promise<void> {
-    await this._repository.softDelete(id as string | number);
+    await this._repository.softDelete(id);
   }
 }

@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
+import { BaseService } from '../../shared/services/base.service';
 import { CommunicationRepository } from './communication.repository';
+import { CommunicationEntity } from './entities/communication.entity';
+import { CommunicationInsertData } from './types/communication-insert-data.type';
 
 @Injectable()
-export class CommunicationService {
-  public constructor(private readonly _repository: CommunicationRepository) {}
+export class CommunicationService extends BaseService<CommunicationEntity, CommunicationInsertData> {
+  public constructor(repository: CommunicationRepository) {
+    super(repository);
+  }
 }
