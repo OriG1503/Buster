@@ -21,7 +21,20 @@ export abstract class BaseRepository<T extends { id: TId }, TId extends string |
   }
 
   public async update(id: TId, fields: QueryDeepPartialEntity<T>): Promise<void> {
-    await this._repository.update(id, fields);
+    await this._repository.update(id, this._resolveRelationIdFields(fields));
+  }
+
+  private _resolveRelationIdFields(fields: QueryDeepPartialEntity<T>): QueryDeepPartialEntity<T> {
+    const result = { ...(fields as Record<string, unknown>) };
+    this._repository.metadata.relationIds.forEach((rid) => {
+      if (!(rid.propertyName in result)) {
+        return;
+      }
+      const value = result[rid.propertyName];
+      delete result[rid.propertyName];
+      result[rid.relation.propertyName] = value !== null && value !== undefined ? { id: value } : null;
+    });
+    return result as QueryDeepPartialEntity<T>;
   }
 
   public async softDelete(id: TId): Promise<void> {
