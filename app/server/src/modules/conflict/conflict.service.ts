@@ -11,39 +11,39 @@ export class ConflictService {
   public detectConflicts(
     tableName: string,
     entityId: string,
-    existing: Record<string, unknown>,
-    existingSource: Record<string, string | null> | null,
-    incoming: Record<string, unknown>,
-    fileSource: string,
+    storedRecord: Record<string, unknown>,
+    storedSources: Record<string, string | null> | null,
+    incomingFields: Record<string, unknown>,
+    incomingSource: string,
   ): ConflictDetectionResult {
     const conflictsToCreate: DeepPartial<ConflictEntity>[] = [];
     const fieldsToUpdate: Record<string, unknown> = {};
     const sourceUpdates: Record<string, string> = {};
 
-    Object.keys(incoming).forEach((field) => {
-      const incomingValue = incoming[field];
+    Object.keys(incomingFields).forEach((field) => {
+      const incomingValue = incomingFields[field];
 
       if (incomingValue === null || incomingValue === undefined) {
         return;
       }
 
-      const existingValue = existing[field];
+      const storedValue = storedRecord[field];
 
-      if (existingValue === null || existingValue === undefined) {
+      if (storedValue === null || storedValue === undefined) {
         fieldsToUpdate[field] = incomingValue;
-        sourceUpdates[field] = fileSource;
+        sourceUpdates[field] = incomingSource;
         return;
       }
 
-      if (existingValue !== incomingValue) {
+      if (storedValue !== incomingValue) {
         conflictsToCreate.push({
           tableName,
           columnName: field,
           entityId,
           newValue: String(incomingValue as string | number | boolean),
-          newSource: fileSource,
-          oldValue: String(existingValue as string | number | boolean),
-          oldSource: existingSource?.[field] ?? null,
+          newSource: incomingSource,
+          oldValue: String(storedValue as string | number | boolean),
+          oldSource: storedSources?.[field] ?? null,
           isSolved: false,
         });
       }

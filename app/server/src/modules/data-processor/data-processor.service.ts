@@ -93,21 +93,21 @@ export class DataProcessorService {
       return;
     }
 
-    const { fileSource, id, ...entityFields } = mapped;
-    const existing = await service.findById(id);
+    const { fileSource: incomingSource, id, ...incomingFields } = mapped;
+    const storedRecord = await service.findById(id);
 
-    if (!existing) {
-      await service.insert({ id, ...entityFields } as TData, fileSource);
+    if (!storedRecord) {
+      await service.insert({ id, ...incomingFields } as TData, incomingSource);
       return;
     }
 
     const result = this._conflictService.detectConflicts(
       tableName,
       id,
-      existing as Record<string, unknown>,
-      existing.source,
-      entityFields as Record<string, unknown>,
-      fileSource,
+      storedRecord as Record<string, unknown>,
+      storedRecord.source,
+      incomingFields as Record<string, unknown>,
+      incomingSource,
     );
 
     await Promise.all(
@@ -117,7 +117,7 @@ export class DataProcessorService {
     );
 
     if (Object.keys(result.fieldsToUpdate).length > 0) {
-      await service.update(id, result.fieldsToUpdate, result.sourceUpdates, existing.source);
+      await service.update(id, result.fieldsToUpdate, result.sourceUpdates, storedRecord.source);
     }
   }
 }
