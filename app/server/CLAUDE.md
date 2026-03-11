@@ -30,7 +30,9 @@ Each feature lives in `src/modules/<feature>/` and owns:
 Shared abstractions live in `src/shared/`.
 
 ### Repository layer
-`src/shared/repositories/base.repository.ts` — abstract `BaseRepository<T, TId>` with `findAll`, `findById`, `save`, `saveMany`, `softDelete`, `hardDelete`.
+`src/shared/repositories/base.repository.ts` — abstract `BaseRepository<T, TId>` with `findAll`, `findById`, `insert`, `insertMany`, `softDelete`.
+
+**Important**: there is no `save`/`update` on the base repository by design. Existing entity fields are never overwritten directly — conflicting incoming data creates a `ConflictEntity` record instead. The only way to update an entity field is through conflict resolution.
 
 Each module's repository extends it:
 ```ts
