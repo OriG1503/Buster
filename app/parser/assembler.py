@@ -70,10 +70,7 @@ def _build_hierarchy_from_row(row: dict) -> RobotHierarchy:
     )
 
 
-def assemble(rows: list[dict]) -> list[RobotHierarchy]:
-    # Skip fully empty rows
-    return [
-        _build_hierarchy_from_row(row)
-        for row in rows
-        if any(v is not None for v in row.values())
-    ]
+def assemble(rows):
+    for row in rows:
+        if any(v is not None for v in row.values()):
+            yield _build_hierarchy_from_row(row)
