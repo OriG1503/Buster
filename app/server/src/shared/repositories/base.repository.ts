@@ -13,11 +13,11 @@ export abstract class BaseRepository<T extends { id: TId }, TId extends string |
   }
 
   public async insert(entity: DeepPartial<T>): Promise<void> {
-    await this._repository.insert(entity as QueryDeepPartialEntity<T>);
+    await this._repository.insert(this._resolveRelationIdFields(entity as QueryDeepPartialEntity<T>));
   }
 
   public async insertMany(entities: DeepPartial<T>[]): Promise<void> {
-    await this._repository.insert(entities as QueryDeepPartialEntity<T>[]);
+    await this._repository.insert(entities.map((e) => this._resolveRelationIdFields(e as QueryDeepPartialEntity<T>)));
   }
 
   public async update(id: TId, fields: QueryDeepPartialEntity<T>): Promise<void> {

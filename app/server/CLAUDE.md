@@ -30,9 +30,11 @@ Each feature lives in `src/modules/<feature>/` and owns:
 Shared abstractions live in `src/shared/`.
 
 ### Repository layer
-`src/shared/repositories/base.repository.ts` — abstract `BaseRepository<T, TId>` with `findAll`, `findById`, `insert`, `insertMany`, `softDelete`.
+`src/shared/repositories/base.repository.ts` — abstract `BaseRepository<T, TId>` with `findAll`, `findById`, `insert`, `insertMany`, `update`, `softDelete`.
 
-**Important**: there is no `save`/`update` on the base repository by design. Existing entity fields are never overwritten directly — conflicting incoming data creates a `ConflictEntity` record instead. The only way to update an entity field is through conflict resolution.
+**Important**: `update` is only called for **gap-fills** (stored field is `null`, incoming has a value). Existing non-null fields are never overwritten directly — differing values create a `ConflictEntity` instead.
+
+`insert`, `insertMany`, and `update` all call `_resolveRelationIdFields()` which transforms `@RelationId` properties (e.g. `batteryId`) into relation objects (`{ battery: { id } }`) before passing to TypeORM — `@RelationId` is a read-only virtual property and TypeORM silently ignores it on writes without this transformation.
 
 Each module's repository extends it:
 ```ts
