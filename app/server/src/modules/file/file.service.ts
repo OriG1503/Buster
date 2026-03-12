@@ -27,13 +27,13 @@ export class FileService {
   }
 
   private async _saveFile(file: Express.Multer.File): Promise<void> {
-    const filesPath = join(__dirname, '../../../../../files');
+    const filesPath = join(__dirname, '../../../../../../files');
     await mkdir(filesPath, { recursive: true });
     await writeFile(join(filesPath, file.originalname), file.buffer);
   }
 
   private async _sendToParser(file: Express.Multer.File): Promise<ParsedRow[]> {
-    const filePath = join(__dirname, '../../../../../files', file.originalname);
+    const filePath = join(__dirname, '../../../../../../files', file.originalname);
     const { data } = await firstValueFrom(this._httpService.post<ParsedRow[]>(process.env.PARSER_URL!, { path: filePath }));
     return data;
   }
