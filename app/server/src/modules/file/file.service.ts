@@ -1,6 +1,5 @@
 import { HttpService } from '@nestjs/axios';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { firstValueFrom } from 'rxjs';
@@ -11,7 +10,6 @@ import { ParsedRow } from '../data-processor/types/parsed-row.type';
 export class FileService {
   public constructor(
     private readonly _httpService: HttpService,
-    private readonly _configService: ConfigService,
     private readonly _dataProcessorService: DataProcessorService,
   ) {}
 
@@ -36,8 +34,7 @@ export class FileService {
 
   private async _sendToParser(file: Express.Multer.File): Promise<ParsedRow[]> {
     const filePath = join(__dirname, '../../../../../files', file.originalname);
-    const parserUrl = this._configService.getOrThrow<string>('PARSER_URL');
-    const { data } = await firstValueFrom(this._httpService.post<ParsedRow[]>(parserUrl, { path: filePath }));
+    const { data } = await firstValueFrom(this._httpService.post<ParsedRow[]>(process.env.PARSER_URL!, { path: filePath }));
     return data;
   }
 }
