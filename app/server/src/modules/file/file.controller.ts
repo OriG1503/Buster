@@ -11,7 +11,7 @@ import { FileService } from './file.service';
 export class FileController {
   public constructor(private readonly _fileService: FileService) {}
 
-  @Post('upload')
+  @Post()
   @UseInterceptors(FileInterceptor('file'))
   public async upload(@UploadedFile() file: Express.Multer.File): Promise<void> {
     await this._fileService.handleFile(file);
