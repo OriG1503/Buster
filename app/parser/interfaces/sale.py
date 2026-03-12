@@ -10,7 +10,7 @@ class Sale:
     salesperson: Optional[str] = None
     is_purchased: Optional[bool] = None
     is_stock_ashdod: Optional[bool] = None
-    is_stock_telaviv: Optional[bool] = None
+    is_stock_tel_aviv: Optional[bool] = None
     is_stock_rehovot: Optional[bool] = None
     notes: Optional[str] = None
     data_source: Optional[str] = None
