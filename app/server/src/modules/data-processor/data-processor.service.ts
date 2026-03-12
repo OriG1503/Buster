@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { DeepPartial } from 'typeorm';
+import { DeepPartial, QueryFailedError } from 'typeorm';
+import { PG_UNIQUE_VIOLATION } from '../../shared/consts/pg-error-codes.const';
 import { ConflictRepository } from '../conflict/conflict.repository';
 import { ConflictService } from '../conflict/conflict.service';
 import { ConflictEntity } from '../conflict/entities/conflict.entity';
@@ -97,7 +98,13 @@ export class DataProcessorService {
     const storedRecord = await service.findById(id);
 
     if (!storedRecord) {
-      await service.insert({ id, ...incomingFields } as TData, incomingSource);
+      try {
+        await service.insert({ id, ...incomingFields } as TData, incomingSource);
+      } catch (error) {
+        if (!(error instanceof QueryFailedError) || (error as any).code !== PG_UNIQUE_VIOLATION) {
+          throw error;
+        }
+      }
       return;
     }
 
