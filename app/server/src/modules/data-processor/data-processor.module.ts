@@ -12,6 +12,7 @@ import { RobotModule } from '../robot/robot.module';
 import { ConflictModule } from '../conflict/conflict.module';
 import { DataProcessorService } from './data-processor.service';
 import { ParserRowMapper } from './mappers/parser-row.mapper';
+import { ParsedRowEnricher } from './parsed-row-enricher.service';
 
 @Module({
   imports: [
@@ -27,7 +28,7 @@ import { ParserRowMapper } from './mappers/parser-row.mapper';
     RobotModule,
     ConflictModule,
   ],
-  providers: [DataProcessorService, ParserRowMapper],
+  providers: [DataProcessorService, ParserRowMapper, ParsedRowEnricher],
   exports: [DataProcessorService],
 })
 export class DataProcessorModule {}
