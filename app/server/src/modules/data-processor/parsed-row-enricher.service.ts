@@ -1,22 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { ParsedCommunicationRow, ParsedPlasticRow, ParsedRow, ParsedWiringRow } from './types/parsed-row.type';
 
-const SERVER_GENERATED_SOURCE = 'server-generated';
-
 const nullIfEmpty = (value: string | null | undefined): string | null =>
   value === '' || value === null || value === undefined ? null : value;
 
 @Injectable()
 export class ParsedRowEnricher {
   public enrich(row: ParsedRow): ParsedRow {
-    const enrichedPlastic = this._enrichPlastic(row.communication?.plastic ?? null);
-    const enrichedCommunication = this._enrichCommunication(row.communication, enrichedPlastic, row.robot_UUID);
-    const enrichedWiring = this._enrichWiring(row.wiring);
+    const enrichedPlastic = this._enrichPlastic(row.communication?.plastic ?? null, row.source);
+    const enrichedCommunication = this._enrichCommunication(row.communication, enrichedPlastic, row.robot_UUID, row.source);
+    const enrichedWiring = this._enrichWiring(row.wiring, row.source);
 
     return { ...row, communication: enrichedCommunication, wiring: enrichedWiring };
   }
 
-  private _enrichPlastic(plastic: ParsedPlasticRow | null): ParsedPlasticRow | null {
+  private _enrichPlastic(plastic: ParsedPlasticRow | null, rowSource: string): ParsedPlasticRow | null {
     if (!plastic) {
       return null;
     }
@@ -34,7 +32,7 @@ export class ParsedRowEnricher {
     return {
       ...plastic,
       plastic_UUID: `auto-plastic-for-${batteryId}`,
-      source: SERVER_GENERATED_SOURCE,
+      source: rowSource,
     };
   }
 
@@ -42,6 +40,7 @@ export class ParsedRowEnricher {
     comm: ParsedCommunicationRow | null,
     enrichedPlastic: ParsedPlasticRow | null,
     robotId: string,
+    rowSource: string,
   ): ParsedCommunicationRow | null {
     if (!comm) {
       return null;
@@ -63,11 +62,11 @@ export class ParsedRowEnricher {
     return {
       ...updated,
       communication_UUID: `auto-comm-for-${robotId}`,
-      source: SERVER_GENERATED_SOURCE,
+      source: rowSource,
     };
   }
 
-  private _enrichWiring(wiring: ParsedWiringRow | null): ParsedWiringRow | null {
+  private _enrichWiring(wiring: ParsedWiringRow | null, rowSource: string): ParsedWiringRow | null {
     if (!wiring) {
       return null;
     }
@@ -85,7 +84,7 @@ export class ParsedRowEnricher {
     return {
       ...wiring,
       wiring_UUID: `auto-wiring-for-${storageId}`,
-      source: SERVER_GENERATED_SOURCE,
+      source: rowSource,
     };
   }
 }

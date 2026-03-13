@@ -56,11 +56,16 @@ npm run start        # Start once
 npm run build        # Compile to dist/
 npm run lint         # ESLint with auto-fix
 npm run test         # Integration tests (sequential, --runInBand, 60s timeout)
+npx jest entities.integration --runInBand   # Run the single integration spec directly
 ```
 
-The server reads `DATABASE_URL` from `.env` for the Neon PostgreSQL connection. TypeORM runs with `synchronize: true` in non-production (auto-migrates schema on startup).
+The server reads two env vars from `.env`:
+- `DATABASE_URL` — Neon PostgreSQL connection string (TypeORM `synchronize: true` in non-production)
+- `PARSER_URL` — Python parser service URL
 
 Tests live in `src/tests/` and use a real database via the full `AppModule`.
+
+Uploaded files are saved to `<repo-root>/files/` (outside `app/`).
 
 ## Sub-project Status
 | Project | Tech | Status |
