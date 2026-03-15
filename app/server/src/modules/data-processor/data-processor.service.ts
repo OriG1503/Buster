@@ -1,23 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { DeepPartial, QueryFailedError } from 'typeorm';
 import { PG_UNIQUE_VIOLATION } from '../../shared/consts/pg-error-codes.const';
+import { EntityServiceRegistry } from '../../shared/services/entity-service-registry.service';
 import { ConflictRepository } from '../conflict/conflict.repository';
 import { ConflictService } from '../conflict/conflict.service';
 import { ConflictEntity } from '../conflict/entities/conflict.entity';
-import { BatteryService } from '../battery/battery.service';
-import { StorageService } from '../storage/storage.service';
-import { IronService } from '../iron/iron.service';
-import { PlasticService } from '../plastic/plastic.service';
-import { WiringService } from '../wiring/wiring.service';
-import { CommunicationService } from '../communication/communication.service';
-import { CardboardService } from '../cardboard/cardboard.service';
-import { SensorService } from '../sensor/sensor.service';
-import { SaleService } from '../sale/sale.service';
-import { RobotService } from '../robot/robot.service';
 import { ParserRowMapper } from './mappers/parser-row.mapper';
 import { ParsedRowEnricher } from './parsed-row-enricher.service';
-import { ParsedRow } from './types/parsed-row.type';
 import { EntityService } from './types/entity-service.type';
+import { ParsedRow } from './types/parsed-row.type';
 
 @Injectable()
 export class DataProcessorService {
@@ -26,16 +17,7 @@ export class DataProcessorService {
     private readonly _enricher: ParsedRowEnricher,
     private readonly _conflictService: ConflictService,
     private readonly _conflictRepository: ConflictRepository,
-    private readonly _batteryService: BatteryService,
-    private readonly _storageService: StorageService,
-    private readonly _ironService: IronService,
-    private readonly _plasticService: PlasticService,
-    private readonly _wiringService: WiringService,
-    private readonly _communicationService: CommunicationService,
-    private readonly _cardboardService: CardboardService,
-    private readonly _sensorService: SensorService,
-    private readonly _saleService: SaleService,
-    private readonly _robotService: RobotService,
+    private readonly _registry: EntityServiceRegistry,
   ) {}
 
   public async process(rows: ParsedRow[]): Promise<void> {
@@ -44,54 +26,22 @@ export class DataProcessorService {
 
   private async _processRow(row: ParsedRow): Promise<void> {
     const enriched = this._enricher.enrich(row);
-    await this._processEntity(
-      this._mapper.mapBattery(enriched),
-      'batteries',
-      this._batteryService as EntityService<{ id: string }>,
-    );
-    await this._processEntity(
-      this._mapper.mapStorage(enriched),
-      'storages',
-      this._storageService as EntityService<{ id: string }>,
-    );
-    await this._processEntity(this._mapper.mapIron(enriched), 'irons', this._ironService as EntityService<{ id: string }>);
-    await this._processEntity(
-      this._mapper.mapPlastic(enriched),
-      'plastics',
-      this._plasticService as EntityService<{ id: string }>,
-    );
-    await this._processEntity(
-      this._mapper.mapWiring(enriched),
-      'wirings',
-      this._wiringService as EntityService<{ id: string }>,
-    );
-    await this._processEntity(
-      this._mapper.mapCommunication(enriched),
-      'communications',
-      this._communicationService as EntityService<{ id: string }>,
-    );
-    await this._processEntity(
-      this._mapper.mapCardboard(enriched),
-      'cardboards',
-      this._cardboardService as EntityService<{ id: string }>,
-    );
-    await this._processEntity(
-      this._mapper.mapSensor(enriched),
-      'sensors',
-      this._sensorService as EntityService<{ id: string }>,
-    );
-    await this._processEntity(this._mapper.mapSale(enriched), 'sales', this._saleService as EntityService<{ id: string }>);
-    await this._processEntity(
-      this._mapper.mapRobot(enriched),
-      'robots',
-      this._robotService as EntityService<{ id: string }>,
-    );
+
+    await this._processEntity(this._mapper.mapBattery(enriched), this._registry.get('batteries'));
+    await this._processEntity(this._mapper.mapStorage(enriched), this._registry.get('storages'));
+    await this._processEntity(this._mapper.mapIron(enriched), this._registry.get('irons'));
+    await this._processEntity(this._mapper.mapPlastic(enriched), this._registry.get('plastics'));
+    await this._processEntity(this._mapper.mapWiring(enriched), this._registry.get('wirings'));
+    await this._processEntity(this._mapper.mapCommunication(enriched), this._registry.get('communications'));
+    await this._processEntity(this._mapper.mapCardboard(enriched), this._registry.get('cardboards'));
+    await this._processEntity(this._mapper.mapSensor(enriched), this._registry.get('sensors'));
+    await this._processEntity(this._mapper.mapSale(enriched), this._registry.get('sales'));
+    await this._processEntity(this._mapper.mapRobot(enriched), this._registry.get('robots'));
   }
 
-  private async _processEntity<TData extends { id: string; fileSource: string }>(
-    mapped: TData | null,
-    tableName: string,
-    service: EntityService<TData>,
+  private async _processEntity(
+    mapped: ({ id: string; fileSource: string } & Record<string, unknown>) | null,
+    service: EntityService<{ id: string }>,
   ): Promise<void> {
     if (!mapped?.id) {
       return;
@@ -102,7 +52,7 @@ export class DataProcessorService {
 
     if (!storedRecord) {
       try {
-        await service.insert({ id, ...incomingFields } as TData, incomingSource);
+        await service.insert({ id, ...incomingFields } as { id: string }, incomingSource);
       } catch (error) {
         if (!(error instanceof QueryFailedError) || (error as any).code !== PG_UNIQUE_VIOLATION) {
           throw error;
@@ -112,7 +62,7 @@ export class DataProcessorService {
     }
 
     const result = this._conflictService.detectConflicts(
-      tableName,
+      service.tableName,
       id,
       storedRecord as Record<string, unknown>,
       storedRecord.source,

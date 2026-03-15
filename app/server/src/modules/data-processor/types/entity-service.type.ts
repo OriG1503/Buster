@@ -1,6 +1,7 @@
 import { BaseEntity } from '../../../shared/entities/base.entity';
 
 export type EntityService<TData extends { id: string }> = {
+  tableName: string;
   findById(id: string): Promise<(BaseEntity & Record<string, unknown>) | null>;
   insert(data: TData, fileSource: string): Promise<void>;
   update(
