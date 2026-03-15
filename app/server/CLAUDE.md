@@ -16,7 +16,28 @@ npm run start:dev    # Watch mode (hot reload)
 npm run start        # Start once
 npm run build        # Compile to dist/
 npm run lint         # ESLint with auto-fix
+npm run test         # Integration tests (sequential, real DB, 60s timeout)
 ```
+
+There is one integration test file: `src/tests/entities.integration.spec.ts`. To run it directly:
+```bash
+npx jest entities.integration --runInBand
+```
+
+The server requires two env vars in `.env`:
+- `DATABASE_URL` — Neon PostgreSQL connection string
+- `PARSER_URL` — URL of the Python parser service (used by `FileService` to forward CSV paths)
+
+## File Upload Flow
+
+**Endpoint**: `POST /api/file` (multipart, field name `file`, `.csv` only)
+
+`FileController` → `FileService`:
+1. Validates `.csv` extension
+2. Saves raw file to `<repo-root>/files/<filename>` (outside `app/`)
+3. POSTs the saved file **path** (not the buffer) to `PARSER_URL` — the Python parser reads from disk
+4. Python parser returns `ParsedRow[]`
+5. `DataProcessorService.process(rows)` ingests all rows in parallel
 
 ## Architecture
 
@@ -30,9 +51,11 @@ Each feature lives in `src/modules/<feature>/` and owns:
 Shared abstractions live in `src/shared/`.
 
 ### Repository layer
-`src/shared/repositories/base.repository.ts` — abstract `BaseRepository<T, TId>` with `findAll`, `findById`, `insert`, `insertMany`, `softDelete`.
+`src/shared/repositories/base.repository.ts` — abstract `BaseRepository<T, TId>` with `findAll`, `findById`, `insert`, `insertMany`, `update`, `softDelete`.
 
-**Important**: there is no `save`/`update` on the base repository by design. Existing entity fields are never overwritten directly — conflicting incoming data creates a `ConflictEntity` record instead. The only way to update an entity field is through conflict resolution.
+**Important**: `update` is only called for **gap-fills** (stored field is `null`, incoming has a value). Existing non-null fields are never overwritten directly — differing values create a `ConflictEntity` instead.
+
+`insert`, `insertMany`, and `update` all call `_resolveRelationIdFields()` which transforms `@RelationId` properties (e.g. `batteryId`) into relation objects (`{ battery: { id } }`) before passing to TypeORM — `@RelationId` is a read-only virtual property and TypeORM silently ignores it on writes without this transformation.
 
 Each module's repository extends it:
 ```ts
@@ -74,6 +97,24 @@ Because TypeORM puts parent-class columns first, the DB column order is always:
 Use `@OneToOne` / `@ManyToOne` with `@JoinColumn({ name: 'foreignKeyColumn' })` on the owning side.
 Use `@RelationId` to expose the FK value as a typed property without a redundant `@Column`.
 Always add the inverse side (`@OneToOne(() => X, (x) => x.y)`) on the related entity.
+
+### ParsedRow type and enrichment
+
+`ParsedRow` (in `src/modules/data-processor/types/parsed-row.type.ts`) is the structured JSON the Python parser returns. It is a flat robot row that nests child rows: `robot_UUID`, `source`, and optional `cardboard`, `sensor`, `communication` (which nests `plastic` → `battery`, and `iron`), `wiring` (which nests `storage`), `sale`.
+
+`ParsedRowEnricher` (`parsed-row-enricher.service.ts`) runs before mapping and **auto-generates UUIDs** for intermediate entities that lack their own UUID but have child data. The pattern is deterministic:
+- `plastic_UUID` → `auto-plastic-for-{battery_UUID}`
+- `communication_UUID` → `auto-comm-for-{robot_UUID}`
+- `wiring_UUID` → `auto-wiring-for-{storage_UUID}`
+
+This ensures intermediate entities are created even when the upload source doesn't include their own ID.
+
+### DataProcessorService ingestion order
+
+Entities are always processed leaf-first to satisfy FK constraints:
+`Battery → Storage → Iron → Plastic → Wiring → Communication → Cardboard → Sensor → Sale → Robot`
+
+For each entity: if not found → `insert` (catches unique-constraint race); if found → `ConflictService.detectConflicts()` → create `ConflictEntity` records for differing fields, call `update` for null gap-fills.
 
 ## Domain Entities
 

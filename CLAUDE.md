@@ -19,7 +19,8 @@ The core goal is to produce a **Single Source of Truth**: users review each conf
 ## Excel Upload Model
 - A user uploads an Excel for a **single entity type** (e.g., just robots) or a **parent entity that embeds child entities** (e.g., a robot Excel that also includes sensor and wiring rows).
 - Each Excel follows a fixed template. Users can download the correct template from the upload page.
-- The Python parser (`app/service`) handles all Excel parsing logic and returns structured JSON to the server.
+- The Python parser (`app/parser`) handles all CSV parsing logic and returns structured JSON to the server.
+- CSV templates for each entity type live in `app/parser/templates/`.
 
 ## Entities
 | Entity | Description |
@@ -44,7 +45,7 @@ GitLab: `git@gitlab.com:ori.gritzman/buster.git`
 app/
 ├── client/     # Angular 19 client (not yet initialized)
 ├── server/     # NestJS 11 API server  ← active
-└── service/    # Python Excel processing service (not yet initialized)
+└── parser/     # Python FastAPI CSV parsing service  ← active
 ```
 
 Each sub-project has its own `CLAUDE.md` with tech-specific conventions. **Read `app/server/CLAUDE.md` before working in the server.**
@@ -56,25 +57,41 @@ npm run start        # Start once
 npm run build        # Compile to dist/
 npm run lint         # ESLint with auto-fix
 npm run test         # Integration tests (sequential, --runInBand, 60s timeout)
+npx jest entities.integration --runInBand   # Run the single integration spec directly
 ```
 
-The server reads `DATABASE_URL` from `.env` for the Neon PostgreSQL connection. TypeORM runs with `synchronize: true` in non-production (auto-migrates schema on startup).
+The server reads two env vars from `.env`:
+- `DATABASE_URL` — Neon PostgreSQL connection string (TypeORM `synchronize: true` in non-production)
+- `PARSER_URL` — Python parser service URL (e.g. `http://localhost:8000`)
 
 Tests live in `src/tests/` and use a real database via the full `AppModule`.
+
+Uploaded files are saved to `<repo-root>/files/` (outside `app/`).
+
+## Parser Commands (from `app/parser/`)
+```bash
+pip install -r requirements.txt    # Install dependencies
+uvicorn main:app --reload          # Dev mode with hot reload
+uvicorn main:app                   # Start once (default port 8000)
+```
+
+**Endpoint**: `POST /parse` — body: `{ "path": "<absolute path to .csv file>" }` — returns `ParsedRow[]`.
+
+The parser reads the CSV from disk (the server saves the upload to `<repo-root>/files/` first, then sends the path). It builds a `RobotHierarchy` per CSV row via `assembler.py`, then flattens it to a dict via `helpers/flatten.py`. CSV templates for manual use are in `app/parser/templates/`; test fixture CSVs are in `app/parser/tests/`.
 
 ## Sub-project Status
 | Project | Tech | Status |
 |---------|------|--------|
 | `app/server` | NestJS 11 + PostgreSQL (Neon) + TypeORM | Active — all entities + data-processor implemented |
+| `app/parser` | Python FastAPI + uvicorn | Active — CSV parsing + hierarchy flattening implemented |
 | `app/client` | Angular 19 | Pending |
-| `app/service` | Python (TBD) | Pending |
 
 ## Server Architecture Summary
 The server has two key abstractions in `src/shared/`:
 - **`BaseRepository`** — generic CRUD + soft delete. No `save`/`update` by design: existing entity fields are never overwritten directly; conflicting data creates a `ConflictEntity` instead.
 - **`BaseService`** — wraps the repository and handles `source` field tracking (which Excel file each field value came from).
 
-The **`DataProcessorModule`** (`src/modules/data-processor/`) orchestrates ingestion: it receives `ParsedRow[]` from the Python parser, maps each row to typed entity data, then for each entity either inserts (new) or runs `ConflictService.detectConflicts()` (existing). Detected conflicts are bulk-inserted as `ConflictEntity` records; non-conflicting field updates are applied via `BaseService.update()`.
+The **`DataProcessorModule`** (`src/modules/data-processor/`) orchestrates ingestion: it receives `ParsedRow[]` from the Python parser (`app/parser`), maps each row to typed entity data, then for each entity either inserts (new) or runs `ConflictService.detectConflicts()` (existing). Detected conflicts are bulk-inserted as `ConflictEntity` records; non-conflicting field updates are applied via `BaseService.update()`.
 
 See `app/server/CLAUDE.md` for the full entity relationship chain, column conventions, and TypeORM patterns.
 

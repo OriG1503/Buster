@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { DeepPartial } from 'typeorm';
+import { DeepPartial, QueryFailedError } from 'typeorm';
+import { PG_UNIQUE_VIOLATION } from '../../shared/consts/pg-error-codes.const';
 import { ConflictRepository } from '../conflict/conflict.repository';
 import { ConflictService } from '../conflict/conflict.service';
 import { ConflictEntity } from '../conflict/entities/conflict.entity';
@@ -14,6 +15,7 @@ import { SensorService } from '../sensor/sensor.service';
 import { SaleService } from '../sale/sale.service';
 import { RobotService } from '../robot/robot.service';
 import { ParserRowMapper } from './mappers/parser-row.mapper';
+import { ParsedRowEnricher } from './parsed-row-enricher.service';
 import { ParsedRow } from './types/parsed-row.type';
 import { EntityService } from './types/entity-service.type';
 
@@ -21,6 +23,7 @@ import { EntityService } from './types/entity-service.type';
 export class DataProcessorService {
   public constructor(
     private readonly _mapper: ParserRowMapper,
+    private readonly _enricher: ParsedRowEnricher,
     private readonly _conflictService: ConflictService,
     private readonly _conflictRepository: ConflictRepository,
     private readonly _batteryService: BatteryService,
@@ -40,45 +43,46 @@ export class DataProcessorService {
   }
 
   private async _processRow(row: ParsedRow): Promise<void> {
+    const enriched = this._enricher.enrich(row);
     await this._processEntity(
-      this._mapper.mapBattery(row),
+      this._mapper.mapBattery(enriched),
       'batteries',
       this._batteryService as EntityService<{ id: string }>,
     );
     await this._processEntity(
-      this._mapper.mapStorage(row),
+      this._mapper.mapStorage(enriched),
       'storages',
       this._storageService as EntityService<{ id: string }>,
     );
-    await this._processEntity(this._mapper.mapIron(row), 'irons', this._ironService as EntityService<{ id: string }>);
+    await this._processEntity(this._mapper.mapIron(enriched), 'irons', this._ironService as EntityService<{ id: string }>);
     await this._processEntity(
-      this._mapper.mapPlastic(row),
+      this._mapper.mapPlastic(enriched),
       'plastics',
       this._plasticService as EntityService<{ id: string }>,
     );
     await this._processEntity(
-      this._mapper.mapWiring(row),
+      this._mapper.mapWiring(enriched),
       'wirings',
       this._wiringService as EntityService<{ id: string }>,
     );
     await this._processEntity(
-      this._mapper.mapCommunication(row),
+      this._mapper.mapCommunication(enriched),
       'communications',
       this._communicationService as EntityService<{ id: string }>,
     );
     await this._processEntity(
-      this._mapper.mapCardboard(row),
+      this._mapper.mapCardboard(enriched),
       'cardboards',
       this._cardboardService as EntityService<{ id: string }>,
     );
     await this._processEntity(
-      this._mapper.mapSensor(row),
+      this._mapper.mapSensor(enriched),
       'sensors',
       this._sensorService as EntityService<{ id: string }>,
     );
-    await this._processEntity(this._mapper.mapSale(row), 'sales', this._saleService as EntityService<{ id: string }>);
+    await this._processEntity(this._mapper.mapSale(enriched), 'sales', this._saleService as EntityService<{ id: string }>);
     await this._processEntity(
-      this._mapper.mapRobot(row),
+      this._mapper.mapRobot(enriched),
       'robots',
       this._robotService as EntityService<{ id: string }>,
     );
@@ -97,7 +101,13 @@ export class DataProcessorService {
     const storedRecord = await service.findById(id);
 
     if (!storedRecord) {
-      await service.insert({ id, ...incomingFields } as TData, incomingSource);
+      try {
+        await service.insert({ id, ...incomingFields } as TData, incomingSource);
+      } catch (error) {
+        if (!(error instanceof QueryFailedError) || (error as any).code !== PG_UNIQUE_VIOLATION) {
+          throw error;
+        }
+      }
       return;
     }
 
