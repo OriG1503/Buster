@@ -6,6 +6,8 @@ import { IronInsertData } from './types/iron-insert-data.type';
 
 @Injectable()
 export class IronService extends BaseService<IronEntity, IronInsertData> {
+  public readonly tableName = 'irons';
+
   public constructor(repository: IronRepository) {
     super(repository);
   }

@@ -6,6 +6,8 @@ import { PlasticInsertData } from './types/plastic-insert-data.type';
 
 @Injectable()
 export class PlasticService extends BaseService<PlasticEntity, PlasticInsertData> {
+  public readonly tableName = 'plastics';
+
   public constructor(repository: PlasticRepository) {
     super(repository);
   }

@@ -6,6 +6,8 @@ import { RobotInsertData } from './types/robot-insert-data.type';
 
 @Injectable()
 export class RobotService extends BaseService<RobotEntity, RobotInsertData> {
+  public readonly tableName = 'robots';
+
   public constructor(repository: RobotRepository) {
     super(repository);
   }

@@ -6,6 +6,8 @@ import { StorageInsertData } from './types/storage-insert-data.type';
 
 @Injectable()
 export class StorageService extends BaseService<StorageEntity, StorageInsertData> {
+  public readonly tableName = 'storages';
+
   public constructor(repository: StorageRepository) {
     super(repository);
   }

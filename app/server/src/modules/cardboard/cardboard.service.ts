@@ -6,6 +6,8 @@ import { CardboardInsertData } from './types/cardboard-insert-data.type';
 
 @Injectable()
 export class CardboardService extends BaseService<CardboardEntity, CardboardInsertData> {
+  public readonly tableName = 'cardboards';
+
   public constructor(repository: CardboardRepository) {
     super(repository);
   }
