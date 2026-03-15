@@ -6,6 +6,8 @@ import { WiringInsertData } from './types/wiring-insert-data.type';
 
 @Injectable()
 export class WiringService extends BaseService<WiringEntity, WiringInsertData> {
+  public readonly tableName = 'wirings';
+
   public constructor(repository: WiringRepository) {
     super(repository);
   }

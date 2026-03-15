@@ -6,6 +6,8 @@ import { BatteryInsertData } from './types/battery-insert-data.type';
 
 @Injectable()
 export class BatteryService extends BaseService<BatteryEntity, BatteryInsertData> {
+  public readonly tableName = 'batteries';
+
   public constructor(repository: BatteryRepository) {
     super(repository);
   }

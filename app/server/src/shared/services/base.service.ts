@@ -4,6 +4,8 @@ import { BaseEntity } from '../entities/base.entity';
 import { BaseRepository } from '../repositories/base.repository';
 
 export abstract class BaseService<T extends BaseEntity, TInsertData extends { id: string }> {
+  public abstract readonly tableName: string;
+
   public constructor(protected readonly _repository: BaseRepository<T>) {}
 
   public findById(id: string): Promise<T | null> {

@@ -6,6 +6,8 @@ import { SensorInsertData } from './types/sensor-insert-data.type';
 
 @Injectable()
 export class SensorService extends BaseService<SensorEntity, SensorInsertData> {
+  public readonly tableName = 'sensors';
+
   public constructor(repository: SensorRepository) {
     super(repository);
   }

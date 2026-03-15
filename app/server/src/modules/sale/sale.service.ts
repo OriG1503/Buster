@@ -6,6 +6,8 @@ import { SaleInsertData } from './types/sale-insert-data.type';
 
 @Injectable()
 export class SaleService extends BaseService<SaleEntity, SaleInsertData> {
+  public readonly tableName = 'sales';
+
   public constructor(repository: SaleRepository) {
     super(repository);
   }
