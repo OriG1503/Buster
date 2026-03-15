@@ -9,14 +9,14 @@ export class CommunicationEntity extends BaseEntity {
   @Column({ type: 'varchar', nullable: true })
   public communicationType: string | null;
 
-  @OneToOne(() => PlasticEntity, (plastic) => plastic.communication, { nullable: true, onDelete: 'SET NULL' })
+  @OneToOne(() => PlasticEntity, (plastic) => plastic.communication, { nullable: true, onDelete: 'SET NULL', onUpdate: 'CASCADE' })
   @JoinColumn({ name: 'plasticId' })
   public plastic: PlasticEntity | null;
 
   @RelationId((communication: CommunicationEntity) => communication.plastic)
   public plasticId: string | null;
 
-  @OneToOne(() => IronEntity, (iron) => iron.communication, { nullable: true, onDelete: 'SET NULL' })
+  @OneToOne(() => IronEntity, (iron) => iron.communication, { nullable: true, onDelete: 'SET NULL', onUpdate: 'CASCADE' })
   @JoinColumn({ name: 'ironId' })
   public iron: IronEntity | null;
 

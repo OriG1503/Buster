@@ -14,7 +14,7 @@ export class WiringEntity extends BaseEntity {
   @Column({ type: 'varchar', nullable: true })
   public municipality: string | null;
 
-  @OneToOne(() => StorageEntity, (storage) => storage.wiring, { nullable: true, onDelete: 'SET NULL' })
+  @OneToOne(() => StorageEntity, (storage) => storage.wiring, { nullable: true, onDelete: 'SET NULL', onUpdate: 'CASCADE' })
   @JoinColumn({ name: 'storageId' })
   public storage: StorageEntity | null;
 

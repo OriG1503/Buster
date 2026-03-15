@@ -8,35 +8,35 @@ import { WiringEntity } from '../../wiring/entities/wiring.entity';
 
 @Entity('robots')
 export class RobotEntity extends BaseEntity {
-  @OneToOne(() => CardboardEntity, (cardboard) => cardboard.robot, { nullable: true, onDelete: 'SET NULL' })
+  @OneToOne(() => CardboardEntity, (cardboard) => cardboard.robot, { nullable: true, onDelete: 'SET NULL', onUpdate: 'CASCADE' })
   @JoinColumn({ name: 'cardboardId' })
   public cardboard: CardboardEntity | null;
 
   @RelationId((robot: RobotEntity) => robot.cardboard)
   public cardboardId: string | null;
 
-  @OneToOne(() => SensorEntity, (sensor) => sensor.robot, { nullable: true, onDelete: 'SET NULL' })
+  @OneToOne(() => SensorEntity, (sensor) => sensor.robot, { nullable: true, onDelete: 'SET NULL', onUpdate: 'CASCADE' })
   @JoinColumn({ name: 'sensorId' })
   public sensor: SensorEntity | null;
 
   @RelationId((robot: RobotEntity) => robot.sensor)
   public sensorId: string | null;
 
-  @OneToOne(() => CommunicationEntity, (communication) => communication.robot, { nullable: true, onDelete: 'SET NULL' })
+  @OneToOne(() => CommunicationEntity, (communication) => communication.robot, { nullable: true, onDelete: 'SET NULL', onUpdate: 'CASCADE' })
   @JoinColumn({ name: 'communicationId' })
   public communication: CommunicationEntity | null;
 
   @RelationId((robot: RobotEntity) => robot.communication)
   public communicationId: string | null;
 
-  @OneToOne(() => SaleEntity, (sale) => sale.robot, { nullable: true, onDelete: 'SET NULL' })
+  @OneToOne(() => SaleEntity, (sale) => sale.robot, { nullable: true, onDelete: 'SET NULL', onUpdate: 'CASCADE' })
   @JoinColumn({ name: 'saleId' })
   public sale: SaleEntity | null;
 
   @RelationId((robot: RobotEntity) => robot.sale)
   public saleId: string | null;
 
-  @ManyToOne(() => WiringEntity, (wiring) => wiring.robots, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne(() => WiringEntity, (wiring) => wiring.robots, { nullable: true, onDelete: 'SET NULL', onUpdate: 'CASCADE' })
   @JoinColumn({ name: 'wiringId' })
   public wiring: WiringEntity | null;
 
