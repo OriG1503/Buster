@@ -12,9 +12,12 @@ export abstract class BaseService<T extends BaseEntity, TInsertData extends { id
 
   public async insert(data: TInsertData, fileSource: string): Promise<void> {
     const { id, ...fields } = data as { id: string } & Record<string, unknown>;
-    const source: Record<string, string | null> = Object.fromEntries(
-      Object.entries(fields).map(([key, value]) => [key, value !== null && value !== undefined ? fileSource : null]),
-    );
+    const source: Record<string, string | null> = {
+      id: fileSource,
+      ...Object.fromEntries(
+        Object.entries(fields).map(([key, value]) => [key, value !== null && value !== undefined ? fileSource : null]),
+      ),
+    };
     await this._repository.insert({ id, ...fields, source } as DeepPartial<T>);
   }
 
