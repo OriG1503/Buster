@@ -31,12 +31,20 @@ _UUID_FIELDS = {
 
 
 def _build_entity(cls, row: dict):
-    # Skip the entity entirely if its UUID column is absent or empty
-    if not row.get(_UUID_FIELDS[cls]):
-        return None
+    uuid_field = _UUID_FIELDS[cls]
     cls_fields = dataclasses.fields(cls)
-    # Only map columns that exist in the row (extra columns are ignored)
     data = {f.name: row[f.name] for f in cls_fields if f.name in row}
+
+    has_uuid = bool(data.get(uuid_field))
+    has_data = any(v for k, v in data.items() if k != uuid_field and v)
+
+    if not has_uuid and not has_data:
+        return None
+
+    # Flying entity: has data fields but no UUID — include with empty UUID so server can detect it
+    if not has_uuid:
+        data[uuid_field] = ''
+
     return cls(**data)
 
 
