@@ -13,16 +13,24 @@ export class FileService {
     private readonly _dataProcessorService: DataProcessorService,
   ) {}
 
-  public async handleFile(file: Express.Multer.File): Promise<void> {
+  public async handleFile(file: Express.Multer.File, username: string): Promise<number> {
     this._validateFile(file);
+    this._validateUsername(username);
     await this._saveFile(file);
+
     const parsedRows = await this._sendToParser(file);
-    await this._dataProcessorService.process(parsedRows);
+    return this._dataProcessorService.process(parsedRows, username);
   }
 
   private _validateFile(file: Express.Multer.File): void {
     if (!file?.originalname.endsWith('.csv')) {
       throw new BadRequestException('File must be a .csv');
+    }
+  }
+
+  private _validateUsername(username: string): void {
+    if (!username?.trim()) {
+      throw new BadRequestException('username is required');
     }
   }
 

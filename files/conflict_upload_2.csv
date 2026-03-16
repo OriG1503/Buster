@@ -1,0 +1,2 @@
+robot_UUID,source,sensor_UUID,sensor_type,sensor_version,communication_UUID,plastic_UUID,battery_UUID,sku
+robot-conflict-001,crm-system,sensor-conflict-001,ultrasonic,v2.0,comm-conflict-002,plastic-conflict-001,battery-conflict-001,SKU-BETA
