@@ -4,5 +4,5 @@ export type ResolveConflictDto = {
   columnName: string;
   winnerValue: string;
   conflictResolver: string;
-  notes: string;
+  resolutionNotes: string;
 };

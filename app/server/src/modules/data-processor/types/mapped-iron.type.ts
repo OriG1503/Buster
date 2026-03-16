@@ -1,6 +1,7 @@
 export type MappedIron = {
   id: string;
-  fileSource: string;
+  source: string;
+  notes: string | null;
   ironType: string | null;
   ironVersion: string | null;
   isHeatConductor: boolean | null;

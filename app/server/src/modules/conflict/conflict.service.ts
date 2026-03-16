@@ -13,13 +13,16 @@ export class ConflictService {
     entityId: string,
     storedRecord: Record<string, unknown>,
     storedSources: Record<string, string | null> | null,
+    storedNotes: Record<string, string | null> | null,
     incomingFields: Record<string, unknown>,
     incomingSource: string,
     conflictCreator: string,
+    incomingNotes: string | null,
   ): ConflictDetectionResult {
     const conflictsToCreate: DeepPartial<ConflictEntity>[] = [];
     const fieldsToUpdate: Record<string, unknown> = {};
     const sourceUpdates: Record<string, string> = {};
+    const notesUpdates: Record<string, string | null> = {};
 
     Object.keys(incomingFields).forEach((field) => {
       const incomingValue = incomingFields[field];
@@ -33,6 +36,7 @@ export class ConflictService {
       if (storedValue === null || storedValue === undefined) {
         fieldsToUpdate[field] = incomingValue;
         sourceUpdates[field] = incomingSource;
+        notesUpdates[field] = incomingNotes;
         return;
       }
 
@@ -43,14 +47,16 @@ export class ConflictService {
           entityId,
           newValue: String(incomingValue as string | number | boolean),
           newSource: incomingSource,
+          newNotes: incomingNotes,
           oldValue: String(storedValue as string | number | boolean),
           oldSource: storedSources?.[field] ?? null,
+          oldNotes: storedNotes?.[field] ?? null,
           conflictCreator,
           isSolved: false,
         });
       }
     });
 
-    return { conflictsToCreate, fieldsToUpdate, sourceUpdates };
+    return { conflictsToCreate, fieldsToUpdate, sourceUpdates, notesUpdates };
   }
 }

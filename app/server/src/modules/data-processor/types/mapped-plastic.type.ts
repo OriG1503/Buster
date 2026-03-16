@@ -1,6 +1,7 @@
 export type MappedPlastic = {
   id: string;
-  fileSource: string;
+  source: string;
+  notes: string | null;
   plasticType: string | null;
   batteryId: string | null;
 };

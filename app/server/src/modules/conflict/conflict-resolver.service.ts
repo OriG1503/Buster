@@ -14,7 +14,7 @@ export class ConflictResolverService {
   ) {}
 
   public async resolve(resolveConflictDto: ResolveConflictDto): Promise<BaseEntity & Record<string, unknown>> {
-    const { tableName, entityId, columnName, winnerValue, conflictResolver, notes } = resolveConflictDto;
+    const { tableName, entityId, columnName, winnerValue, conflictResolver, resolutionNotes } = resolveConflictDto;
 
     const conflicts = await this._fetchAndValidateConflicts(tableName, entityId, columnName, winnerValue);
 
@@ -25,7 +25,7 @@ export class ConflictResolverService {
       await this._applyWinnerValue(entityService, entityId, columnName, winnerValue, winnerConflict, conflicts);
     }
 
-    await this._conflictRepository.resolveMany(tableName, entityId, columnName, conflictResolver, notes);
+    await this._conflictRepository.resolveMany(tableName, entityId, columnName, conflictResolver, resolutionNotes);
 
     return this._fetchUpdatedEntity(entityService, entityId, tableName);
   }
@@ -80,13 +80,27 @@ export class ConflictResolverService {
     const referencedEntity = await referencedService.findById(oldId);
 
     if (referencedEntity) {
-      await referencedService.update(oldId, { id: winnerValue }, {}, referencedEntity.source);
+      await referencedService.update(
+        oldId,
+        { id: winnerValue },
+        { id: winnerConflict.newSource ?? '' },
+        referencedEntity.source,
+        { id: winnerConflict.newNotes },
+        referencedEntity.notes,
+      );
     }
 
     const owningEntity = await entityService.findById(entityId);
 
     if (owningEntity) {
-      await entityService.update(entityId, {}, { [columnName]: winnerConflict.newSource ?? '' }, owningEntity.source);
+      await entityService.update(
+        entityId,
+        {},
+        { [columnName]: winnerConflict.newSource ?? '' },
+        owningEntity.source,
+        { [columnName]: winnerConflict.newNotes },
+        owningEntity.notes,
+      );
     }
   }
 
@@ -105,6 +119,8 @@ export class ConflictResolverService {
         { [columnName]: winnerValue },
         { [columnName]: winnerConflict.newSource ?? '' },
         entity.source,
+        { [columnName]: winnerConflict.newNotes },
+        entity.notes,
       );
     }
   }

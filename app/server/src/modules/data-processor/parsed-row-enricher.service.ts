@@ -7,14 +7,14 @@ const nullIfEmpty = (value: string | null | undefined): string | null =>
 @Injectable()
 export class ParsedRowEnricher {
   public enrich(row: ParsedRow): ParsedRow {
-    const enrichedPlastic = this._enrichPlastic(row.communication?.plastic ?? null, row.source);
-    const enrichedCommunication = this._enrichCommunication(row.communication, enrichedPlastic, row.robot_UUID, row.source);
-    const enrichedWiring = this._enrichWiring(row.wiring, row.source);
+    const enrichedPlastic = this._enrichPlastic(row.communication?.plastic ?? null, row.source, row.notes);
+    const enrichedCommunication = this._enrichCommunication(row.communication, enrichedPlastic, row.robot_UUID, row.source, row.notes);
+    const enrichedWiring = this._enrichWiring(row.wiring, row.source, row.notes);
 
     return { ...row, communication: enrichedCommunication, wiring: enrichedWiring };
   }
 
-  private _enrichPlastic(plastic: ParsedPlasticRow | null, rowSource: string): ParsedPlasticRow | null {
+  private _enrichPlastic(plastic: ParsedPlasticRow | null, rowSource: string, rowNotes: string | null): ParsedPlasticRow | null {
     if (!plastic) {
       return null;
     }
@@ -32,6 +32,7 @@ export class ParsedRowEnricher {
     return {
       ...plastic,
       plastic_UUID: `auto-plastic-for-${batteryId}`,
+      notes: rowNotes,
       source: rowSource,
     };
   }
@@ -41,6 +42,7 @@ export class ParsedRowEnricher {
     enrichedPlastic: ParsedPlasticRow | null,
     robotId: string,
     rowSource: string,
+    rowNotes: string | null,
   ): ParsedCommunicationRow | null {
     if (!comm) {
       return null;
@@ -62,11 +64,12 @@ export class ParsedRowEnricher {
     return {
       ...updated,
       communication_UUID: `auto-comm-for-${robotId}`,
+      notes: rowNotes,
       source: rowSource,
     };
   }
 
-  private _enrichWiring(wiring: ParsedWiringRow | null, rowSource: string): ParsedWiringRow | null {
+  private _enrichWiring(wiring: ParsedWiringRow | null, rowSource: string, rowNotes: string | null): ParsedWiringRow | null {
     if (!wiring) {
       return null;
     }
@@ -84,6 +87,7 @@ export class ParsedRowEnricher {
     return {
       ...wiring,
       wiring_UUID: `auto-wiring-for-${storageId}`,
+      notes: rowNotes,
       source: rowSource,
     };
   }

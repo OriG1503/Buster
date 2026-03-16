@@ -5,4 +5,5 @@ export type ConflictDetectionResult = {
   conflictsToCreate: DeepPartial<ConflictEntity>[];
   fieldsToUpdate: Record<string, unknown>;
   sourceUpdates: Record<string, string>;
+  notesUpdates: Record<string, string | null>;
 };

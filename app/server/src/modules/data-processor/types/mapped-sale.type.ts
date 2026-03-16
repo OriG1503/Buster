@@ -1,6 +1,7 @@
 export type MappedSale = {
   id: string;
-  fileSource: string;
+  source: string;
+  notes: string | null;
   carrier: string | null;
   onlineStoreName: string | null;
   salesperson: string | null;
@@ -8,6 +9,5 @@ export type MappedSale = {
   isStockAshdod: boolean | null;
   isStockTelAviv: boolean | null;
   isStockRehovot: boolean | null;
-  notes: string | null;
   dataSource: string | null;
 };
