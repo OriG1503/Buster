@@ -1,7 +1,8 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, Unique } from 'typeorm';
 import { GeneratedBaseEntity } from '../../../shared/entities/generated-base.entity';
 
 @Entity('conflicts')
+@Unique(['tableName', 'columnName', 'entityId', 'newValue'])
 export class ConflictEntity extends GeneratedBaseEntity {
   @Column({ type: 'varchar', nullable: true })
   public tableName: string | null;

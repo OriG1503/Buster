@@ -10,4 +10,5 @@ class Robot:
     communication_UUID: Optional[str] = None
     wiring_UUID: Optional[str] = None
     sale_UUID: Optional[str] = None
+    notes: Optional[str] = None
     source: Optional[str] = None

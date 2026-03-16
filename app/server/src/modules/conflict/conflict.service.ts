@@ -15,6 +15,7 @@ export class ConflictService {
     storedSources: Record<string, string | null> | null,
     incomingFields: Record<string, unknown>,
     incomingSource: string,
+    conflictCreator: string,
   ): ConflictDetectionResult {
     const conflictsToCreate: DeepPartial<ConflictEntity>[] = [];
     const fieldsToUpdate: Record<string, unknown> = {};
@@ -44,6 +45,7 @@ export class ConflictService {
           newSource: incomingSource,
           oldValue: String(storedValue as string | number | boolean),
           oldSource: storedSources?.[field] ?? null,
+          conflictCreator,
           isSolved: false,
         });
       }

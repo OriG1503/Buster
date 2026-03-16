@@ -12,8 +12,8 @@ export abstract class BaseRepository<T extends { id: TId }, TId extends string |
     return this._repository.findOne({ where: { id } as FindOptionsWhere<T>, loadRelationIds: true });
   }
 
-  public async insert(entity: DeepPartial<T>): Promise<void> {
-    await this._repository.insert(this._resolveRelationIdFields(entity as QueryDeepPartialEntity<T>));
+  public async insert(entity: DeepPartial<T>, orIgnore = false): Promise<void> {
+    await this._repository.createQueryBuilder().insert().into(this._repository.target).values(this._resolveRelationIdFields(entity as QueryDeepPartialEntity<T>)).orIgnore(orIgnore).execute();
   }
 
   public async insertMany(entities: DeepPartial<T>[]): Promise<void> {

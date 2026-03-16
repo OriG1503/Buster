@@ -9,4 +9,5 @@ class Wiring:
     district: Optional[str] = None
     municipality: Optional[str] = None
     storage_UUID: Optional[str] = None
+    notes: Optional[str] = None
     source: Optional[str] = None

@@ -20,31 +20,35 @@ export class DataProcessorService {
     private readonly _registry: EntityServiceRegistry,
   ) {}
 
-  public async process(rows: ParsedRow[]): Promise<void> {
-    await Promise.all(rows.map((row) => this._processRow(row)));
+  public async process(rows: ParsedRow[], username: string): Promise<number> {
+    const counts = await Promise.all(rows.map((row) => this._processRow(row, username)));
+    return counts.reduce((sum, count) => sum + count, 0);
   }
 
-  private async _processRow(row: ParsedRow): Promise<void> {
+  private async _processRow(row: ParsedRow, username: string): Promise<number> {
     const enriched = this._enricher.enrich(row);
-
-    await this._processEntity(this._mapper.mapBattery(enriched), this._registry.get('batteries'));
-    await this._processEntity(this._mapper.mapStorage(enriched), this._registry.get('storages'));
-    await this._processEntity(this._mapper.mapIron(enriched), this._registry.get('irons'));
-    await this._processEntity(this._mapper.mapPlastic(enriched), this._registry.get('plastics'));
-    await this._processEntity(this._mapper.mapWiring(enriched), this._registry.get('wirings'));
-    await this._processEntity(this._mapper.mapCommunication(enriched), this._registry.get('communications'));
-    await this._processEntity(this._mapper.mapCardboard(enriched), this._registry.get('cardboards'));
-    await this._processEntity(this._mapper.mapSensor(enriched), this._registry.get('sensors'));
-    await this._processEntity(this._mapper.mapSale(enriched), this._registry.get('sales'));
-    await this._processEntity(this._mapper.mapRobot(enriched), this._registry.get('robots'));
+    const counts = [
+      await this._processEntity(this._mapper.mapBattery(enriched), this._registry.get('batteries'), username),
+      await this._processEntity(this._mapper.mapStorage(enriched), this._registry.get('storages'), username),
+      await this._processEntity(this._mapper.mapIron(enriched), this._registry.get('irons'), username),
+      await this._processEntity(this._mapper.mapPlastic(enriched), this._registry.get('plastics'), username),
+      await this._processEntity(this._mapper.mapWiring(enriched), this._registry.get('wirings'), username),
+      await this._processEntity(this._mapper.mapCommunication(enriched), this._registry.get('communications'), username),
+      await this._processEntity(this._mapper.mapCardboard(enriched), this._registry.get('cardboards'), username),
+      await this._processEntity(this._mapper.mapSensor(enriched), this._registry.get('sensors'), username),
+      await this._processEntity(this._mapper.mapSale(enriched), this._registry.get('sales'), username),
+      await this._processEntity(this._mapper.mapRobot(enriched), this._registry.get('robots'), username),
+    ];
+    return counts.reduce((sum, count) => sum + count, 0);
   }
 
   private async _processEntity(
     mapped: ({ id: string; fileSource: string } & Record<string, unknown>) | null,
     service: EntityService<{ id: string }>,
-  ): Promise<void> {
+    username: string,
+  ): Promise<number> {
     if (!mapped?.id) {
-      return;
+      return 0;
     }
 
     const { fileSource: incomingSource, id, ...incomingFields } = mapped;
@@ -58,7 +62,7 @@ export class DataProcessorService {
           throw error;
         }
       }
-      return;
+      return 0;
     }
 
     const result = this._conflictService.detectConflicts(
@@ -68,16 +72,19 @@ export class DataProcessorService {
       storedRecord.source,
       incomingFields as Record<string, unknown>,
       incomingSource,
+      username,
     );
 
     await Promise.all(
       result.conflictsToCreate.map((conflict: DeepPartial<ConflictEntity>) =>
-        this._conflictRepository.insert(conflict),
+        this._conflictRepository.insert(conflict, true),
       ),
     );
 
     if (Object.keys(result.fieldsToUpdate).length > 0) {
       await service.update(id, result.fieldsToUpdate, result.sourceUpdates, storedRecord.source);
     }
+
+    return result.conflictsToCreate.length;
   }
 }
