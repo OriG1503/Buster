@@ -5,6 +5,9 @@ export abstract class BaseEntity {
   public id: string;
 
   @Column({ type: 'jsonb', nullable: true })
+  public notes: Record<string, string | null> | null;
+
+  @Column({ type: 'jsonb', nullable: true })
   public source: Record<string, string | null> | null;
 
   @CreateDateColumn()

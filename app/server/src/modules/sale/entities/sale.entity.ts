@@ -26,9 +26,6 @@ export class SaleEntity extends BaseEntity {
   public isStockRehovot: boolean | null;
 
   @Column({ type: 'varchar', nullable: true })
-  public notes: string | null;
-
-  @Column({ type: 'varchar', nullable: true })
   public dataSource: string | null;
 
   @OneToOne(() => RobotEntity, (robot) => robot.sale)

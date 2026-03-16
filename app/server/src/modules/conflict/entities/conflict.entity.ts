@@ -20,16 +20,22 @@ export class ConflictEntity extends GeneratedBaseEntity {
   public newSource: string | null;
 
   @Column({ type: 'varchar', nullable: true })
+  public newNotes: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
   public oldValue: string | null;
 
   @Column({ type: 'varchar', nullable: true })
   public oldSource: string | null;
 
   @Column({ type: 'varchar', nullable: true })
+  public oldNotes: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
   public conflictCreator: string | null;
 
   @Column({ type: 'varchar', nullable: true })
-  public notes: string | null;
+  public resolutionNotes: string | null;
 
   @Column({ type: 'varchar', nullable: true })
   public conflictResolver: string | null;

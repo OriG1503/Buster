@@ -116,6 +116,26 @@ Entities are always processed leaf-first to satisfy FK constraints:
 
 For each entity: if not found → `insert` (catches unique-constraint race); if found → `ConflictService.detectConflicts()` → create `ConflictEntity` records for differing fields, call `update` for null gap-fills.
 
+### EntityServiceRegistry
+
+`src/shared/services/entity-service-registry.service.ts` — service locator that maps `tableName → BaseService`. All 10 entity services are injected in the constructor; `get(tableName)` returns the right one at runtime. Used by `DataProcessorService` and `ConflictResolverService` to avoid hard-coding service imports per entity.
+
+Each `BaseService` subclass must declare `public readonly tableName: string` so the registry can build its map.
+
+### Conflict resolution
+
+**Endpoint**: `PATCH /api/conflicts/resolve`
+
+**Request body**: `{ tableName, entityId, columnName, winnerValue, conflictResolver, notes }`
+
+`ConflictResolverService` resolves all open conflicts for a `(tableName, entityId, columnName)` group in one call:
+1. Fetches open conflicts for the group; validates `winnerValue` is one of the competing values.
+2. Applies the winner:
+   - **FK column** (name ends with `Id`): updates the referenced entity's ID, then updates the owning entity's `source` tracking.
+   - **Regular column**: updates the field value and its `source` entry on the entity.
+3. Marks all conflicts in the group `isSolved: true`, records `conflictResolver` and `notes`.
+4. Returns the updated entity.
+
 ## Domain Entities
 
 All entities extend `BaseEntity` (user-provided string `id`, `source` jsonb) except `ConflictEntity` which extends `GeneratedBaseEntity` (auto-increment `id`, no `source`).

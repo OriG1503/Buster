@@ -59,7 +59,8 @@ export class ParserRowMapper {
     }
     return {
       id: nullIfEmpty(raw.wiring_UUID) as string,
-      fileSource: raw.source,
+      source: raw.source,
+      notes: raw.notes,
       wiringType: nullIfEmpty(raw.wiring_type),
       district: nullIfEmpty(raw.district),
       municipality: nullIfEmpty(raw.municipality),
@@ -78,7 +79,8 @@ export class ParserRowMapper {
     }
     return {
       id: nullIfEmpty(raw.cardboard_UUID) as string,
-      fileSource: raw.source,
+      source: raw.source,
+      notes: raw.notes,
       cardboardType: nullIfEmpty(raw.cardboard_type),
       cardboardVersion: nullIfEmpty(raw.cardboard_version),
     };
@@ -91,7 +93,8 @@ export class ParserRowMapper {
     }
     return {
       id: nullIfEmpty(raw.sensor_UUID) as string,
-      fileSource: raw.source,
+      source: raw.source,
+      notes: raw.notes,
       sensorType: nullIfEmpty(raw.sensor_type),
       sensorVersion: nullIfEmpty(raw.sensor_version),
     };
@@ -104,7 +107,8 @@ export class ParserRowMapper {
     }
     return {
       id: nullIfEmpty(raw.sale_UUID) as string,
-      fileSource: raw.source,
+      source: raw.source,
+      notes: raw.notes,
       carrier: nullIfEmpty(raw.carrier),
       onlineStoreName: nullIfEmpty(raw.online_store_name),
       salesperson: nullIfEmpty(raw.salesperson),
@@ -112,7 +116,6 @@ export class ParserRowMapper {
       isStockAshdod: parseBool(raw.is_stock_ashdod),
       isStockTelAviv: parseBool(raw.is_stock_tel_aviv),
       isStockRehovot: parseBool(raw.is_stock_rehovot),
-      notes: nullIfEmpty(raw.notes),
       dataSource: nullIfEmpty(raw.data_source),
     };
   }
@@ -124,7 +127,8 @@ export class ParserRowMapper {
     }
     return {
       id,
-      fileSource: row.source,
+      source: row.source,
+      notes: row.notes,
       cardboardId: row.cardboard ? nullIfEmpty(row.cardboard.cardboard_UUID) : null,
       sensorId: row.sensor ? nullIfEmpty(row.sensor.sensor_UUID) : null,
       communicationId: row.communication ? nullIfEmpty(row.communication.communication_UUID) : null,
@@ -139,7 +143,8 @@ export class ParserRowMapper {
     }
     return {
       id: nullIfEmpty(raw.battery_UUID) as string,
-      fileSource: raw.source,
+      source: raw.source,
+      notes: raw.notes,
       sku: nullIfEmpty(raw.sku),
       batteryType: nullIfEmpty(raw.battery_type),
       batteryVersion: nullIfEmpty(raw.battery_version),
@@ -153,7 +158,8 @@ export class ParserRowMapper {
     }
     return {
       id: nullIfEmpty(raw.storage_UUID) as string,
-      fileSource: raw.source,
+      source: raw.source,
+      notes: raw.notes,
       storageType: nullIfEmpty(raw.storage_type),
       storageVersion: nullIfEmpty(raw.storage_version),
       isStockNetanya: parseBool(raw.is_stock_netanya),
@@ -167,7 +173,8 @@ export class ParserRowMapper {
     }
     return {
       id: nullIfEmpty(raw.iron_UUID) as string,
-      fileSource: raw.source,
+      source: raw.source,
+      notes: raw.notes,
       ironType: nullIfEmpty(raw.iron_type),
       ironVersion: nullIfEmpty(raw.iron_version),
       isHeatConductor: parseBool(raw.is_heat_conductor),
@@ -180,7 +187,8 @@ export class ParserRowMapper {
     }
     return {
       id: nullIfEmpty(raw.plastic_UUID) as string,
-      fileSource: raw.source,
+      source: raw.source,
+      notes: raw.notes,
       plasticType: nullIfEmpty(raw.plastic_type),
       batteryId: raw.battery ? nullIfEmpty(raw.battery.battery_UUID) : null,
     };
@@ -192,7 +200,8 @@ export class ParserRowMapper {
     }
     return {
       id: nullIfEmpty(raw.communication_UUID) as string,
-      fileSource: raw.source,
+      source: raw.source,
+      notes: raw.notes,
       communicationType: nullIfEmpty(raw.communication_type),
       plasticId: raw.plastic ? nullIfEmpty(raw.plastic.plastic_UUID) : null,
       ironId: raw.iron ? nullIfEmpty(raw.iron.iron_UUID) : null,

@@ -1,6 +1,7 @@
 export type MappedStorage = {
   id: string;
-  fileSource: string;
+  source: string;
+  notes: string | null;
   storageType: string | null;
   storageVersion: string | null;
   isStockNetanya: boolean | null;

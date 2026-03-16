@@ -12,15 +12,17 @@ export abstract class BaseService<T extends BaseEntity, TInsertData extends { id
     return this._repository.findById(id);
   }
 
-  public async insert(data: TInsertData, fileSource: string): Promise<void> {
+  public async insert(data: TInsertData, source: string, notes: string | null): Promise<void> {
     const { id, ...fields } = data as { id: string } & Record<string, unknown>;
-    const source: Record<string, string | null> = {
-      id: fileSource,
+    const buildTracking = (value: string | null): Record<string, string | null> => ({
+      id: value,
       ...Object.fromEntries(
-        Object.entries(fields).map(([key, value]) => [key, value !== null && value !== undefined ? fileSource : null]),
+        Object.entries(fields).map(([key, val]) => [key, val !== null && val !== undefined ? value : null]),
       ),
-    };
-    await this._repository.insert({ id, ...fields, source } as DeepPartial<T>);
+    });
+    const sourceTracking = buildTracking(source);
+    const notesTracking = buildTracking(notes);
+    await this._repository.insert({ id, ...fields, source: sourceTracking, notes: notesTracking } as DeepPartial<T>);
   }
 
   public async update(
@@ -28,8 +30,14 @@ export abstract class BaseService<T extends BaseEntity, TInsertData extends { id
     fields: Record<string, unknown>,
     sourceUpdates: Record<string, string>,
     existingSource: Record<string, string | null> | null,
+    notesUpdates: Record<string, string | null>,
+    existingNotes: Record<string, string | null> | null,
   ): Promise<void> {
     const mergedSource = { ...(existingSource ?? {}), ...sourceUpdates };
-    await this._repository.update(id, { ...fields, source: mergedSource } as unknown as QueryDeepPartialEntity<T>);
+    const mergedNotes = { ...(existingNotes ?? {}), ...notesUpdates };
+    await this._repository.update(
+      id,
+      { ...fields, source: mergedSource, notes: mergedNotes } as unknown as QueryDeepPartialEntity<T>,
+    );
   }
 }

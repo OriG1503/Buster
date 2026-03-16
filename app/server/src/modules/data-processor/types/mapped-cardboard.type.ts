@@ -1,6 +1,7 @@
 export type MappedCardboard = {
   id: string;
-  fileSource: string;
+  source: string;
+  notes: string | null;
   cardboardType: string | null;
   cardboardVersion: string | null;
 };

@@ -26,7 +26,7 @@ export class ConflictRepository extends BaseRepository<ConflictEntity, number> {
   ): Promise<void> {
     await this._repository.update(
       { tableName, entityId, columnName, isSolved: false } as FindOptionsWhere<ConflictEntity>,
-      { isSolved: true, conflictResolver, notes },
+      { isSolved: true, conflictResolver, resolutionNotes: notes },
     );
   }
 }

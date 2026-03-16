@@ -1,6 +1,7 @@
 export type MappedRobot = {
   id: string;
-  fileSource: string;
+  source: string;
+  notes: string | null;
   cardboardId: string | null;
   sensorId: string | null;
   communicationId: string | null;

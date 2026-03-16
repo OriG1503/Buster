@@ -43,7 +43,7 @@ export class DataProcessorService {
   }
 
   private async _processEntity(
-    mapped: ({ id: string; fileSource: string } & Record<string, unknown>) | null,
+    mapped: ({ id: string; source: string; notes: string | null } & Record<string, unknown>) | null,
     service: EntityService<{ id: string }>,
     username: string,
   ): Promise<number> {
@@ -51,12 +51,12 @@ export class DataProcessorService {
       return 0;
     }
 
-    const { fileSource: incomingSource, id, ...incomingFields } = mapped;
+    const { source: incomingSource, notes: incomingNotes, id, ...incomingFields } = mapped;
     const storedRecord = await service.findById(id);
 
     if (!storedRecord) {
       try {
-        await service.insert({ id, ...incomingFields } as { id: string }, incomingSource);
+        await service.insert({ id, ...incomingFields } as { id: string }, incomingSource, incomingNotes);
       } catch (error) {
         if (!(error instanceof QueryFailedError) || (error as any).code !== PG_UNIQUE_VIOLATION) {
           throw error;
@@ -70,9 +70,11 @@ export class DataProcessorService {
       id,
       storedRecord as Record<string, unknown>,
       storedRecord.source,
+      storedRecord.notes,
       incomingFields as Record<string, unknown>,
       incomingSource,
       username,
+      incomingNotes,
     );
 
     await Promise.all(
@@ -82,7 +84,7 @@ export class DataProcessorService {
     );
 
     if (Object.keys(result.fieldsToUpdate).length > 0) {
-      await service.update(id, result.fieldsToUpdate, result.sourceUpdates, storedRecord.source);
+      await service.update(id, result.fieldsToUpdate, result.sourceUpdates, storedRecord.source, result.notesUpdates, storedRecord.notes);
     }
 
     return result.conflictsToCreate.length;

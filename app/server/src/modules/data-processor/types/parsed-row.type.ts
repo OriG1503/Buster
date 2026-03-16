@@ -1,5 +1,6 @@
 export type ParsedBatteryRow = {
   battery_UUID: string;
+  notes: string | null;
   source: string;
   sku: string | null;
   battery_type: string | null;
@@ -9,6 +10,7 @@ export type ParsedBatteryRow = {
 
 export type ParsedStorageRow = {
   storage_UUID: string;
+  notes: string | null;
   source: string;
   storage_type: string | null;
   storage_version: string | null;
@@ -18,6 +20,7 @@ export type ParsedStorageRow = {
 
 export type ParsedIronRow = {
   iron_UUID: string;
+  notes: string | null;
   source: string;
   iron_type: string | null;
   iron_version: string | null;
@@ -26,6 +29,7 @@ export type ParsedIronRow = {
 
 export type ParsedPlasticRow = {
   plastic_UUID: string;
+  notes: string | null;
   source: string;
   plastic_type: string | null;
   battery: ParsedBatteryRow | null;
@@ -33,6 +37,7 @@ export type ParsedPlasticRow = {
 
 export type ParsedWiringRow = {
   wiring_UUID: string;
+  notes: string | null;
   source: string;
   wiring_type: string | null;
   district: string | null;
@@ -42,6 +47,7 @@ export type ParsedWiringRow = {
 
 export type ParsedCommunicationRow = {
   communication_UUID: string;
+  notes: string | null;
   source: string;
   communication_type: string | null;
   plastic: ParsedPlasticRow | null;
@@ -50,6 +56,7 @@ export type ParsedCommunicationRow = {
 
 export type ParsedCardboardRow = {
   cardboard_UUID: string;
+  notes: string | null;
   source: string;
   cardboard_type: string | null;
   cardboard_version: string | null;
@@ -57,6 +64,7 @@ export type ParsedCardboardRow = {
 
 export type ParsedSensorRow = {
   sensor_UUID: string;
+  notes: string | null;
   source: string;
   sensor_type: string | null;
   sensor_version: string | null;
@@ -64,6 +72,7 @@ export type ParsedSensorRow = {
 
 export type ParsedSaleRow = {
   sale_UUID: string;
+  notes: string | null;
   source: string;
   carrier: string | null;
   online_store_name: string | null;
@@ -72,12 +81,12 @@ export type ParsedSaleRow = {
   is_stock_ashdod: string | null;
   is_stock_tel_aviv: string | null;
   is_stock_rehovot: string | null;
-  notes: string | null;
   data_source: string | null;
 };
 
 export type ParsedRow = {
   robot_UUID: string;
+  notes: string | null;
   source: string;
   cardboard: ParsedCardboardRow | null;
   sensor: ParsedSensorRow | null;

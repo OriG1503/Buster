@@ -82,18 +82,21 @@ The parser reads the CSV from disk (the server saves the upload to `<repo-root>/
 ## Sub-project Status
 | Project | Tech | Status |
 |---------|------|--------|
-| `app/server` | NestJS 11 + PostgreSQL (Neon) + TypeORM | Active — all entities + data-processor implemented |
+| `app/server` | NestJS 11 + PostgreSQL (Neon) + TypeORM | Active — all entities, data-processor, and conflict resolution implemented |
 | `app/parser` | Python FastAPI + uvicorn | Active — CSV parsing + hierarchy flattening implemented |
 | `app/client` | Angular 19 | Pending |
 
 ## Server Architecture Summary
-The server has two key abstractions in `src/shared/`:
+The server has three key abstractions in `src/shared/`:
 - **`BaseRepository`** — generic CRUD + soft delete. No `save`/`update` by design: existing entity fields are never overwritten directly; conflicting data creates a `ConflictEntity` instead.
-- **`BaseService`** — wraps the repository and handles `source` field tracking (which Excel file each field value came from).
+- **`BaseService`** — wraps the repository; tracks which Excel file each field value came from via a `source` jsonb column. Subclasses must declare `tableName`.
+- **`EntityServiceRegistry`** — service locator that maps `tableName → BaseService`. Used by `DataProcessorService` and `ConflictResolverService` to dispatch to the right service at runtime without per-entity branching.
 
-The **`DataProcessorModule`** (`src/modules/data-processor/`) orchestrates ingestion: it receives `ParsedRow[]` from the Python parser (`app/parser`), maps each row to typed entity data, then for each entity either inserts (new) or runs `ConflictService.detectConflicts()` (existing). Detected conflicts are bulk-inserted as `ConflictEntity` records; non-conflicting field updates are applied via `BaseService.update()`.
+The **`DataProcessorModule`** (`src/modules/data-processor/`) orchestrates ingestion: receives `ParsedRow[]`, enriches missing UUIDs, maps each row to typed entity data, then processes each entity leaf-first (`Battery → … → Robot`). For new entities: `insert`; for existing: `ConflictService.detectConflicts()` → bulk-insert `ConflictEntity` records, then `update` for null gap-fills.
 
-See `app/server/CLAUDE.md` for the full entity relationship chain, column conventions, and TypeORM patterns.
+The **`ConflictModule`** (`src/modules/conflict/`) handles resolution via `PATCH /api/conflicts/resolve`. `ConflictResolverService` validates the winner value, applies it to the entity (or its referenced FK entity), and marks the entire conflict group `isSolved`.
+
+See `app/server/CLAUDE.md` for the full entity relationship chain, column conventions, TypeORM patterns, and conflict resolution details.
 
 ## Cross-project Conventions (from UIAI)
 - **Private members**: prefix with `_`
