@@ -1,3 +1,3 @@
-robot_UUID,communication_UUID,plastic_UUID,battery_UUID,source,sku,battery_type,battery_version,lithium_version,notes
-robot-bat-001,comm-bat-001,plastic-bat-001,battery-mock-001,crm-system,SKU-BAT-001-NEW,lithium-ion,v1.5,LFP-v2,123
-robot-bat-002,comm-bat-002,plastic-bat-002,battery-mock-002,crm-system,SKU-BAT-002,NiMH-X,v2.0,NiMH-v2,1234
+robot_UUID,battery_UUID,plastic_UUID,source,sku,battery_type,battery_version,lithium_version,notes
+robot-bat-001,,plastic-bat-001,crm-system,SKU-BAT-001-NEW,lithium-ion,v1.5,LFP-v2,123
+robot-bat-002,battery-123,plastic-bat-002,battery-mock-002,SKU-BAT-002,NiMH-X,v2.0,NiMH-v2,1234

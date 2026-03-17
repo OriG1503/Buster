@@ -4,10 +4,11 @@ import { ConflictModule } from '../conflict/conflict.module';
 import { DataProcessorService } from './data-processor.service';
 import { ParserRowMapper } from './mappers/parser-row.mapper';
 import { ParsedRowEnricher } from './parsed-row-enricher.service';
+import { ProcessReportService } from './process-report.service';
 
 @Module({
   imports: [EntityServiceRegistryModule, ConflictModule],
-  providers: [DataProcessorService, ParserRowMapper, ParsedRowEnricher],
-  exports: [DataProcessorService],
+  providers: [DataProcessorService, ParserRowMapper, ParsedRowEnricher, ProcessReportService],
+  exports: [DataProcessorService, ProcessReportService],
 })
 export class DataProcessorModule {}
