@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { DeepPartial } from 'typeorm';
+import { EntityValue } from '../../shared/types/entity-value.type';
 import { ConflictRepository } from './conflict.repository';
-import { ConflictEntity } from './entities/conflict.entity';
 import { ConflictDetectionResult } from './types/conflict-detection-result.type';
 
 @Injectable()
@@ -11,16 +10,16 @@ export class ConflictService {
   public detectConflicts(
     tableName: string,
     entityId: string,
-    storedRecord: Record<string, unknown>,
+    storedRecord: Record<string, EntityValue>,
     storedSources: Record<string, string | null> | null,
     storedNotes: Record<string, string | null> | null,
-    incomingFields: Record<string, unknown>,
+    incomingFields: Record<string, EntityValue>,
     incomingSource: string,
     conflictCreator: string,
     incomingNotes: string | null,
   ): ConflictDetectionResult {
-    const conflictsToCreate: DeepPartial<ConflictEntity>[] = [];
-    const fieldsToUpdate: Record<string, unknown> = {};
+    const conflictsToCreate: Record<string, EntityValue>[] = [];
+    const fieldsToUpdate: Record<string, EntityValue> = {};
     const sourceUpdates: Record<string, string> = {};
     const notesUpdates: Record<string, string | null> = {};
 

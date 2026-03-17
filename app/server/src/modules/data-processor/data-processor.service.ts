@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { DeepPartial, QueryFailedError } from 'typeorm';
+import { QueryFailedError } from 'typeorm';
 import { PG_UNIQUE_VIOLATION } from '../../shared/consts/pg-error-codes.const';
+import { EntityValue } from '../../shared/types/entity-value.type';
 import { EntityServiceRegistry } from '../../shared/services/entity-service-registry.service';
 import { ConflictRepository } from '../conflict/conflict.repository';
 import { ConflictService } from '../conflict/conflict.service';
-import { ConflictEntity } from '../conflict/entities/conflict.entity';
 import { ParserRowMapper } from './mappers/parser-row.mapper';
 import { ParsedRowEnricher } from './parsed-row-enricher.service';
 import { EntityService } from './types/entity-service.type';
@@ -68,7 +68,7 @@ export class DataProcessorService {
   }
 
   private async _processEntity(
-    mapped: ({ id: string; source: string; notes: string | null } & Record<string, unknown>) | null,
+    mapped: ({ id: string; source: string; notes: string | null } & Record<string, EntityValue>) | null,
     service: EntityService<{ id: string }>,
     username: string,
     rowIndex: number,
@@ -94,7 +94,7 @@ export class DataProcessorService {
 
     if (!storedRecord) {
       try {
-        await service.insert({ id, ...incomingFields } as { id: string }, incomingSource, incomingNotes);
+        await service.insert({ id, ...incomingFields }, incomingSource, incomingNotes);
       } catch (error) {
         if (!(error instanceof QueryFailedError) || (error as any).code !== PG_UNIQUE_VIOLATION) {
           throw error;
@@ -106,17 +106,17 @@ export class DataProcessorService {
     const result = this._conflictService.detectConflicts(
       service.tableName,
       id,
-      storedRecord as Record<string, unknown>,
+      storedRecord as object as Record<string, EntityValue>,
       storedRecord.source,
       storedRecord.notes,
-      incomingFields as Record<string, unknown>,
+      incomingFields,
       incomingSource,
       username,
       incomingNotes,
     );
 
     await Promise.all(
-      result.conflictsToCreate.map((conflict: DeepPartial<ConflictEntity>) =>
+      result.conflictsToCreate.map((conflict) =>
         this._conflictRepository.insert(conflict, true),
       ),
     );

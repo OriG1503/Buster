@@ -8,7 +8,7 @@ export class ConflictController {
   public constructor(private readonly _conflictResolverService: ConflictResolverService) {}
 
   @Patch('resolve')
-  public async resolve(@Body() resolveConflictDto: ResolveConflictDto): Promise<BaseEntity & Record<string, unknown>> {
+  public async resolve(@Body() resolveConflictDto: ResolveConflictDto): Promise<BaseEntity> {
     return this._conflictResolverService.resolve(resolveConflictDto);
   }
 }
