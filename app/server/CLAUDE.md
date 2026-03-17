@@ -84,14 +84,15 @@ Two base entities in `src/shared/entities/`:
 - **`GeneratedBaseEntity`** — used only by `ConflictEntity`. `id` is auto-generated (`@PrimaryGeneratedColumn('increment')`). No `source` field.
 
 `BaseEntity` also provides:
-- `source` — `jsonb`, array of `{ column, value }` pairs from the uploaded Excel row
+- `source` — `jsonb`, maps each column name to the Excel source file that provided that value (or `null` if not provided)
+- `notes` — `jsonb`, same shape as `source`; maps each column name to the user-provided notes/comment from the upload row (or `null`)
 
 Both provide:
 - `createdAt`, `updatedAt`, `deletedAt` — TypeORM-managed (soft delete via `deletedAt`)
 
 ### Entity column order convention
 Because TypeORM puts parent-class columns first, the DB column order is always:
-`id → source → createdAt → updatedAt → deletedAt → [entity-specific columns]`
+`id → notes → source → createdAt → updatedAt → deletedAt → [entity-specific columns]`
 
 ### Relations
 Use `@OneToOne` / `@ManyToOne` with `@JoinColumn({ name: 'foreignKeyColumn' })` on the owning side.
@@ -126,14 +127,14 @@ Each `BaseService` subclass must declare `public readonly tableName: string` so 
 
 **Endpoint**: `PATCH /api/conflicts/resolve`
 
-**Request body**: `{ tableName, entityId, columnName, winnerValue, conflictResolver, notes }`
+**Request body**: `{ tableName, entityId, columnName, winnerValue, conflictResolver, resolutionNotes }`
 
 `ConflictResolverService` resolves all open conflicts for a `(tableName, entityId, columnName)` group in one call:
 1. Fetches open conflicts for the group; validates `winnerValue` is one of the competing values.
 2. Applies the winner:
    - **FK column** (name ends with `Id`): updates the referenced entity's ID, then updates the owning entity's `source` tracking.
    - **Regular column**: updates the field value and its `source` entry on the entity.
-3. Marks all conflicts in the group `isSolved: true`, records `conflictResolver` and `notes`.
+3. Marks all conflicts in the group `isSolved: true`, records `conflictResolver` and `resolutionNotes`.
 4. Returns the updated entity.
 
 ## Domain Entities
@@ -152,7 +153,7 @@ All entities extend `BaseEntity` (user-provided string `id`, `source` jsonb) exc
 | `IronEntity` | `irons` | ironType, ironVersion, isHeatConductor | OneToOne ← Communication |
 | `CardboardEntity` | `cardboards` | cardboardType, cardboardVersion | OneToOne ← Robot |
 | `SaleEntity` | `sales` | carrier, onlineStoreName, salesperson, isPurchased, isStockAshdod, isStockTelAviv, isStockRehovot, notes, dataSource | OneToOne ← Robot |
-| `ConflictEntity` | `conflicts` | tableName, columnName, entityId, newValue, newSource, oldValue, oldSource, conflictCreator, conflictResolver, isSolved, notes | standalone |
+| `ConflictEntity` | `conflicts` | tableName, columnName, entityId, newValue, newSource, newNotes, oldValue, oldSource, oldNotes, conflictCreator, conflictResolver, resolutionNotes, isSolved | standalone |
 
 ### Entity relationship chain
 ```
