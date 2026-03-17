@@ -1,9 +1,8 @@
-import { DeepPartial } from 'typeorm';
-import { ConflictEntity } from '../entities/conflict.entity';
+import { EntityValue } from '../../../shared/types/entity-value.type';
 
 export type ConflictDetectionResult = {
-  conflictsToCreate: DeepPartial<ConflictEntity>[];
-  fieldsToUpdate: Record<string, unknown>;
+  conflictsToCreate: Record<string, EntityValue>[];
+  fieldsToUpdate: Record<string, EntityValue>;
   sourceUpdates: Record<string, string>;
   notesUpdates: Record<string, string | null>;
 };

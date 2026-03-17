@@ -40,7 +40,7 @@ export class EntityServiceRegistry {
       wiringService,
     ];
 
-    this._map = Object.fromEntries(services.map((service) => [service.tableName, service as unknown as EntityService<{ id: string }>]));
+    this._map = Object.fromEntries(services.map((service) => [service.tableName, service as object as EntityService<{ id: string }>]));
   }
 
   public get(tableName: string): EntityService<{ id: string }> {

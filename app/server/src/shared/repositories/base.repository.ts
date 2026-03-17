@@ -1,5 +1,6 @@
-import { DeepPartial, FindOptionsWhere, Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+import { EntityValue } from '../types/entity-value.type';
 
 export abstract class BaseRepository<T extends { id: TId }, TId extends string | number = string> {
   public constructor(protected readonly _repository: Repository<T>) {}
@@ -12,29 +13,29 @@ export abstract class BaseRepository<T extends { id: TId }, TId extends string |
     return this._repository.findOne({ where: { id } as FindOptionsWhere<T>, loadRelationIds: true });
   }
 
-  public async insert(entity: DeepPartial<T>, orIgnore = false): Promise<void> {
-    await this._repository.createQueryBuilder().insert().into(this._repository.target).values(this._resolveRelationIdFields(entity as QueryDeepPartialEntity<T>)).orIgnore(orIgnore).execute();
+  public async insert(entity: Record<string, EntityValue>, orIgnore = false): Promise<void> {
+    await this._repository.createQueryBuilder().insert().into(this._repository.target).values(this._resolveRelationIdFields(entity as object as QueryDeepPartialEntity<T>)).orIgnore(orIgnore).execute();
   }
 
-  public async insertMany(entities: DeepPartial<T>[]): Promise<void> {
-    await this._repository.insert(entities.map((entity) => this._resolveRelationIdFields(entity as QueryDeepPartialEntity<T>)));
+  public async insertMany(entities: Record<string, EntityValue>[]): Promise<void> {
+    await this._repository.insert(entities.map((entity) => this._resolveRelationIdFields(entity as object as QueryDeepPartialEntity<T>)));
   }
 
-  public async update(id: TId, fields: QueryDeepPartialEntity<T>): Promise<void> {
-    await this._repository.update(id, this._resolveRelationIdFields(fields));
+  public async update(id: TId, fields: Record<string, EntityValue>): Promise<void> {
+    await this._repository.update(id, this._resolveRelationIdFields(fields as object as QueryDeepPartialEntity<T>));
   }
 
   private _resolveRelationIdFields(fields: QueryDeepPartialEntity<T>): QueryDeepPartialEntity<T> {
-    const result = { ...(fields as Record<string, unknown>) };
+    const result: Record<string, EntityValue> = { ...(fields as object as Record<string, EntityValue>) };
     this._repository.metadata.relationIds.forEach((rid) => {
       if (!(rid.propertyName in result)) {
         return;
       }
       const value = result[rid.propertyName];
       delete result[rid.propertyName];
-      result[rid.relation.propertyName] = value !== null && value !== undefined ? { id: value } : null;
+      result[rid.relation.propertyName] = value !== null && value !== undefined ? { id: String(value) } : null;
     });
-    return result as QueryDeepPartialEntity<T>;
+    return result as object as QueryDeepPartialEntity<T>;
   }
 
   public async softDelete(id: TId): Promise<void> {

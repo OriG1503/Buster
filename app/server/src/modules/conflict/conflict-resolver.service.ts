@@ -13,7 +13,7 @@ export class ConflictResolverService {
     private readonly _registry: EntityServiceRegistry,
   ) {}
 
-  public async resolve(resolveConflictDto: ResolveConflictDto): Promise<BaseEntity & Record<string, unknown>> {
+  public async resolve(resolveConflictDto: ResolveConflictDto): Promise<BaseEntity> {
     const { tableName, entityId, columnName, winnerValue, conflictResolver, resolutionNotes } = resolveConflictDto;
 
     const conflicts = await this._fetchAndValidateConflicts(tableName, entityId, columnName, winnerValue);
@@ -129,7 +129,7 @@ export class ConflictResolverService {
     entityService: EntityService<{ id: string }>,
     entityId: string,
     tableName: string,
-  ): Promise<BaseEntity & Record<string, unknown>> {
+  ): Promise<BaseEntity> {
     const updatedEntity = await entityService.findById(entityId);
 
     if (!updatedEntity) {
