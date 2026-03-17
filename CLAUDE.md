@@ -89,12 +89,12 @@ The parser reads the CSV from disk (the server saves the upload to `<repo-root>/
 ## Server Architecture Summary
 The server has three key abstractions in `src/shared/`:
 - **`BaseRepository`** — generic CRUD + soft delete. No `save`/`update` by design: existing entity fields are never overwritten directly; conflicting data creates a `ConflictEntity` instead.
-- **`BaseService`** — wraps the repository; tracks which Excel file each field value came from via a `source` jsonb column. Subclasses must declare `tableName`.
+- **`BaseService`** — wraps the repository; tracks which Excel file each field value came from via a `source` jsonb column, and user-provided notes via a `notes` jsonb column (same shape). Both are maintained per-column on insert and gap-fill updates. Subclasses must declare `tableName`.
 - **`EntityServiceRegistry`** — service locator that maps `tableName → BaseService`. Used by `DataProcessorService` and `ConflictResolverService` to dispatch to the right service at runtime without per-entity branching.
 
 The **`DataProcessorModule`** (`src/modules/data-processor/`) orchestrates ingestion: receives `ParsedRow[]`, enriches missing UUIDs, maps each row to typed entity data, then processes each entity leaf-first (`Battery → … → Robot`). For new entities: `insert`; for existing: `ConflictService.detectConflicts()` → bulk-insert `ConflictEntity` records, then `update` for null gap-fills.
 
-The **`ConflictModule`** (`src/modules/conflict/`) handles resolution via `PATCH /api/conflicts/resolve`. `ConflictResolverService` validates the winner value, applies it to the entity (or its referenced FK entity), and marks the entire conflict group `isSolved`.
+The **`ConflictModule`** (`src/modules/conflict/`) handles resolution via `PATCH /api/conflicts/resolve` (body: `{ tableName, entityId, columnName, winnerValue, conflictResolver, resolutionNotes }`). `ConflictResolverService` validates the winner value, applies it to the entity (or its referenced FK entity), and marks the entire conflict group `isSolved`.
 
 See `app/server/CLAUDE.md` for the full entity relationship chain, column conventions, TypeORM patterns, and conflict resolution details.
 
