@@ -126,7 +126,7 @@ A modal dialog for uploading Excel files.
 ## Tech Stack
 - Angular 19
 - Node.js 20.10.0, npm 10.9.2
-- PrimeNG 19 with **Aura** preset theme (dark mode via `.dark-mode` class on `<html>`, managed by `ThemeService` with localStorage persistence)
+- PrimeNG 19 with **Aura** preset theme — **dark mode only** (`.dark-mode` class is permanently on `<html>`, no light mode, no theme toggle)
 - SCSS for styling
 
 ## Commands
