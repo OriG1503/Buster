@@ -38,6 +38,11 @@ export abstract class BaseRepository<T extends { id: TId }, TId extends string |
     return result as object as QueryDeepPartialEntity<T>;
   }
 
+  public async renameId(oldId: TId, newId: TId): Promise<void> {
+    const tableName = this._repository.metadata.tableName;
+    await this._repository.manager.query(`UPDATE "${tableName}" SET "id" = $1 WHERE "id" = $2`, [newId, oldId]);
+  }
+
   public async softDelete(id: TId): Promise<void> {
     await this._repository.softDelete(id);
   }
