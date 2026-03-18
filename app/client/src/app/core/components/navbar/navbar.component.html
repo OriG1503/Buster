@@ -2,22 +2,19 @@
   <div class="navbar__logo">BUSTER</div>
 
   <div class="navbar__links">
-    <a
+    <button
       class="navbar__link"
-      routerLink="/"
-      routerLinkActive="navbar__link--active"
-      [routerLinkActiveOptions]="{ exact: true }"
+      (click)="onHomeClick()"
     >
       {{ _labelMap.home }}
-    </a>
+    </button>
 
-    <a
+    <button
       class="navbar__link"
-      routerLink="/conflicts"
-      routerLinkActive="navbar__link--active"
+      (click)="onConflictsClick()"
     >
       {{ _labelMap.conflicts }}
-    </a>
+    </button>
 
     <button
       class="navbar__link"
