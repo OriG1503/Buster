@@ -22,6 +22,14 @@ export abstract class BaseService<T extends BaseEntity, TInsertData extends { id
     await this._repository.insert({ id, ...fields, source: buildTracking(source), notes: buildTracking(notes) });
   }
 
+  public renameId(oldId: string, newId: string): Promise<void> {
+    return this._repository.renameId(oldId, newId);
+  }
+
+  public softDelete(id: string): Promise<void> {
+    return this._repository.softDelete(id);
+  }
+
   public async update(
     id: string,
     fields: Record<string, EntityValue>,

@@ -19,10 +19,14 @@ export class ConflictResolverService {
     const conflicts = await this._fetchAndValidateConflicts(tableName, entityId, columnName, winnerValue);
 
     const entityService = this._registry.get(tableName);
-    const winnerConflict = conflicts.find((conflict) => conflict.newValue === winnerValue);
 
-    if (winnerConflict) {
-      await this._applyWinnerValue(entityService, entityId, columnName, winnerValue, winnerConflict, conflicts);
+    if (columnName.endsWith('Id')) {
+      await this._applyFkIdWinner(entityService, entityId, columnName, winnerValue, conflicts);
+    } else {
+      const winnerConflict = conflicts.find((conflict) => conflict.newValue === winnerValue);
+      if (winnerConflict) {
+        await this._applyFieldWinner(entityService, entityId, columnName, winnerValue, winnerConflict);
+      }
     }
 
     await this._conflictRepository.resolveMany(tableName, entityId, columnName, conflictResolver, resolutionNotes);
@@ -51,57 +55,39 @@ export class ConflictResolverService {
     return conflicts;
   }
 
-  private async _applyWinnerValue(
-    entityService: EntityService<{ id: string }>,
-    entityId: string,
-    columnName: string,
-    winnerValue: string,
-    winnerConflict: ConflictEntity,
-    conflicts: ConflictEntity[],
-  ): Promise<void> {
-    if (columnName.endsWith('Id')) {
-      await this._applyFkIdWinner(entityService, entityId, columnName, winnerValue, winnerConflict, conflicts);
-    } else {
-      await this._applyFieldWinner(entityService, entityId, columnName, winnerValue, winnerConflict);
-    }
-  }
-
   private async _applyFkIdWinner(
     entityService: EntityService<{ id: string }>,
     entityId: string,
     columnName: string,
     winnerValue: string,
-    winnerConflict: ConflictEntity,
     conflicts: ConflictEntity[],
   ): Promise<void> {
     const referencedTableName = `${columnName.slice(0, -2)}s`;
     const referencedService = this._registry.get(referencedTableName);
     const oldId = conflicts[0].oldValue!;
-    const referencedEntity = await referencedService.findById(oldId);
+    const allNewIds = conflicts.map((c) => c.newValue).filter((id): id is string => id !== null);
+    const loserIds = [...new Set([oldId, ...allNewIds].filter((id) => id !== winnerValue))];
 
-    if (referencedEntity) {
-      await referencedService.update(
-        oldId,
-        { id: winnerValue },
-        { id: winnerConflict.newSource ?? '' },
-        referencedEntity.source,
-        { id: winnerConflict.newNotes },
-        referencedEntity.notes,
-      );
+    const winnerConflict = conflicts.find((c) => c.newValue === winnerValue);
+    const winnerSource = winnerConflict?.newSource ?? '';
+    const winnerNotes = winnerConflict?.newNotes ?? null;
+
+    if (winnerValue !== oldId) {
+      const owningEntity = await entityService.findById(entityId);
+
+      if (owningEntity) {
+        await entityService.update(
+          entityId,
+          { [columnName]: winnerValue },
+          { [columnName]: winnerSource },
+          owningEntity.source,
+          { [columnName]: winnerNotes },
+          owningEntity.notes,
+        );
+      }
     }
 
-    const owningEntity = await entityService.findById(entityId);
-
-    if (owningEntity) {
-      await entityService.update(
-        entityId,
-        {},
-        { [columnName]: winnerConflict.newSource ?? '' },
-        owningEntity.source,
-        { [columnName]: winnerConflict.newNotes },
-        owningEntity.notes,
-      );
-    }
+    await Promise.all(loserIds.map((id) => referencedService.softDelete(id)));
   }
 
   private async _applyFieldWinner(

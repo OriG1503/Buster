@@ -35,7 +35,10 @@ export class DataProcessorService {
   ) {}
 
   public async process(rows: ParsedRow[], username: string): Promise<ProcessResult> {
-    const results = await Promise.all(rows.map((row, i) => this._processRow(row, username, i)));
+    const results = await rows.reduce(
+      async (accPromise, row, i) => [...(await accPromise), await this._processRow(row, username, i)],
+      Promise.resolve([] as RowResult[]),
+    );
     const conflictCount = results.reduce((sum, r) => sum + r.conflictCount, 0);
     const flyingFields = results.flatMap((r) => r.flyingFields);
     const totalFields = results.reduce((sum, r) => sum + r.totalFields, 0);
@@ -48,18 +51,50 @@ export class DataProcessorService {
 
   private async _processRow(row: ParsedRow, username: string, rowIndex: number): Promise<RowResult> {
     const enriched = this._enricher.enrich(row);
+
+    const storedRobot = await this._registry.get('robots').findById(enriched.robot_UUID);
+    const storedRobotFields = storedRobot as unknown as Record<string, string | null> | null;
+    const currentCommId = storedRobotFields?.['communicationId'] ?? null;
+    const currentWiringId = storedRobotFields?.['wiringId'] ?? null;
+
+    const storedComm = currentCommId ? await this._registry.get('communications').findById(currentCommId) : null;
+    const currentPlasticId = storedComm ? (storedComm as unknown as Record<string, string | null>)['plasticId'] ?? null : null;
+
+    const commPriorId = currentCommId ?? undefined;
+    const plasticPriorId = currentPlasticId ?? undefined;
+    const wiringPriorId = currentWiringId ?? undefined;
+
+    const mappedComm = this._mapper.mapCommunication(enriched);
+    const commWasRenamed = storedComm !== null && commPriorId !== undefined && mappedComm?.id != null && commPriorId !== mappedComm.id;
+
     const results: EntityResult[] = [
       await this._processEntity(this._mapper.mapBattery(enriched), this._registry.get('batteries'), username, rowIndex),
       await this._processEntity(this._mapper.mapStorage(enriched), this._registry.get('storages'), username, rowIndex),
       await this._processEntity(this._mapper.mapIron(enriched), this._registry.get('irons'), username, rowIndex),
-      await this._processEntity(this._mapper.mapPlastic(enriched), this._registry.get('plastics'), username, rowIndex),
-      await this._processEntity(this._mapper.mapWiring(enriched), this._registry.get('wirings'), username, rowIndex),
-      await this._processEntity(this._mapper.mapCommunication(enriched), this._registry.get('communications'), username, rowIndex),
+      await this._processEntity(this._mapper.mapPlastic(enriched), this._registry.get('plastics'), username, rowIndex, plasticPriorId),
+      await this._processEntity(this._mapper.mapWiring(enriched), this._registry.get('wirings'), username, rowIndex, wiringPriorId),
+      await this._processEntity(mappedComm, this._registry.get('communications'), username, rowIndex, commPriorId),
       await this._processEntity(this._mapper.mapCardboard(enriched), this._registry.get('cardboards'), username, rowIndex),
       await this._processEntity(this._mapper.mapSensor(enriched), this._registry.get('sensors'), username, rowIndex),
       await this._processEntity(this._mapper.mapSale(enriched), this._registry.get('sales'), username, rowIndex),
       await this._processEntity(this._mapper.mapRobot(enriched), this._registry.get('robots'), username, rowIndex),
     ];
+
+    if (commWasRenamed) {
+      const robotService = this._registry.get('robots');
+      const currentRobot = await robotService.findById(enriched.robot_UUID);
+      if (currentRobot) {
+        await robotService.update(
+          enriched.robot_UUID,
+          {},
+          { communicationId: mappedComm!.source },
+          currentRobot.source,
+          { communicationId: mappedComm!.notes },
+          currentRobot.notes,
+        );
+      }
+    }
+
     return {
       conflictCount: results.reduce((sum, r) => sum + r.count, 0),
       flyingFields: results.filter((r) => r.flyingField !== null).map((r) => r.flyingField as FlyingField),
@@ -72,6 +107,7 @@ export class DataProcessorService {
     service: EntityService<{ id: string }>,
     username: string,
     rowIndex: number,
+    priorId?: string,
   ): Promise<EntityResult> {
     if (!mapped) {
       return { count: 0, flyingField: null, totalFields: 0 };
@@ -90,7 +126,16 @@ export class DataProcessorService {
     // Count of non-null data fields contributed by this entity in this row (excludes id, source, notes)
     // Used as the "total fields" denominator when calculating upload percentage
     const nonNullFieldCount = Object.keys(incomingFields).filter((k) => incomingFields[k] !== null).length;
-    const storedRecord = await service.findById(id);
+    let storedRecord = await service.findById(id);
+
+    if (!storedRecord && priorId && priorId !== id) {
+      const priorRecord = await service.findById(priorId);
+      if (priorRecord) {
+        await service.renameId(priorId, id);
+        await service.update(id, {}, { id: incomingSource }, priorRecord.source, { id: incomingNotes }, priorRecord.notes);
+        storedRecord = await service.findById(id);
+      }
+    }
 
     if (!storedRecord) {
       try {

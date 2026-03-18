@@ -5,6 +5,8 @@ export type EntityService<TData extends { id: string }> = {
   tableName: string;
   findById(id: string): Promise<BaseEntity | null>;
   insert(data: TData, source: string, notes: string | null): Promise<void>;
+  renameId(oldId: string, newId: string): Promise<void>;
+  softDelete(id: string): Promise<void>;
   update(
     id: string,
     fields: Record<string, EntityValue>,
