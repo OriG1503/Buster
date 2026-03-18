@@ -1,0 +1,66 @@
+@use 'primeicons/primeicons.css';
+
+:root {
+  --color-red: #e74b3b;
+  --color-light-gray: #efefef;
+  --color-navy-gray: #bfc4cd;
+  --color-white-soft: #f9fafc;
+  --color-dark-navy: #03153a;
+  --color-white: #ffffff;
+  --color-blue: #3f70e3;
+  --color-orange: #ffb656;
+  --color-yellow: #ffee80;
+  --color-option-hover: rgba(63, 112, 227, 0.1);
+  --color-option-selected: rgba(231, 75, 59, 0.18);
+  --color-surface: #ffffff;
+  --color-surface-hover: #f9fafc;
+  --color-surface-selected: rgba(0, 0, 0, 0.06);
+  --box-shadow-panel: 0 4px 20px rgba(0, 0, 0, 0.14);
+  --border-radius: 1.5rem;
+  --font-size-xxs: 0.7rem;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+}
+
+html.dark-mode {
+  --color-light-gray: #2a2d35;
+  --color-navy-gray: #5a6070;
+  --color-white-soft: #22242b;
+  --color-dark-navy: #e8eaf0;
+  --color-white: #16181d;
+  --color-blue: #5b8def;
+  --color-option-hover: rgba(91, 141, 239, 0.15);
+  --color-option-selected: rgba(231, 75, 59, 0.25);
+  --color-surface: #2a2d35;
+  --color-surface-hover: #32363f;
+  --color-surface-selected: rgba(255, 255, 255, 0.16);
+  --box-shadow-panel: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: sans-serif;
+  background-color: var(--color-white);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+*::-webkit-scrollbar {
+  width: 0.25rem;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-navy-gray);
+  border-radius: 0.125rem;
+}
