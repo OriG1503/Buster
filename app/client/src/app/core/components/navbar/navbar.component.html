@@ -1,0 +1,29 @@
+<nav class="navbar">
+  <div class="navbar__logo">BUSTER</div>
+
+  <div class="navbar__links">
+    <a
+      class="navbar__link"
+      routerLink="/"
+      routerLinkActive="navbar__link--active"
+      [routerLinkActiveOptions]="{ exact: true }"
+    >
+      {{ _labelMap.home }}
+    </a>
+
+    <a
+      class="navbar__link"
+      routerLink="/conflicts"
+      routerLinkActive="navbar__link--active"
+    >
+      {{ _labelMap.conflicts }}
+    </a>
+
+    <button
+      class="navbar__link"
+      (click)="onUploadClick()"
+    >
+      {{ _labelMap.upload }}
+    </button>
+  </div>
+</nav>
