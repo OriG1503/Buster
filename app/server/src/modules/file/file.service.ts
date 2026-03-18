@@ -1,7 +1,6 @@
 import { HttpService } from '@nestjs/axios';
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
-import { writeFile, mkdir } from 'fs/promises';
-import { join, basename, extname, parse } from 'path';
+import { basename, extname } from 'path';
 import { firstValueFrom } from 'rxjs';
 import * as XLSX from 'xlsx';
 import { DataProcessorService } from '../data-processor/data-processor.service';
@@ -10,7 +9,7 @@ import { ParsedRow } from '../data-processor/types/parsed-row.type';
 import { UploadSummary } from './types/upload-summary.type';
 
 const ACCEPTED_EXTENSIONS = ['.csv', '.xlsx', '.xls'] as const;
-const FILES_DIR = join(__dirname, '../../../../../../files');
+const FILES_SERVER_URL = process.env.FILES_SERVER_URL ?? 'http://localhost:3001';
 
 @Injectable()
 export class FileService {
@@ -26,13 +25,11 @@ export class FileService {
 
     const csvFile = this._toCsvFile(file);
 
-    await this._saveFile(csvFile).catch(() => {
+    const { path: csvPath } = await this._uploadToFilesServer(csvFile.originalname, csvFile.buffer).catch(() => {
       throw new InternalServerErrorException('Failed to save the uploaded file');
     });
 
-    const csvPath = join(FILES_DIR, csvFile.originalname);
-
-    const parsedRows = await this._sendToParser(csvFile).catch(() => {
+    const parsedRows = await this._sendToParser(csvPath).catch(() => {
       throw new InternalServerErrorException('Parser service failed to process the file');
     });
 
@@ -45,7 +42,8 @@ export class FileService {
     });
 
     const reportName = `${basename(csvFile.originalname, '.csv')}_report.xlsx`;
-    await writeFile(join(FILES_DIR, reportName), reportBuffer).catch(() => {
+
+    await this._uploadToFilesServer(reportName, reportBuffer).catch(() => {
       throw new InternalServerErrorException('Failed to save the Excel report');
     });
 
@@ -75,22 +73,27 @@ export class FileService {
     if (ext === '.csv') {
       return file;
     }
-
     const workbook = XLSX.read(file.buffer, { type: 'buffer' });
     const csvContent = XLSX.utils.sheet_to_csv(workbook.Sheets[workbook.SheetNames[0]]);
     const csvName = `${basename(file.originalname, ext)}.csv`;
-
     return { ...file, originalname: csvName, buffer: Buffer.from(csvContent) };
   }
 
-  private async _saveFile(file: Express.Multer.File): Promise<void> {
-    await mkdir(FILES_DIR, { recursive: true });
-    await writeFile(join(FILES_DIR, file.originalname), file.buffer);
+  private async _uploadToFilesServer(filename: string, buffer: Buffer): Promise<{ filename: string; path: string }> {
+    const { data } = await firstValueFrom(
+      this._httpService.post<{ filename: string; path: string }>(
+        `${FILES_SERVER_URL}/upload?filename=${encodeURIComponent(filename)}`,
+        buffer,
+        { headers: { 'Content-Type': 'application/octet-stream' } },
+      ),
+    );
+    return data;
   }
 
-  private async _sendToParser(file: Express.Multer.File): Promise<ParsedRow[]> {
-    const filePath = join(FILES_DIR, file.originalname);
-    const { data } = await firstValueFrom(this._httpService.post<ParsedRow[]>(process.env.PARSER_URL!, { path: filePath }));
+  private async _sendToParser(csvPath: string): Promise<ParsedRow[]> {
+    const { data } = await firstValueFrom(
+      this._httpService.post<ParsedRow[]>(process.env.PARSER_URL!, { path: csvPath }),
+    );
     return data;
   }
 }

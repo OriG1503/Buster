@@ -1,0 +1,12 @@
+{
+  "name": "files-server",
+  "version": "1.0.0",
+  "description": "Standalone static file server for the files directory",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

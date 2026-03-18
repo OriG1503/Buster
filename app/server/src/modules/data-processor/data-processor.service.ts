@@ -44,7 +44,7 @@ export class DataProcessorService {
     const totalFields = results.reduce((sum, r) => sum + r.totalFields, 0);
     const flyingFieldCount = flyingFields.reduce((sum, f) => sum + f.fields.length, 0);
     const uploadPercentage = totalFields > 0
-      ? Math.round(((totalFields - flyingFieldCount - conflictCount) / totalFields) * 100)
+      ? Math.round(((totalFields - flyingFieldCount) / totalFields) * 100)
       : 100;
     return { conflictCount, flyingFields, uploadPercentage };
   }
