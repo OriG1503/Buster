@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 
 import { NAVBAR_LABEL_MAP } from './mapping/navbar.label-map';
 import { APP_ROUTES } from '../../../shared/consts/app-routes.consts';
+import { UploadDialogService } from '../../services/upload-dialog/upload-dialog.service';
 
 @Component({
   selector: 'app-navbar',
@@ -13,6 +14,7 @@ export class NavbarComponent {
   protected readonly _labelMap = NAVBAR_LABEL_MAP;
 
   private readonly _router = inject(Router);
+  private readonly _uploadDialogService = inject(UploadDialogService);
 
   public onHomeClick(): void {
     this._router.navigate([APP_ROUTES.home]);
@@ -23,6 +25,6 @@ export class NavbarComponent {
   }
 
   public onUploadClick(): void {
-    // TODO: open upload dialog via UploadDialogService
+    this._uploadDialogService.open();
   }
 }
