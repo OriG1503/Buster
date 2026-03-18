@@ -39,15 +39,43 @@ The main content is a **dynamic data table** populated by querying the server.
 - **Red cell** → navigates to the Conflicts Page, pre-focused/filtered on the referenced conflict
 - **Green cell** → opens the **Resolved Conflict History** popup
 
-**Resolved Conflict History popup** (green cell click):
-- Shows the history of values for this resolved conflict
-- Per-entry data: `value`, `source`, `notes`, `datetime`
-- Metadata section: who resolved the conflict, date resolved, resolution notes
-- **Edit / Revert** action — lets the user trigger the "revert resolved conflict" operation
+**Resolved Conflict History popup** ("היסטוריית קונפליקט מוכרע") (green cell click):
+
+Header:
+- Title + **X** close button + **pencil/edit icon** (triggers revert)
+
+History table (one row per source entry):
+| Column | Description |
+|--------|-------------|
+| מקור (Source) | Data source name |
+| תאריך יצירה (Created) | Date the value was recorded |
+| ערך (Value) | The actual field value |
+| הגדרה (Status) | e.g. תקין (current/winner), דנה ישן (outdated), לא מוגדר (undefined) |
+
+- The winning row is marked with a filled blue dot; others have empty dots
+
+Metadata section (below table):
+- **שם מחליט** — name of the user who resolved the conflict
+- **תאריך הכרעה** — date resolved
+- **הערות** — resolution notes (e.g. "הכרעה בוצעה לאחר בדיקה בשטח")
+
+Footer:
+- **"אישור"** (Confirm) button — blue, bottom left
 
 **Table UX:**
 - **Horizontal scrolling** when columns overflow the viewport
 - **Pagination** — server-side, because the dataset can be large
+- Record count shown above the table on the left (e.g. "נמצאו: 124 תוצאות")
+
+**Action bar** (above table, right-aligned):
+- **ניהול עמודות** — column manager button
+- **ייצוא לאקסל** — export to Excel button
+- **+ בחר טבלה** — entity switcher button
+
+**Visual design:**
+- Dark theme throughout
+- Each column header has a search/filter input directly beneath it
+- Navbar: logo centered ("BUSTER"), navigation links on the right
 
 ---
 
@@ -75,14 +103,25 @@ Conflicts are displayed as **collapsible boxes**, one per conflicted entity.
 
 ---
 
-### Upload Popup
+### Upload Popup ("העלאת נתונים חדשים")
 A modal dialog for uploading Excel files.
 
-**Drag & drop zone** — user drags a file in or clicks to browse
+**Header:**
+- Title + subtitle instruction text
+- **"הורדת קבלות"** (Download Templates) button — top right of modal
+- **X** close button — top left
 
-**Upload result section** (appears below the drop zone after upload):
-- Shows upload data and result (parsed entities, any errors, etc.)
-- Only visible after a file has been submitted
+**Drag & drop zone:**
+- Dashed border, cloud upload icon
+- "גרור ושחרר את הקובץ" label with a clickable browse link
+
+**File result rows** (appear below the drop zone after each upload, one row per file):
+- **Green checkmark** — success (0 conflicts, 100%)
+- **Yellow/orange warning triangle** — partial success (conflicts detected, shows conflict count + info icon)
+- Each row shows: filename, status icon, progress percentage, conflict/entity count, optional link
+
+**Footer:**
+- **"אישור"** (Confirm) button — blue, bottom left
 
 ## Tech Stack
 - Angular 19
