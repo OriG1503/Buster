@@ -2,9 +2,91 @@
 
 Angular 19 client for Buster (data aggregation & conflict-resolution platform).
 
+## App Layout
+
+### Routes
+- `/` → **Home Page** (entity data table)
+- `/conflicts` → **Conflicts Page** (conflict resolution)
+- Popups (modals/dialogs) layered on top of both pages for specific actions
+
+---
+
+### Home Page (`/`)
+The main content is a **dynamic data table** populated by querying the server.
+
+**Entity switcher** — user can switch between any entity table:
+- Available entities: Robot, Sensor, Wiring, Communication, Battery, Storage, Iron, Plastic, Cardboard, Sale
+- The Conflict entity is **excluded** from this page
+- Default columns shown = all native properties of the selected entity
+
+**Column manager** — user can add/remove columns from the table:
+- Each entity's own properties are always available
+- If an entity has FK relationships to other entities, the **child entity's properties** are also available to add as columns
+  - Example: Plastic has a FK to Battery → Battery properties (type, etc.) can optionally be displayed in the Plastic table
+  - Example: Battery has no FKs → only Battery's own properties are available
+- This drives what columns appear in the column selector UI
+
+**Per-column filtering** — each displayed column has a plain-string search/filter input
+
+**Cell value coloring** — text color indicates conflict status:
+| Color | Meaning |
+|-------|---------|
+| White (default) | Value is clean — no conflict |
+| Red | Open conflict exists on this field |
+| Green | Conflict was resolved |
+
+**Cell click behavior:**
+- **Red cell** → navigates to the Conflicts Page, pre-focused/filtered on the referenced conflict
+- **Green cell** → opens the **Resolved Conflict History** popup
+
+**Resolved Conflict History popup** (green cell click):
+- Shows the history of values for this resolved conflict
+- Per-entry data: `value`, `source`, `notes`, `datetime`
+- Metadata section: who resolved the conflict, date resolved, resolution notes
+- **Edit / Revert** action — lets the user trigger the "revert resolved conflict" operation
+
+**Table UX:**
+- **Horizontal scrolling** when columns overflow the viewport
+- **Pagination** — server-side, because the dataset can be large
+
+---
+
+### Conflicts Page (`/conflicts`)
+Shows all **open (unresolved) conflicts** with pagination.
+
+Conflicts are displayed as **collapsible boxes**, one per conflicted entity.
+
+**Collapsed state (summary):**
+- Entity ID
+- Table name
+- Which columns have conflicts (list/count)
+
+**Expanded state (full detail):**
+- The full entity data from the DB
+- All conflicting fields shown with their competing values (old value + source vs. new value + source)
+- User can select the winning value per field
+
+**Resolve section** (bottom of expanded box):
+- Resolution notes input
+- Any other resolution metadata fields
+- **OK / Confirm** button — submits the resolution, marks the conflict as solved
+
+**Navigation from Home Page:** clicking a red cell on the Home Page navigates here with the relevant conflict box pre-opened/highlighted.
+
+---
+
+### Upload Popup
+A modal dialog for uploading Excel files.
+
+**Drag & drop zone** — user drags a file in or clicks to browse
+
+**Upload result section** (appears below the drop zone after upload):
+- Shows upload data and result (parsed entities, any errors, etc.)
+- Only visible after a file has been submitted
+
 ## Tech Stack
 - Angular 19
-- Node.js 20, npm 10
+- Node.js 20.10.0, npm 10.9.2
 - PrimeNG 19 with **Aura** preset theme (dark mode via `.dark-mode` class on `<html>`, managed by `ThemeService` with localStorage persistence)
 - SCSS for styling
 
