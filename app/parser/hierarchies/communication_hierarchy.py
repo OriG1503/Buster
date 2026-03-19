@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
-from interfaces.communication import Communication
-from interfaces.iron import Iron
+from entities.communication import Communication
+from entities.iron import Iron
 from hierarchies.plastic_hierarchy import PlasticHierarchy
 
 

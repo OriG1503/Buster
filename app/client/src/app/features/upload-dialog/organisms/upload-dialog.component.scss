@@ -220,6 +220,10 @@
     &--error {
       color: var(--color-red);
     }
+
+    &--pending {
+      color: var(--color-navy-gray);
+    }
   }
 
   &__file-error {

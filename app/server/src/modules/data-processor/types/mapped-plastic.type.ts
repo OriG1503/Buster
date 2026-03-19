@@ -1,7 +1,6 @@
-export type MappedPlastic = {
-  id: string;
-  source: string;
-  notes: string | null;
+import { MappedEntityBase } from './mapped-entity-base.type';
+
+export interface MappedPlastic extends MappedEntityBase {
   plasticType: string | null;
   batteryId: string | null;
-};
+}

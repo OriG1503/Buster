@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
-from interfaces.wiring import Wiring
-from interfaces.storage import Storage
+from entities.wiring import Wiring
+from entities.storage import Storage
 
 
 @dataclass

@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from typing import Optional
-from interfaces.robot import Robot
-from interfaces.sensor import Sensor
-from interfaces.cardboard import Cardboard
-from interfaces.sale import Sale
+from entities.robot import Robot
+from entities.sensor import Sensor
+from entities.cardboard import Cardboard
+from entities.sale import Sale
 from hierarchies.communication_hierarchy import CommunicationHierarchy
 from hierarchies.wiring_hierarchy import WiringHierarchy
 
