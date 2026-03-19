@@ -1,14 +1,14 @@
 import dataclasses
-from interfaces.robot import Robot
-from interfaces.sensor import Sensor
-from interfaces.cardboard import Cardboard
-from interfaces.communication import Communication
-from interfaces.plastic import Plastic
-from interfaces.battery import Battery
-from interfaces.iron import Iron
-from interfaces.sale import Sale
-from interfaces.wiring import Wiring
-from interfaces.storage import Storage
+from entities.robot import Robot
+from entities.sensor import Sensor
+from entities.cardboard import Cardboard
+from entities.communication import Communication
+from entities.plastic import Plastic
+from entities.battery import Battery
+from entities.iron import Iron
+from entities.sale import Sale
+from entities.wiring import Wiring
+from entities.storage import Storage
 from hierarchies.communication_hierarchy import CommunicationHierarchy
 from hierarchies.plastic_hierarchy import PlasticHierarchy
 from hierarchies.wiring_hierarchy import WiringHierarchy
@@ -31,6 +31,16 @@ _UUID_FIELDS = {
 
 
 def _build_entity(cls, row: dict):
+    """
+    Attempts to build a single entity instance from a CSV row.
+
+    Extracts only the fields that belong to the given entity class from the row,
+    then decides whether the entity is present based on its UUID and data fields:
+    - If both UUID and data are missing → the entity is absent, returns None.
+    - If data exists but UUID is missing → a "flying" entity (server will handle it).
+    - Otherwise → returns a fully populated entity instance.
+    """
+
     uuid_field = _UUID_FIELDS[cls]
     cls_fields = dataclasses.fields(cls)
     data = {f.name: row[f.name] for f in cls_fields if f.name in row}
@@ -49,7 +59,28 @@ def _build_entity(cls, row: dict):
 
 
 def _build_hierarchy_from_row(row: dict) -> RobotHierarchy:
-    # Each row can contain data for multiple entities; build each one and nest them
+    """
+    Builds a full RobotHierarchy from a single CSV row.
+
+    Each row can carry data for multiple entities at once. This function constructs
+    each entity from the relevant columns and nests them into the hierarchy tree:
+
+    RobotHierarchy
+    ├── Robot
+    ├── Cardboard
+    ├── Sensor
+    ├── CommunicationHierarchy
+    │   ├── Communication
+    │   ├── Iron
+    │   └── PlasticHierarchy
+    │       ├── Plastic
+    │       └── Battery
+    ├── WiringHierarchy
+    │   ├── Wiring
+    │   └── Storage
+    └── Sale
+    """
+
     return RobotHierarchy(
         _build_entity(Robot, row),
 
@@ -79,6 +110,12 @@ def _build_hierarchy_from_row(row: dict) -> RobotHierarchy:
 
 
 def assemble(rows):
+    """
+    Iterates over CSV rows and yields a RobotHierarchy for each non-empty row.
+
+    Skips rows where all values are None (e.g. trailing empty lines in the CSV).
+    """
+    
     for row in rows:
         if any(v is not None for v in row.values()):
             yield _build_hierarchy_from_row(row)

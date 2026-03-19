@@ -8,6 +8,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FileService } from './file.service';
 import { UploadSummary } from './types/upload-summary.type';
+import { UploadFileDto } from './dto/upload-file.dto';
 
 @Controller('file')
 export class FileController {
@@ -15,10 +16,7 @@ export class FileController {
 
   @Post()
   @UseInterceptors(FileInterceptor('file'))
-  public async upload(
-    @UploadedFile() file: Express.Multer.File,
-    @Body('username') username: string,
-  ): Promise<UploadSummary> {
+  public async upload(@UploadedFile() file: Express.Multer.File, @Body() { username }: UploadFileDto): Promise<UploadSummary> {
     return this._fileService.handleFile(file, username);
   }
 }

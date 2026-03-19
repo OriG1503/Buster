@@ -4,10 +4,10 @@ from helpers.flatten import flatten_hierarchy
 from models.parse_request import ParseRequest
 import csv
 
-router = APIRouter()
+parse_csv_router = APIRouter(tags=["Parse CSV"])
 
 
-@router.post("/parse")
+@parse_csv_router.post("/parse")
 async def parse_excel(body: ParseRequest):
     if not body.path.endswith(".csv"):
         raise HTTPException(status_code=400, detail="File must be a CSV file")

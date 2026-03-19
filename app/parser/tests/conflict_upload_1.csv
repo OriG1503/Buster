@@ -1,2 +1,0 @@
-robot_UUID,source,sensor_UUID,sensor_type,sensor_version,communication_UUID,plastic_UUID,battery_UUID,sku
-robot-conflict-001,erp-system,sensor-conflict-001,ultrasonic,,comm-conflict-001,plastic-conflict-001,battery-conflict-001,SKU-ALPHA

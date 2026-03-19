@@ -1,9 +1,8 @@
-export type MappedBattery = {
-  id: string;
-  source: string;
-  notes: string | null;
+import { MappedEntityBase } from './mapped-entity-base.type';
+
+export interface MappedBattery extends MappedEntityBase {
   sku: string | null;
   batteryType: string | null;
   batteryVersion: string | null;
   lithiumVersion: string | null;
-};
+}

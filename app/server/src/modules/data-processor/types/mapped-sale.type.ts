@@ -1,7 +1,6 @@
-export type MappedSale = {
-  id: string;
-  source: string;
-  notes: string | null;
+import { MappedEntityBase } from './mapped-entity-base.type';
+
+export interface MappedSale extends MappedEntityBase {
   carrier: string | null;
   onlineStoreName: string | null;
   salesperson: string | null;
@@ -10,4 +9,4 @@ export type MappedSale = {
   isStockTelAviv: boolean | null;
   isStockRehovot: boolean | null;
   dataSource: string | null;
-};
+}
