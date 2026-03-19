@@ -32,6 +32,7 @@ export class ConflictHistoryService {
     entryMap.set(originalKey, {
       value: earliest.oldValue,
       source: earliest.oldSource,
+      notes: earliest.oldNotes,
       createdAt: entity?.createdAt instanceof Date ? entity.createdAt.toISOString() : null,
       isWinner: currentValue !== null && currentValue === earliest.oldValue,
     });
@@ -43,6 +44,7 @@ export class ConflictHistoryService {
         entryMap.set(key, {
           value: conflict.newValue,
           source: conflict.newSource,
+          notes: conflict.newNotes,
           createdAt: conflict.createdAt instanceof Date ? conflict.createdAt.toISOString() : null,
           isWinner: currentValue !== null && currentValue === conflict.newValue,
         });

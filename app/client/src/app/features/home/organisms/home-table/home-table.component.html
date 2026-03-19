@@ -36,7 +36,7 @@
               @for (col of _$displayColumns(); track col) {
                 <td
                   class="home-table__td home-table__td--{{ cellStatus(row[col]) }}"
-                  (click)="onCellClick(row, col)"
+                  (click)="onCellClick(row, col, $event)"
                 >
                   {{ cellValue(row[col]) }}
                 </td>
@@ -53,3 +53,10 @@
     </table>
   </div>
 </div>
+
+@if (_$historyTarget(); as target) {
+  <app-conflict-history-popup
+    [$target]="target"
+    (closed)="onHistoryPopupClose()"
+  />
+}
