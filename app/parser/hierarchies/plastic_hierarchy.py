@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
-from interfaces.plastic import Plastic
-from interfaces.battery import Battery
+from entities.plastic import Plastic
+from entities.battery import Battery
 
 
 @dataclass

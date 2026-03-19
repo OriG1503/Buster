@@ -102,15 +102,17 @@ export class UploadDialogComponent {
 
   private _processFiles(files: File[]): void {
     files.filter((file) => this._isValidFile(file)).forEach((file) => {
-      const pending: UploadedFile = { name: file.name, successRate: 0, newConflictsCount: 0, status: 'pending' };
+      const id = crypto.randomUUID();
+      const pending: UploadedFile = { id, name: file.name, successRate: 0, newConflictsCount: 0, status: 'pending' };
       this._$uploadedFiles.update((prev) => [...prev, pending]);
 
       this._fileService.upload(file, 'default').subscribe({
         next: (summary) => {
           this._$uploadedFiles.update((prev) =>
             prev.map((f) =>
-              f.name === file.name
+              f.id === id
                 ? {
+                    id,
                     name: file.name,
                     successRate: summary.uploadPercentage,
                     newConflictsCount: summary.conflictCount,
@@ -124,7 +126,7 @@ export class UploadDialogComponent {
         error: (err: HttpErrorResponse) => {
           const errorMessage = err.error?.message ?? err.message ?? 'שגיאה בהעלאת הקובץ';
           this._$uploadedFiles.update((prev) =>
-            prev.map((f) => (f.name === file.name ? { ...f, status: 'error', errorMessage } : f)),
+            prev.map((f) => (f.id === id ? { ...f, status: 'error', errorMessage } : f)),
           );
         },
       });
