@@ -4,6 +4,7 @@ import { HomeTableComponent } from '../../../features/home/organisms/home-table/
 import { TableActionBarComponent } from '../../../features/home/organisms/table-action-bar/table-action-bar.component';
 import { ColumnToggleEvent } from '../../../shared/types/column-toggle-event.type';
 import { HomeStore } from '../../store/home.store';
+import { UploadDialogService } from '../../services/upload-dialog/upload-dialog.service';
 
 @Component({
   selector: 'app-home-layout',
@@ -13,6 +14,7 @@ import { HomeStore } from '../../store/home.store';
 })
 export class HomeLayoutComponent {
   protected readonly _store = inject(HomeStore);
+  private readonly _uploadDialogService = inject(UploadDialogService);
 
   protected readonly _$hasActiveFilters = computed(() => Object.values(this._store.filters()).some((v) => v.length > 0));
 
@@ -26,6 +28,10 @@ export class HomeLayoutComponent {
 
   public onClearFilters(): void {
     this._store.clearFilters();
+  }
+
+  public onUploadClick(): void {
+    this._uploadDialogService.open();
   }
 
   public onExportExcel(): void {}

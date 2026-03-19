@@ -3,7 +3,6 @@ import { Router } from '@angular/router';
 
 import { NAVBAR_LABEL_MAP } from './mapping/navbar.label-map';
 import { APP_ROUTES } from '../../../shared/consts/app-routes.consts';
-import { UploadDialogService } from '../../services/upload-dialog/upload-dialog.service';
 import { HomeStore } from '../../store/home.store';
 
 @Component({
@@ -15,7 +14,6 @@ export class NavbarComponent {
   protected readonly _labelMap = NAVBAR_LABEL_MAP;
 
   private readonly _router = inject(Router);
-  private readonly _uploadDialogService = inject(UploadDialogService);
   private readonly _homeStore = inject(HomeStore);
 
   public onHomeClick(): void {
@@ -25,9 +23,5 @@ export class NavbarComponent {
 
   public onConflictsClick(): void {
     this._router.navigate([APP_ROUTES.conflicts]);
-  }
-
-  public onUploadClick(): void {
-    this._uploadDialogService.open();
   }
 }

@@ -30,6 +30,7 @@ export class TableActionBarComponent {
   public readonly columnToggle = output<ColumnToggleEvent>();
   public readonly exportExcel = output<void>();
   public readonly clearFilters = output<void>();
+  public readonly uploadClick = output<void>();
 
   protected readonly _labelMap = HOME_LABEL_MAP;
   protected readonly ENTITY_OPTIONS = ENTITY_OPTIONS;
