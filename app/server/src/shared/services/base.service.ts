@@ -7,10 +7,6 @@ export abstract class BaseService<T extends BaseEntity, TInsertData extends { id
 
   public constructor(protected readonly _repository: BaseRepository<T>) {}
 
-  public findAll(): Promise<T[]> {
-    return this._repository.findAll();
-  }
-
   public findById(id: string): Promise<T | null> {
     return this._repository.findById(id);
   }
