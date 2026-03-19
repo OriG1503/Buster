@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 
 import { HomeTableComponent } from '../../../features/home/organisms/home-table/home-table.component';
 import { TableActionBarComponent } from '../../../features/home/organisms/table-action-bar/table-action-bar.component';
@@ -13,7 +13,6 @@ import { HomeStore } from '../../store/home.store';
 })
 export class HomeLayoutComponent {
   protected readonly _store = inject(HomeStore);
-  protected readonly _$resultCount = signal(0);
 
   public onEntitySelected(tableName: string): void {
     this._store.selectTable(tableName);

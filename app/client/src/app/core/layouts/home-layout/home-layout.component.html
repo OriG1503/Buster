@@ -1,6 +1,6 @@
 <div class="home-layout">
   <app-table-action-bar
-    [$resultCount]="_$resultCount()"
+    [$resultCount]="_store.total()"
     [$columnGroups]="_store.columnGroups()"
     [$selectedTable]="_store.selectedTable()"
     [$selectedColumns]="_store.selectedColumns()"

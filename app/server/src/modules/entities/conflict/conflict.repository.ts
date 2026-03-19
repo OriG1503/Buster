@@ -15,6 +15,13 @@ export class ConflictRepository extends BaseRepository<ConflictEntity, number> {
     return this._repository.find({ where: { tableName, entityId, columnName, isSolved: false } });
   }
 
+  public findAllByGroup(tableName: string, entityId: string, columnName: string): Promise<ConflictEntity[]> {
+    return this._repository.find({
+      where: { tableName, entityId, columnName, isSolved: true },
+      order: { createdAt: 'ASC' },
+    });
+  }
+
   /** Finds the most recent solved conflict in the group where newValue or oldValue matches. */
   public findResolvedByGroupValue(tableName: string, entityId: string, columnName: string, value: string): Promise<ConflictEntity | null> {
     const base = { tableName, entityId, columnName, isSolved: true };
