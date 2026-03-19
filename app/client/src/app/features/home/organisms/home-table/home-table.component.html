@@ -11,7 +11,7 @@
                 <input
                   class="home-table__th-search-input"
                   type="text"
-                  [value]="_$filters()[col] || ''"
+                  [value]="_store.filters()[col] || ''"
                   (input)="onFilterChange(col, $any($event.target).value)"
                 />
               </div>

@@ -1,12 +1,12 @@
 <div class="home-layout">
   <app-table-action-bar
     [$resultCount]="_$resultCount()"
-    [$columnGroups]="_$columnGroups()"
-    [$selectedTable]="_$selectedTable()"
-    [$selectedColumns]="_$selectedColumns()"
+    [$columnGroups]="_store.columnGroups()"
+    [$selectedTable]="_store.selectedTable()"
+    [$selectedColumns]="_store.selectedColumns()"
     (entitySelected)="onEntitySelected($event)"
     (columnToggle)="onColumnToggle($event)"
     (exportExcel)="onExportExcel()"
   />
-  <app-home-table [$selectedColumns]="_$selectedColumns()" />
+  <app-home-table />
 </div>
