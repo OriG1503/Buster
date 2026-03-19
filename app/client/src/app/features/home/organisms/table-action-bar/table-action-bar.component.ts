@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, ViewEncapsulation, input, output } from '@angular/core';
+import { Component, ElementRef, ViewChild, ViewEncapsulation, computed, input, output } from '@angular/core';
 
 import { OverlayPanel, OverlayPanelModule } from 'primeng/overlaypanel';
 
@@ -34,6 +34,10 @@ export class TableActionBarComponent {
 
   protected readonly _labelMap = HOME_LABEL_MAP;
   protected readonly ENTITY_OPTIONS = ENTITY_OPTIONS;
+
+  protected readonly _$selectedTableLabel = computed(
+    () => ENTITY_OPTIONS.find((opt) => opt.tableName === this.$selectedTable())?.label ?? this.$selectedTable(),
+  );
 
   private _entityPanelTarget: HTMLElement | null = null;
   private _columnPanelTarget: HTMLElement | null = null;

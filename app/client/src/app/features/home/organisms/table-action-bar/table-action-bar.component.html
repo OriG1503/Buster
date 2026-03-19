@@ -3,6 +3,7 @@
     <button class="table-action-bar__btn" (click)="onTableSelectClick($event)">
       <i class="pi pi-table"></i>
       {{ _labelMap.selectTable }}
+      <span class="table-action-bar__table-badge">{{ _$selectedTableLabel() }}</span>
     </button>
     <button class="table-action-bar__btn" (click)="onColumnManageClick($event)">
       <i class="pi pi-sliders-h"></i>

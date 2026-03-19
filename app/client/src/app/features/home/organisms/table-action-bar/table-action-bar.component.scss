@@ -77,6 +77,25 @@
       }
     }
 
+    &--upload {
+      border-color: var(--color-blue);
+      color: var(--color-blue);
+
+      .pi {
+        color: var(--color-blue);
+      }
+
+      &:hover {
+        background-color: rgba(63, 112, 227, 0.08);
+        border-color: var(--color-blue);
+        color: var(--color-blue);
+
+        .pi {
+          color: var(--color-blue);
+        }
+      }
+    }
+
     &--clear {
       border-color: var(--color-red);
       color: var(--color-red);
@@ -95,6 +114,19 @@
         }
       }
     }
+  }
+
+  &__table-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.1rem 0.45rem;
+    background-color: rgba(63, 112, 227, 0.12);
+    border: 1px solid rgba(63, 112, 227, 0.3);
+    border-radius: 0.25rem;
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--color-blue);
+    line-height: 1.4;
   }
 }
 
@@ -149,6 +181,7 @@
   &::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.35);
   }
+
   gap: 1rem;
   max-height: 24rem;
   overflow-y: auto;
