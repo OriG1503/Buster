@@ -1,10 +1,10 @@
 import { Routes } from '@angular/router';
 
-import { HomeViewComponent } from './core/routes/home-view/home-view.component';
-import { ConflictsViewComponent } from './core/routes/conflicts-view/conflicts-view.component';
+import { ConflictsLayoutComponent } from './core/layouts/conflicts-layout/conflicts-layout.component';
+import { HomeLayoutComponent } from './core/layouts/home-layout/home-layout.component';
 
 export const routes: Routes = [
-  { path: '', component: HomeViewComponent },
-  { path: 'conflicts', component: ConflictsViewComponent },
+  { path: '', component: HomeLayoutComponent },
+  { path: 'conflicts', component: ConflictsLayoutComponent },
   { path: '**', redirectTo: '' },
 ];
