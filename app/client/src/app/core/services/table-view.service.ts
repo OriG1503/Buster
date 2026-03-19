@@ -2,15 +2,8 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+import { TableViewQuery } from '../../shared/types/table-view-query.type';
 import { TableViewResponse } from '../../shared/types/table-view-response.type';
-
-type TableViewQuery = {
-  tableName: string;
-  columns: string[];
-  filters: Record<string, string>;
-  page: number;
-  pageSize: number;
-};
 
 @Injectable({ providedIn: 'root' })
 export class TableViewService {
