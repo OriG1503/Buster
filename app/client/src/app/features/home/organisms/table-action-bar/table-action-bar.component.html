@@ -1,0 +1,54 @@
+<div class="table-action-bar">
+  <div class="table-action-bar__actions">
+    <button class="table-action-bar__btn" (click)="onTableSelectClick($event)">
+      <i class="pi pi-table"></i>
+      {{ _labelMap.selectTable }}
+    </button>
+    <button class="table-action-bar__btn" (click)="onColumnManageClick($event)">
+      <i class="pi pi-sliders-h"></i>
+      {{ _labelMap.manageColumns }}
+    </button>
+    <button class="table-action-bar__btn" (click)="exportExcel.emit()">
+      <i class="pi pi-download"></i>
+      {{ _labelMap.exportExcel }}
+    </button>
+  </div>
+
+  <span class="table-action-bar__count">
+    {{ _labelMap.resultsFound }}: {{ $resultCount() }} {{ _labelMap.results }}
+  </span>
+</div>
+
+<p-overlayPanel #entityPanel (onShow)="onEntityPanelShow()">
+  <div #entityPanelContent class="entity-panel" (keydown)="onEntityPanelKeydown($event)">
+    @for (option of ENTITY_OPTIONS; track option.tableName) {
+      <button
+        class="entity-panel__item"
+        [class.entity-panel__item--active]="option.tableName === $selectedTable()"
+        (click)="onEntitySelected(option.tableName)"
+      >
+        {{ option.label }}
+      </button>
+    }
+  </div>
+</p-overlayPanel>
+
+<p-overlayPanel #columnPanel styleClass="column-panel-overlay" (onShow)="onColumnPanelShow()">
+  <div #columnPanelContent class="column-panel" (keydown)="onColumnPanelKeydown($event)">
+    @for (group of $columnGroups(); track group.entityTable) {
+      <div class="column-panel__group">
+        <span class="column-panel__group-label">{{ group.label }}</span>
+        @for (col of group.columns; track col.key) {
+          <label class="column-panel__item">
+            <input
+              type="checkbox"
+              [checked]="$selectedColumns().includes(col.key)"
+              (change)="onColumnToggle(col.key, $any($event.target).checked)"
+            />
+            {{ col.label }}
+          </label>
+        }
+      </div>
+    }
+  </div>
+</p-overlayPanel>
