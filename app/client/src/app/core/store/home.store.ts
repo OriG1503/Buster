@@ -1,18 +1,17 @@
 import { computed, effect, inject } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from '@ngrx/signals';
+import { combineLatest, debounceTime, switchMap } from 'rxjs';
 
+import { TableViewService } from '../services/table-view.service';
 import { ENTITY_COLUMN_TREE } from '../../shared/consts/entity-column-tree.consts';
 import { FK_TO_ENTITY_ID } from '../../shared/consts/fk-to-entity-id.consts';
 import { ColumnGroup } from '../../shared/types/column-group.type';
 import { ColumnToggleEvent } from '../../shared/types/column-toggle-event.type';
+import { TableRow } from '../../shared/types/table-view-response.type';
 
-type HomeState = {
-  selectedTable: string;
-  selectedColumns: string[];
-  filters: Record<string, string>;
-};
-
+const PAGE_SIZE = 20;
 const VALID_TABLES = new Set(Object.keys(ENTITY_COLUMN_TREE));
 const DEFAULT_TABLE = 'robots';
 
@@ -24,12 +23,26 @@ function defaultColumns(tableName: string): string[] {
   return [...keys, ...linked];
 }
 
+type HomeState = {
+  selectedTable: string;
+  selectedColumns: string[];
+  filters: Record<string, string>;
+  page: number;
+  rows: TableRow[];
+  total: number;
+  isLoading: boolean;
+};
+
 export const HomeStore = signalStore(
   { providedIn: 'root' },
   withState<HomeState>({
     selectedTable: DEFAULT_TABLE,
     selectedColumns: defaultColumns(DEFAULT_TABLE),
     filters: {},
+    page: 1,
+    rows: [],
+    total: 0,
+    isLoading: false,
   }),
   withComputed((store) => ({
     columnGroups: computed<ColumnGroup[]>(() => ENTITY_COLUMN_TREE[store.selectedTable()]),
@@ -40,6 +53,8 @@ export const HomeStore = signalStore(
         selectedTable: tableName,
         selectedColumns: defaultColumns(tableName),
         filters: {},
+        page: 1,
+        rows: [],
       });
     },
 
@@ -48,15 +63,19 @@ export const HomeStore = signalStore(
       const linkedId = FK_TO_ENTITY_ID[key];
       if (checked) {
         const toAdd = [key, ...(linkedId && !cols.includes(linkedId) ? [linkedId] : [])];
-        patchState(store, { selectedColumns: [...cols, ...toAdd] });
+        patchState(store, { selectedColumns: [...cols, ...toAdd], page: 1, rows: [] });
       } else {
         const toRemove = new Set([key, ...(linkedId ? [linkedId] : [])]);
-        patchState(store, { selectedColumns: cols.filter((col) => !toRemove.has(col)) });
+        patchState(store, { selectedColumns: cols.filter((col) => !toRemove.has(col)), page: 1, rows: [] });
       }
     },
 
     setFilter(col: string, value: string): void {
-      patchState(store, (state) => ({ filters: { ...state.filters, [col]: value } }));
+      patchState(store, (state) => ({ filters: { ...state.filters, [col]: value }, page: 1, rows: [] }));
+    },
+
+    setPage(page: number): void {
+      patchState(store, { page, rows: [] });
     },
 
     syncFromUrl(params: Params): void {
@@ -79,6 +98,7 @@ export const HomeStore = signalStore(
     onInit(): void {
       const route = inject(ActivatedRoute);
       const router = inject(Router);
+      const tableViewService = inject(TableViewService);
 
       const snapshot = route.snapshot.queryParams as Params;
       if (snapshot['table'] || snapshot['cols']) {
@@ -96,6 +116,24 @@ export const HomeStore = signalStore(
           replaceUrl: true,
         });
       });
+
+      combineLatest({
+        tableName: toObservable(store.selectedTable),
+        columns: toObservable(store.selectedColumns),
+        filters: toObservable(store.filters),
+        page: toObservable(store.page),
+      })
+        .pipe(
+          debounceTime(300),
+          switchMap(({ tableName, columns, filters, page }) => {
+            patchState(store, { isLoading: true });
+            return tableViewService.query({ tableName, columns, filters, page, pageSize: PAGE_SIZE });
+          }),
+        )
+        .subscribe({
+          next: (response) => patchState(store, { rows: response.rows, total: response.total, isLoading: false }),
+          error: () => patchState(store, { isLoading: false }),
+        });
     },
   })),
 );

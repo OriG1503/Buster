@@ -19,7 +19,37 @@
           }
         </tr>
       </thead>
-      <tbody></tbody>
+      <tbody>
+        @if (_store.isLoading() && _store.rows().length === 0) {
+          @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
+            <tr class="home-table__tr home-table__tr--skeleton">
+              @for (col of _$displayColumns(); track col) {
+                <td class="home-table__td">
+                  <span class="home-table__skeleton"></span>
+                </td>
+              }
+            </tr>
+          }
+        } @else {
+          @for (row of _store.rows(); track trackByIndex($index)) {
+            <tr class="home-table__tr">
+              @for (col of _$displayColumns(); track col) {
+                <td
+                  class="home-table__td home-table__td--{{ cellStatus(row[col]) }}"
+                  (click)="onCellClick(row, col)"
+                >
+                  {{ cellValue(row[col]) }}
+                </td>
+              }
+            </tr>
+          }
+          @if (_store.rows().length === 0 && !_store.isLoading()) {
+            <tr>
+              <td class="home-table__empty" [attr.colspan]="_$displayColumns().length">אין נתונים</td>
+            </tr>
+          }
+        }
+      </tbody>
     </table>
   </div>
 </div>

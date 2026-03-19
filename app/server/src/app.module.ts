@@ -27,6 +27,17 @@ import { ConfigModule } from '@nestjs/config';
       autoLoadEntities: true,
       synchronize: process.env.NODE_ENV !== 'production',
       ssl: { rejectUnauthorized: false },
+      // Neon is serverless and pauses after inactivity — these keep the pool alive and auto-reconnect.
+      connectTimeoutMS: 10000,
+      retryAttempts: 10,
+      retryDelay: 3000,
+      extra: {
+        max: 5,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 10000,
+        keepAlive: true,
+        keepAliveInitialDelayMillis: 10000,
+      },
     }),
     BatteryModule,
     PlasticModule,
