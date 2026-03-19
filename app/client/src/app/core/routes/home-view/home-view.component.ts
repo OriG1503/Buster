@@ -4,6 +4,7 @@ import { OverlayPanel, OverlayPanelModule } from 'primeng/overlaypanel';
 
 import { ENTITY_COLUMN_TREE } from '../../../features/home/consts/entity-column-tree.consts';
 import { ENTITY_OPTIONS } from '../../../features/home/consts/entity-options.consts';
+import { FK_TO_ENTITY_ID } from '../../../features/home/consts/fk-to-entity-id.consts';
 import { TableActionBarComponent } from '../../../features/home/organisms/table-action-bar/table-action-bar.component';
 
 @Component({
@@ -100,17 +101,23 @@ export class HomeViewComponent {
 
   public onColumnToggle(key: string, checked: boolean): void {
     const cols = this._$selectedColumns();
+    const linkedId = FK_TO_ENTITY_ID[key];
+
     if (checked) {
-      this._$selectedColumns.set([...cols, key]);
+      const toAdd = [key, ...(linkedId && !cols.includes(linkedId) ? [linkedId] : [])];
+      this._$selectedColumns.set([...cols, ...toAdd]);
     } else {
-      this._$selectedColumns.set(cols.filter((col) => col !== key));
+      const toRemove = new Set([key, ...(linkedId ? [linkedId] : [])]);
+      this._$selectedColumns.set(cols.filter((col) => !toRemove.has(col)));
     }
   }
 
   public onExportExcel(): void {}
 
   private _defaultColumns(tableName: string): string[] {
-    return ENTITY_COLUMN_TREE[tableName][0].columns.map((col) => col.key);
+    const keys = ENTITY_COLUMN_TREE[tableName][0].columns.map((col) => col.key);
+    const linked = keys.map((key) => FK_TO_ENTITY_ID[key]).filter((id): id is string => !!id && !keys.includes(id));
+    return [...keys, ...linked];
   }
 
   private _centerPanelBeneathTarget(panel: OverlayPanel, target: HTMLElement | null): void {
