@@ -1,0 +1,25 @@
+<div class="home-table">
+  <div class="home-table__scroll">
+    <table class="home-table__table">
+      <thead>
+        <tr>
+          @for (col of _$displayColumns(); track col) {
+            <th class="home-table__th">
+              <span class="home-table__th-label">{{ _columnLabelMap[col] }}</span>
+              <div class="home-table__th-search">
+                <i class="pi pi-search home-table__th-search-icon"></i>
+                <input
+                  class="home-table__th-search-input"
+                  type="text"
+                  [value]="_$filters()[col] || ''"
+                  (input)="onFilterChange(col, $any($event.target).value)"
+                />
+              </div>
+            </th>
+          }
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>

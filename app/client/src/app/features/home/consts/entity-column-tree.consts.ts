@@ -4,7 +4,7 @@ const SENSOR_GROUP: ColumnGroup = {
   entityTable: 'sensors',
   label: 'חיישנים',
   columns: [
-    { key: 'sensors.id', label: 'מזהה' },
+    { key: 'sensors.id', label: 'מזהה חיישן' },
     { key: 'sensors.sensorType', label: 'סוג חיישן' },
     { key: 'sensors.sensorVersion', label: 'גרסת חיישן' },
   ],
@@ -14,7 +14,7 @@ const STORAGE_GROUP: ColumnGroup = {
   entityTable: 'storages',
   label: 'אחסון',
   columns: [
-    { key: 'storages.id', label: 'מזהה' },
+    { key: 'storages.id', label: 'מזהה אחסון' },
     { key: 'storages.storageType', label: 'סוג אחסון' },
     { key: 'storages.storageVersion', label: 'גרסת אחסון' },
     { key: 'storages.isStockNetanya', label: 'מלאי נתניה' },
@@ -26,7 +26,7 @@ const BATTERY_GROUP: ColumnGroup = {
   entityTable: 'batteries',
   label: 'סוללות',
   columns: [
-    { key: 'batteries.id', label: 'מזהה' },
+    { key: 'batteries.id', label: 'מזהה סוללה' },
     { key: 'batteries.sku', label: 'מק"ט' },
     { key: 'batteries.batteryType', label: 'סוג סוללה' },
     { key: 'batteries.batteryVersion', label: 'גרסת סוללה' },
@@ -38,7 +38,7 @@ const IRON_GROUP: ColumnGroup = {
   entityTable: 'irons',
   label: 'ברזל',
   columns: [
-    { key: 'irons.id', label: 'מזהה' },
+    { key: 'irons.id', label: 'מזהה ברזל' },
     { key: 'irons.ironType', label: 'סוג ברזל' },
     { key: 'irons.ironVersion', label: 'גרסת ברזל' },
     { key: 'irons.isHeatConductor', label: 'מוליך חום' },
@@ -49,7 +49,7 @@ const PLASTIC_GROUP: ColumnGroup = {
   entityTable: 'plastics',
   label: 'פלסטיק',
   columns: [
-    { key: 'plastics.id', label: 'מזהה' },
+    { key: 'plastics.id', label: 'מזהה פלסטיק' },
     { key: 'plastics.plasticType', label: 'סוג פלסטיק' },
     { key: 'plastics.batteryId', label: 'מזהה סוללה' },
   ],
@@ -59,7 +59,7 @@ const CARDBOARD_GROUP: ColumnGroup = {
   entityTable: 'cardboards',
   label: 'קרטון',
   columns: [
-    { key: 'cardboards.id', label: 'מזהה' },
+    { key: 'cardboards.id', label: 'מזהה קרטון' },
     { key: 'cardboards.cardboardType', label: 'סוג קרטון' },
     { key: 'cardboards.cardboardVersion', label: 'גרסת קרטון' },
   ],
@@ -69,7 +69,7 @@ const SALE_GROUP: ColumnGroup = {
   entityTable: 'sales',
   label: 'מכירות',
   columns: [
-    { key: 'sales.id', label: 'מזהה' },
+    { key: 'sales.id', label: 'מזהה מכירה' },
     { key: 'sales.carrier', label: 'ספק שילוח' },
     { key: 'sales.onlineStoreName', label: 'שם חנות מקוונת' },
     { key: 'sales.salesperson', label: 'איש מכירות' },
@@ -85,7 +85,7 @@ const COMMUNICATION_GROUP: ColumnGroup = {
   entityTable: 'communications',
   label: 'תקשורת',
   columns: [
-    { key: 'communications.id', label: 'מזהה' },
+    { key: 'communications.id', label: 'מזהה תקשורת' },
     { key: 'communications.communicationType', label: 'סוג תקשורת' },
     { key: 'communications.plasticId', label: 'מזהה פלסטיק' },
     { key: 'communications.ironId', label: 'מזהה ברזל' },
@@ -96,7 +96,7 @@ const WIRING_GROUP: ColumnGroup = {
   entityTable: 'wirings',
   label: 'כבלים',
   columns: [
-    { key: 'wirings.id', label: 'מזהה' },
+    { key: 'wirings.id', label: 'מזהה כבל' },
     { key: 'wirings.wiringType', label: 'סוג כבל' },
     { key: 'wirings.district', label: 'מחוז' },
     { key: 'wirings.municipality', label: 'עיריה' },
@@ -108,7 +108,7 @@ const ROBOT_GROUP: ColumnGroup = {
   entityTable: 'robots',
   label: 'רובוטים',
   columns: [
-    { key: 'robots.id', label: 'מזהה' },
+    { key: 'robots.id', label: 'מזהה רובוט' },
     { key: 'robots.cardboardId', label: 'מזהה קרטון' },
     { key: 'robots.sensorId', label: 'מזהה חיישן' },
     { key: 'robots.communicationId', label: 'מזהה תקשורת' },

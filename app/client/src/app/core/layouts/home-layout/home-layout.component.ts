@@ -2,12 +2,13 @@ import { Component, computed, signal } from '@angular/core';
 
 import { ENTITY_COLUMN_TREE } from '../../../features/home/consts/entity-column-tree.consts';
 import { FK_TO_ENTITY_ID } from '../../../features/home/consts/fk-to-entity-id.consts';
+import { HomeTableComponent } from '../../../features/home/organisms/home-table/home-table.component';
 import { TableActionBarComponent } from '../../../features/home/organisms/table-action-bar/table-action-bar.component';
 import { ColumnToggleEvent } from '../../../features/home/types/column-toggle-event.type';
 
 @Component({
   selector: 'app-home-layout',
-  imports: [TableActionBarComponent],
+  imports: [TableActionBarComponent, HomeTableComponent],
   templateUrl: './home-layout.component.html',
   styleUrl: './home-layout.component.scss',
 })
