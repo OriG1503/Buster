@@ -50,7 +50,8 @@
       "Bash(find /c/Users/Ori/Desktop/Coding/buster/app/client/src -name *upload-summary* -o -name *summary*)",
       "Bash(find C:UsersOriDesktopCodingbusterappclientsrcappfeatureshome -type f -name *.ts -o -name *.html -o -name *.scss)",
       "Bash(find C:/Users/Ori/Desktop/Coding/buster/app/client/node_modules/primeng -name overlaypanel*)",
-      "Bash(grep -r \"arrow\\\\|::before\\\\|::after\\\\|caret\\\\|p-op\" C:/Users/Ori/Desktop/Coding/buster/app/client/node_modules/@primeuix --include=*.css -l)"
+      "Bash(grep -r \"arrow\\\\|::before\\\\|::after\\\\|caret\\\\|p-op\" C:/Users/Ori/Desktop/Coding/buster/app/client/node_modules/@primeuix --include=*.css -l)",
+      "Bash(find /c/Users/Ori/Desktop/Coding/buster/app/client/src/app/features/home/types -type f -name *.ts)"
     ]
   }
 }

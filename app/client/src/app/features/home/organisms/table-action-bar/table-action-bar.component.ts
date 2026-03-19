@@ -2,10 +2,10 @@ import { Component, ElementRef, ViewChild, ViewEncapsulation, input, output } fr
 
 import { OverlayPanel, OverlayPanelModule } from 'primeng/overlaypanel';
 
-import { ENTITY_OPTIONS } from '../../consts/entity-options.consts';
+import { ENTITY_OPTIONS } from '../../../../shared/consts/entity-options.consts';
 import { HOME_LABEL_MAP } from '../../mapping/home.label-map';
-import { ColumnGroup } from '../../types/column-group.type';
-import { ColumnToggleEvent } from '../../types/column-toggle-event.type';
+import { ColumnGroup } from '../../../../shared/types/column-group.type';
+import { ColumnToggleEvent } from '../../../../shared/types/column-toggle-event.type';
 
 @Component({
   selector: 'app-table-action-bar',

@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 
 import { HomeTableComponent } from '../../../features/home/organisms/home-table/home-table.component';
 import { TableActionBarComponent } from '../../../features/home/organisms/table-action-bar/table-action-bar.component';
-import { ColumnToggleEvent } from '../../../features/home/types/column-toggle-event.type';
+import { ColumnToggleEvent } from '../../../shared/types/column-toggle-event.type';
 import { HomeStore } from '../../store/home.store';
 
 @Component({

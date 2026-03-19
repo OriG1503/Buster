@@ -1,8 +1,8 @@
 import { Component, computed, inject } from '@angular/core';
 
 import { HomeStore } from '../../../../core/store/home.store';
-import { FK_TO_ENTITY_ID } from '../../consts/fk-to-entity-id.consts';
-import { COLUMN_LABEL_MAP } from '../../mapping/home.label-map';
+import { FK_TO_ENTITY_ID } from '../../../../shared/consts/fk-to-entity-id.consts';
+import { ENTITY_COLUMN_LABEL_MAP } from '../../../../shared/mapping/entity-column.label-map';
 
 @Component({
   selector: 'app-home-table',
@@ -23,7 +23,7 @@ export class HomeTableComponent {
     });
   });
 
-  protected readonly _columnLabelMap = COLUMN_LABEL_MAP;
+  protected readonly _columnLabelMap = ENTITY_COLUMN_LABEL_MAP;
 
   public onFilterChange(col: string, value: string): void {
     this._store.setFilter(col, value);

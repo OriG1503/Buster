@@ -2,10 +2,10 @@ import { computed, effect, inject } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from '@ngrx/signals';
 
-import { ENTITY_COLUMN_TREE } from '../../features/home/consts/entity-column-tree.consts';
-import { FK_TO_ENTITY_ID } from '../../features/home/consts/fk-to-entity-id.consts';
-import { ColumnGroup } from '../../features/home/types/column-group.type';
-import { ColumnToggleEvent } from '../../features/home/types/column-toggle-event.type';
+import { ENTITY_COLUMN_TREE } from '../../shared/consts/entity-column-tree.consts';
+import { FK_TO_ENTITY_ID } from '../../shared/consts/fk-to-entity-id.consts';
+import { ColumnGroup } from '../../shared/types/column-group.type';
+import { ColumnToggleEvent } from '../../shared/types/column-toggle-event.type';
 
 type HomeState = {
   selectedTable: string;
