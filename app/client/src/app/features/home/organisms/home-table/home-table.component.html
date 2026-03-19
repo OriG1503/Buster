@@ -14,15 +14,14 @@
                   [value]="_store.filters()[col] || ''"
                   (input)="onFilterChange(col, $any($event.target).value)"
                 />
-                @if (_store.filters()[col]) {
-                  <button
-                    class="home-table__th-search-clear"
-                    type="button"
-                    (click)="onFilterChange(col, '')"
-                  >
-                    <i class="pi pi-times"></i>
-                  </button>
-                }
+                <button
+                  class="home-table__th-search-clear"
+                  [class.home-table__th-search-clear--hidden]="!_store.filters()[col]"
+                  type="button"
+                  (click)="onFilterChange(col, '')"
+                >
+                  <i class="pi pi-times"></i>
+                </button>
               </div>
             </th>
           }
