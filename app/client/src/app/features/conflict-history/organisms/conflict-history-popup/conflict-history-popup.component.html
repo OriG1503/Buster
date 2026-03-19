@@ -1,0 +1,83 @@
+<div class="history-popup__backdrop" (click)="onClose()"></div>
+
+<div
+  class="history-popup__panel"
+  dir="rtl"
+  [style.top]="_$panelStyle().top"
+  [style.left]="_$panelStyle().left"
+>
+  <div class="history-popup__header">
+    <span class="history-popup__title">היסטוריית קונפליקט מוכרע</span>
+    <div class="history-popup__header-actions">
+      <button class="history-popup__btn-icon" type="button" aria-label="ערוך">
+        <i class="pi pi-pencil"></i>
+      </button>
+      <button class="history-popup__btn-icon" type="button" aria-label="סגור" (click)="onClose()">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+  </div>
+
+  @if (_$isLoading()) {
+    <div class="history-popup__loading">
+      @for (i of [1, 2, 3]; track i) {
+        <div class="history-popup__skeleton-row">
+          <span class="history-popup__skeleton"></span>
+          <span class="history-popup__skeleton"></span>
+          <span class="history-popup__skeleton"></span>
+          <span class="history-popup__skeleton"></span>
+        </div>
+      }
+    </div>
+  } @else if (_$isError()) {
+    <div class="history-popup__error">שגיאה בטעינת הנתונים</div>
+  } @else {
+    @if (_$history(); as history) {
+      <table class="history-popup__table">
+        <thead>
+          <tr>
+            <th class="history-popup__th">מקור</th>
+            <th class="history-popup__th">תאריך יצירה</th>
+            <th class="history-popup__th">ערך</th>
+            <th class="history-popup__th history-popup__th--note">הערה</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (entry of history.entries; track $index) {
+            <tr class="history-popup__tr">
+              <td class="history-popup__td">{{ entry.source ?? 'N/A' }}</td>
+              <td class="history-popup__td">{{ formatDate(entry.createdAt) }}</td>
+              <td class="history-popup__td">{{ entry.value ?? 'N/A' }}</td>
+              <td class="history-popup__td history-popup__td--note">
+                <span
+                  class="history-popup__dot"
+                  [class.history-popup__dot--winner]="entry.isWinner"
+                ></span>
+                <span class="history-popup__note">{{ entry.notes ?? 'N/A' }}</span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <div class="history-popup__meta">
+        <div class="history-popup__meta-row">
+          <span class="history-popup__meta-label">שם מחליט</span>
+          <span class="history-popup__meta-value">{{ history.resolverName ?? 'N/A' }}</span>
+        </div>
+        <div class="history-popup__meta-row">
+          <span class="history-popup__meta-label">תאריך הכרעה</span>
+          <span class="history-popup__meta-value">{{ formatDate(history.resolutionDate) }}</span>
+        </div>
+        <div class="history-popup__meta-row">
+          <span class="history-popup__meta-label">הערות</span>
+          <span class="history-popup__meta-value">{{ history.resolutionNotes ?? 'N/A' }}</span>
+        </div>
+      </div>
+    }
+  }
+
+  <div class="history-popup__footer">
+    <button class="history-popup__btn-confirm" type="button" (click)="onClose()">אישור</button>
+  </div>
+</div>
