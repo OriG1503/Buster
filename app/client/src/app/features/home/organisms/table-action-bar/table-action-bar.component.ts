@@ -24,10 +24,12 @@ export class TableActionBarComponent {
   public readonly $columnGroups = input<ColumnGroup[]>([]);
   public readonly $selectedTable = input<string>('robots');
   public readonly $selectedColumns = input<string[]>([]);
+  public readonly $hasActiveFilters = input<boolean>(false);
 
   public readonly entitySelected = output<string>();
   public readonly columnToggle = output<ColumnToggleEvent>();
   public readonly exportExcel = output<void>();
+  public readonly clearFilters = output<void>();
 
   protected readonly _labelMap = HOME_LABEL_MAP;
   protected readonly ENTITY_OPTIONS = ENTITY_OPTIONS;

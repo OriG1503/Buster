@@ -4,4 +4,5 @@ export const HOME_LABEL_MAP = {
   selectTable: 'בחר טבלה',
   manageColumns: 'ניהול עמודות',
   exportExcel: 'ייצוא לאקסל',
+  clearFilters: 'נקה סינונים',
 } as const;

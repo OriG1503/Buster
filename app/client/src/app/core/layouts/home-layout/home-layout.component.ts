@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 
 import { HomeTableComponent } from '../../../features/home/organisms/home-table/home-table.component';
 import { TableActionBarComponent } from '../../../features/home/organisms/table-action-bar/table-action-bar.component';
@@ -14,12 +14,18 @@ import { HomeStore } from '../../store/home.store';
 export class HomeLayoutComponent {
   protected readonly _store = inject(HomeStore);
 
+  protected readonly _$hasActiveFilters = computed(() => Object.values(this._store.filters()).some((v) => v.length > 0));
+
   public onEntitySelected(tableName: string): void {
     this._store.selectTable(tableName);
   }
 
   public onColumnToggle(event: ColumnToggleEvent): void {
     this._store.toggleColumn(event);
+  }
+
+  public onClearFilters(): void {
+    this._store.clearFilters();
   }
 
   public onExportExcel(): void {}

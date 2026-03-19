@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { NAVBAR_LABEL_MAP } from './mapping/navbar.label-map';
 import { APP_ROUTES } from '../../../shared/consts/app-routes.consts';
 import { UploadDialogService } from '../../services/upload-dialog/upload-dialog.service';
+import { HomeStore } from '../../store/home.store';
 
 @Component({
   selector: 'app-navbar',
@@ -15,8 +16,10 @@ export class NavbarComponent {
 
   private readonly _router = inject(Router);
   private readonly _uploadDialogService = inject(UploadDialogService);
+  private readonly _homeStore = inject(HomeStore);
 
   public onHomeClick(): void {
+    this._homeStore.selectTable('robots');
     this._router.navigate([APP_ROUTES.home]);
   }
 

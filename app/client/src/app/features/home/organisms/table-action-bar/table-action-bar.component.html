@@ -12,6 +12,12 @@
       <i class="pi pi-download"></i>
       {{ _labelMap.exportExcel }}
     </button>
+    @if ($hasActiveFilters()) {
+      <button class="table-action-bar__btn table-action-bar__btn--clear" (click)="clearFilters.emit()">
+        <i class="pi pi-filter-slash"></i>
+        {{ _labelMap.clearFilters }}
+      </button>
+    }
   </div>
 
   <span class="table-action-bar__count">
