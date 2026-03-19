@@ -43,12 +43,12 @@ GitLab: `git@gitlab.com:ori.gritzman/buster.git`
 ## Monorepo Structure
 ```
 app/
-├── client/     # Angular 19 client (not yet initialized)
+├── client/     # Angular 19 client  ← active
 ├── server/     # NestJS 11 API server  ← active
 └── parser/     # Python FastAPI CSV parsing service  ← active
 ```
 
-Each sub-project has its own `CLAUDE.md` with tech-specific conventions. **Read `app/server/CLAUDE.md` before working in the server.**
+Each sub-project has its own `CLAUDE.md` with tech-specific conventions. **Read the relevant sub-project CLAUDE.md before working in that project.**
 
 ## Server Commands (from `app/server/`)
 ```bash
@@ -84,7 +84,14 @@ The parser reads the CSV from disk (the server saves the upload to `<repo-root>/
 |---------|------|--------|
 | `app/server` | NestJS 11 + PostgreSQL (Neon) + TypeORM | Active — all entities, data-processor, and conflict resolution implemented |
 | `app/parser` | Python FastAPI + uvicorn | Active — CSV parsing + hierarchy flattening implemented |
-| `app/client` | Angular 19 | Pending |
+| `app/client` | Angular 19 + PrimeNG Aura (dark mode) | Active — home view, conflicts view, upload dialog implemented |
+
+## Client Commands (from `app/client/`)
+```bash
+npm start        # Dev server (http://localhost:4200)
+npm run build    # Production build
+npm run watch    # Incremental dev build (watch mode)
+```
 
 ## Server Architecture Summary
 The server has three key abstractions in `src/shared/`:
