@@ -18,6 +18,13 @@ export class ConflictRepository extends BaseRepository<ConflictEntity, number> {
     return this._repository.find({ where: { tableName, entityId, columnName, isSolved: false } });
   }
 
+  public findAllByGroup(tableName: string, entityId: string, columnName: string): Promise<ConflictEntity[]> {
+    return this._repository.find({
+      where: { tableName, entityId, columnName, isSolved: true },
+      order: { createdAt: 'ASC' },
+    });
+  }
+
   public findResolvedByGroupValue(
     tableName: string,
     entityId: string,

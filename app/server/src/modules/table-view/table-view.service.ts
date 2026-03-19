@@ -118,10 +118,11 @@ export class TableViewService {
       }
     });
 
-    // Always select source and notes jsonb for every involved table (cell metadata).
+    // Always select source, notes, and createdAt for every involved table (cell metadata).
     tablesInvolved.forEach((table) => {
       parts.push(`"${table}"."source" AS "${table}__source"`);
       parts.push(`"${table}"."notes" AS "${table}__notes"`);
+      parts.push(`"${table}"."createdAt" AS "${table}__createdAt"`);
     });
 
     return parts.join(', ');
@@ -209,11 +210,14 @@ export class TableViewService {
 
       const conflictEntry = entityId ? conflictMap[table]?.[entityId]?.[column] : undefined;
 
+      const createdAt = row[`${table}__createdAt`];
+
       const cell: TableCell = {
         value: rawValue !== undefined && rawValue !== null ? String(rawValue) : null,
         status: conflictEntry?.status ?? 'raw',
         source: sourceMap?.[column] ?? null,
         notes: notesMap?.[column] ?? null,
+        uploadedAt: createdAt instanceof Date ? createdAt.toISOString() : (createdAt as string | null) ?? null,
         conflictId: conflictEntry?.conflictId ?? null,
       };
 
