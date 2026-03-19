@@ -13,6 +13,7 @@ import { WiringModule } from './modules/wiring/wiring.module';
 import { ConflictModule } from './modules/conflict/conflict.module';
 import { FileModule } from './modules/file/file.module';
 import { DataProcessorModule } from './modules/data-processor/data-processor.module';
+import { TableViewModule } from './modules/table-view/table-view.module';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
@@ -40,6 +41,7 @@ import { ConfigModule } from '@nestjs/config';
     ConflictModule,
     FileModule,
     DataProcessorModule,
+    TableViewModule,
   ],
 })
 export class AppModule {}
