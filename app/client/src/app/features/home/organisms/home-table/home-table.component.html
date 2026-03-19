@@ -68,3 +68,10 @@
     (closed)="onHistoryPopupClose()"
   />
 }
+
+@if (_$cellInfoTarget(); as target) {
+  <app-cell-info-popup
+    [$target]="target"
+    (closed)="onCellInfoPopupClose()"
+  />
+}
