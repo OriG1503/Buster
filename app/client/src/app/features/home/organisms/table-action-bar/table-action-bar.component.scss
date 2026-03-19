@@ -1,0 +1,51 @@
+.table-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.625rem 0;
+  border-bottom: 1px solid var(--color-light-gray);
+
+  &__count {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-dark-navy);
+    border-right: 2px solid var(--color-blue);
+    padding-right: 0.625rem;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  &__btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.875rem;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-light-gray);
+    border-radius: 0.375rem;
+    color: var(--color-dark-navy);
+    font-size: var(--font-size-sm);
+    font-family: inherit;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+
+    .pi {
+      font-size: var(--font-size-xs);
+      color: var(--color-navy-gray);
+    }
+
+    &:hover {
+      background-color: var(--color-surface-hover);
+      border-color: var(--color-blue);
+      color: var(--color-blue);
+
+      .pi {
+        color: var(--color-blue);
+      }
+    }
+  }
+}

@@ -45,7 +45,9 @@
       "Bash(powershell -Command \"Get-Process -Id 23388 -ErrorAction SilentlyContinue | Select-Object Id, Name, Path\")",
       "Bash(powershell -Command \"Get-Process | Where-Object { \\\\$_.Id -eq 23388 }\")",
       "Bash(echo \"EXIT: $?\")",
-      "Bash(npm list:*)"
+      "Bash(npm list:*)",
+      "Bash(find /c/Users/Ori/Desktop/Coding/buster/app/server/src -type f -name *.ts)",
+      "Bash(find /c/Users/Ori/Desktop/Coding/buster/app/client/src -name *upload-summary* -o -name *summary*)"
     ]
   }
 }

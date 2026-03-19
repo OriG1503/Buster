@@ -1,1 +1,8 @@
-<div class="home-view"></div>
+<div class="home-view">
+  <app-table-action-bar
+    [$resultCount]="_$resultCount()"
+    (tableSelect)="onTableSelect()"
+    (columnManage)="onColumnManage()"
+    (exportExcel)="onExportExcel()"
+  />
+</div>
