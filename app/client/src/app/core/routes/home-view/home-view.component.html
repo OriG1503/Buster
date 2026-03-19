@@ -1,8 +1,42 @@
 <div class="home-view">
   <app-table-action-bar
     [$resultCount]="_$resultCount()"
-    (tableSelect)="onTableSelect()"
-    (columnManage)="onColumnManage()"
+    (tableSelect)="onTableSelect($event)"
+    (columnManage)="onColumnManage($event)"
     (exportExcel)="onExportExcel()"
   />
+
+  <p-overlayPanel #entityPanel (onShow)="onEntityPanelShow()">
+    <div #entityPanelContent class="entity-panel" (keydown)="onEntityPanelKeydown($event)">
+      @for (option of ENTITY_OPTIONS; track option.tableName) {
+        <button
+          class="entity-panel__item"
+          [class.entity-panel__item--active]="option.tableName === _$selectedTable()"
+          (click)="onEntitySelected(option.tableName)"
+        >
+          {{ option.label }}
+        </button>
+      }
+    </div>
+  </p-overlayPanel>
+
+  <p-overlayPanel #columnPanel styleClass="column-panel-overlay" (onShow)="onColumnPanelShow()">
+    <div #columnPanelContent class="column-panel" (keydown)="onColumnPanelKeydown($event)">
+      @for (group of _$columnGroups(); track group.entityTable) {
+        <div class="column-panel__group">
+          <span class="column-panel__group-label">{{ group.label }}</span>
+          @for (col of group.columns; track col.key) {
+            <label class="column-panel__item">
+              <input
+                type="checkbox"
+                [checked]="_$selectedColumns().includes(col.key)"
+                (change)="onColumnToggle(col.key, $any($event.target).checked)"
+              />
+              {{ col.label }}
+            </label>
+          }
+        </div>
+      }
+    </div>
+  </p-overlayPanel>
 </div>

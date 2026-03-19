@@ -1,10 +1,10 @@
 <div class="table-action-bar">
   <div class="table-action-bar__actions">
-    <button class="table-action-bar__btn" (click)="tableSelect.emit()">
+    <button class="table-action-bar__btn" (click)="tableSelect.emit($event)">
       <i class="pi pi-table"></i>
       {{ _labelMap.selectTable }}
     </button>
-    <button class="table-action-bar__btn" (click)="columnManage.emit()">
+    <button class="table-action-bar__btn" (click)="columnManage.emit($event)">
       <i class="pi pi-sliders-h"></i>
       {{ _labelMap.manageColumns }}
     </button>
