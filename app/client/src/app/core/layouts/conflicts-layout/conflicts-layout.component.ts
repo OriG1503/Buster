@@ -27,14 +27,17 @@ export class ConflictsLayoutComponent implements AfterViewInit, OnDestroy {
   private readonly _$queryParams = toSignal(this._route.queryParams, { initialValue: {} as Params });
   protected readonly _$filterTableName = computed(() => this._$queryParams()['tableName'] ?? '');
   protected readonly _$filterEntityId = computed(() => this._$queryParams()['entityId'] ?? '');
-  protected readonly _$filterSourceFile = computed(() => this._$queryParams()['sourceFile'] ?? '');
+  protected readonly _$filterConflictIds = computed<number[]>(() => {
+    const raw: string = this._$queryParams()['conflictIds'] ?? '';
+    return raw ? raw.split(',').map(Number).filter((n) => !isNaN(n)) : [];
+  });
 
   protected readonly _$filterTitle = computed(() => {
     const parts: string[] = [];
-    const sourceFile = this._$filterSourceFile();
+    const conflictIds = this._$filterConflictIds();
     const tableName = this._$filterTableName();
     const entityId = this._$filterEntityId();
-    if (sourceFile) { parts.push(`קובץ: ${sourceFile}`); }
+    if (conflictIds.length) { parts.push(`קונפליקטים מהעלאה אחרונה (${conflictIds.length})`); }
     if (tableName) {
       const label = this._entityOptions.find((o) => o.tableName === tableName)?.label ?? tableName;
       parts.push(`סוג ישות: ${label}`);
@@ -45,7 +48,7 @@ export class ConflictsLayoutComponent implements AfterViewInit, OnDestroy {
 
   public constructor() {
     effect(() => {
-      this._store.loadConflicts(this._$filterTableName(), this._$filterEntityId(), this._$filterSourceFile());
+      this._store.loadConflicts(this._$filterTableName(), this._$filterEntityId(), this._$filterConflictIds());
     });
     effect(() => {
       if (this._$isSentinelVisible() && !this._store.isLoadingMore() && this._store.hasMore()) {

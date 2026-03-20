@@ -27,9 +27,10 @@ export class ConflictController {
     @Query('limit') limit = '20',
     @Query('tableName') tableName?: string,
     @Query('entityId') entityId?: string,
-    @Query('sourceFile') sourceFile?: string,
+    @Query('conflictIds') conflictIds?: string,
   ): Promise<ConflictListResponse> {
-    return this._conflictListService.getOpenGroups(Number(page), Number(limit), tableName, entityId, sourceFile);
+    const parsedConflictIds = conflictIds ? conflictIds.split(',').map(Number).filter((n) => !isNaN(n)) : undefined;
+    return this._conflictListService.getOpenGroups(Number(page), Number(limit), tableName, entityId, parsedConflictIds);
   }
 
   @Get('count')

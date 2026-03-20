@@ -14,8 +14,8 @@ import { ParsedRow } from '../types/parsed-row.type';
 import { ProcessResult } from '../types/process-result.type';
 import { MappedEntityBase } from '../types/mapped-entity-base.type';
 
-type EntityResult = { count: number; flyingField: FlyingField | null; totalFields: number };
-type RowResult = { conflictCount: number; flyingFields: FlyingField[]; totalFields: number };
+type EntityResult = { count: number; conflictIds: number[]; flyingField: FlyingField | null; totalFields: number };
+type RowResult = { conflictCount: number; conflictIds: number[]; flyingFields: FlyingField[]; totalFields: number };
 
 const BATCH_SIZE = 5;
 
@@ -43,12 +43,13 @@ export class DataProcessorService {
     );
 
     const conflictCount = results.reduce((sum, r) => sum + r.conflictCount, 0);
+    const conflictIds = results.flatMap((r) => r.conflictIds);
     const flyingFields = results.flatMap((r) => r.flyingFields);
     const totalFields = results.reduce((sum, r) => sum + r.totalFields, 0);
     const flyingFieldCount = flyingFields.reduce((sum, f) => sum + f.fields.length, 0);
     const uploadPercentage = totalFields > 0 ? Math.round(((totalFields - flyingFieldCount) / totalFields) * 100) : 100;
 
-    return { conflictCount, flyingFields, uploadPercentage };
+    return { conflictCount, conflictIds, flyingFields, uploadPercentage };
   }
 
   /**
@@ -105,6 +106,7 @@ export class DataProcessorService {
 
     return {
       conflictCount: results.reduce((sum, r) => sum + r.count, 0),
+      conflictIds: results.flatMap((r) => r.conflictIds),
       flyingFields: results.filter((r) => r.flyingField !== null).map((r) => r.flyingField as FlyingField),
       totalFields: results.reduce((sum, r) => sum + r.totalFields, 0),
     };
@@ -127,13 +129,13 @@ export class DataProcessorService {
     service: EntityService<{ id: string }>,
     username: string, rowIndex: number, priorId?: string,
   ): Promise<EntityResult> {
-    if (!mapped) { return { count: 0, flyingField: null, totalFields: 0 }; }
+    if (!mapped) { return { count: 0, conflictIds: [], flyingField: null, totalFields: 0 }; }
 
     const mappedRecord = mapped as MappedEntityBase & Record<string, EntityValue>;
 
     if (!mappedRecord.id) {
       const fields = Object.keys(mappedRecord).filter((k) => k !== 'id' && k !== 'source' && k !== 'notes' && mappedRecord[k] !== null);
-      return { count: 0, flyingField: fields.length > 0 ? { entity: service.tableName, fields, rowIndex } : null, totalFields: fields.length };
+      return { count: 0, conflictIds: [], flyingField: fields.length > 0 ? { entity: service.tableName, fields, rowIndex } : null, totalFields: fields.length };
     }
 
     const { source: incomingSource, notes: incomingNotes, id, ...incomingFields } = mappedRecord;
@@ -181,7 +183,7 @@ export class DataProcessorService {
     } catch (error) {
       if (!(error instanceof QueryFailedError) || (error as any).code !== PG_UNIQUE_VIOLATION) { throw error; }
     }
-    return { count: 0, flyingField: null, totalFields: nonNullFieldCount };
+    return { count: 0, conflictIds: [], flyingField: null, totalFields: nonNullFieldCount };
   }
 
   /**
@@ -202,14 +204,23 @@ export class DataProcessorService {
       incomingFields, incomingSource, username, incomingNotes,
     );
 
+    let conflictIds: number[] = [];
     if (result.conflictsToCreate.length > 0) {
       await this._conflictRepository.insertMany(result.conflictsToCreate, true);
+      conflictIds = await this._conflictRepository.findOpenIdsByData(
+        result.conflictsToCreate.map((c) => ({
+          tableName: c.tableName as string,
+          entityId: c.entityId as string,
+          columnName: c.columnName as string,
+          newValue: c.newValue as string,
+        })),
+      );
     }
 
     if (Object.keys(result.fieldsToUpdate).length > 0) {
       await service.update(id, result.fieldsToUpdate, result.sourceUpdates, storedRecord.source, result.notesUpdates, storedRecord.notes);
     }
 
-    return { count: result.conflictsToCreate.length, flyingField: null, totalFields: nonNullFieldCount };
+    return { count: result.conflictsToCreate.length, conflictIds, flyingField: null, totalFields: nonNullFieldCount };
   }
 }

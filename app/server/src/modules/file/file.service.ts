@@ -33,6 +33,7 @@ export class FileService {
 
     return {
       conflictCount: result.conflictCount,
+      conflictIds: result.conflictIds,
       uploadPercentage: result.uploadPercentage,
       flyingFieldCount: result.flyingFields.reduce((sum, f) => sum + f.fields.length, 0),
       reportFileName: reportName,

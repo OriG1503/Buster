@@ -36,7 +36,7 @@ export class ConflictRepository extends BaseRepository<ConflictEntity, number> {
     take: number,
     tableName?: string,
     entityId?: string,
-    sourceFile?: string,
+    conflictIds?: number[],
   ): Promise<{ tableName: string; entityId: string }[]> {
     const qb = this._repository
       .createQueryBuilder('c')
@@ -55,8 +55,8 @@ export class ConflictRepository extends BaseRepository<ConflictEntity, number> {
     if (entityId) {
       qb.andWhere('c.entityId ILIKE :entityId', { entityId: `%${entityId}%` });
     }
-    if (sourceFile) {
-      qb.andWhere('c.newSource ILIKE :sourceFile', { sourceFile: `%${sourceFile}%` });
+    if (conflictIds?.length) {
+      qb.andWhere('c.id IN (:...conflictIds)', { conflictIds });
     }
     return qb.getRawMany<{ tableName: string; entityId: string }>();
   }
@@ -74,6 +74,24 @@ export class ConflictRepository extends BaseRepository<ConflictEntity, number> {
 
   public findOpenByEntity(tableName: string, entityId: string): Promise<ConflictEntity[]> {
     return this._repository.find({ where: { tableName, entityId, isSolved: false } });
+  }
+
+  public async findOpenIdsByData(conflicts: { tableName: string; entityId: string; columnName: string; newValue: string }[]): Promise<number[]> {
+    if (!conflicts.length) {
+      return [];
+    }
+    const qb = this._repository
+      .createQueryBuilder('c')
+      .select('c.id', 'id')
+      .where('c.isSolved = :isSolved', { isSolved: false });
+    conflicts.forEach((c, i) => {
+      qb.orWhere(
+        `(c.tableName = :t${i} AND c.columnName = :col${i} AND c.entityId = :e${i} AND c.newValue = :v${i} AND c.isSolved = false)`,
+        { [`t${i}`]: c.tableName, [`col${i}`]: c.columnName, [`e${i}`]: c.entityId, [`v${i}`]: c.newValue },
+      );
+    });
+    const rows = await qb.getRawMany<{ id: number }>();
+    return rows.map((r) => r.id);
   }
 
   public async insertRevertConflict(data: Partial<ConflictEntity>): Promise<void> {

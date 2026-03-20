@@ -6,5 +6,5 @@ export type ConflictsState = {
   page: number;
   hasMore: boolean;
   isLoadingMore: boolean;
-  filter: { tableName: string; entityId: string; sourceFile: string };
+  filter: { tableName: string; entityId: string; conflictIds: number[] };
 };

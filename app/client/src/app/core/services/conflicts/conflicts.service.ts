@@ -23,11 +23,11 @@ export class ConflictsService {
     return this._http.get<ConflictCountResponse>('/api/conflicts/count');
   }
 
-  public getList(page: number, limit: number, tableName?: string, entityId?: string, sourceFile?: string): Observable<ConflictGroup[]> {
+  public getList(page: number, limit: number, tableName?: string, entityId?: string, conflictIds?: number[]): Observable<ConflictGroup[]> {
     const params: Record<string, string | number> = { page, limit };
     if (tableName) { params['tableName'] = tableName; }
     if (entityId) { params['entityId'] = entityId; }
-    if (sourceFile) { params['sourceFile'] = sourceFile; }
+    if (conflictIds?.length) { params['conflictIds'] = conflictIds.join(','); }
     return this._http.get<ConflictGroup[]>('/api/conflicts', { params });
   }
 

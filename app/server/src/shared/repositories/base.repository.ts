@@ -17,14 +17,17 @@ export abstract class BaseRepository<T extends { id: TId }, TId extends string |
     await this._repository.createQueryBuilder().insert().into(this._repository.target).values(this._resolveRelationIdFields(entity as object as QueryDeepPartialEntity<T>)).orIgnore(orIgnore).execute();
   }
 
-  public async insertMany(entities: Record<string, EntityValue>[], orIgnore = false): Promise<void> {
-    await this._repository
+  public async insertMany(entities: Record<string, EntityValue>[], orIgnore = false): Promise<TId[]> {
+    const result = await this._repository
       .createQueryBuilder()
       .insert()
       .into(this._repository.target)
       .values(entities.map((entity) => this._resolveRelationIdFields(entity as object as QueryDeepPartialEntity<T>)))
       .orIgnore(orIgnore)
       .execute();
+    return result.identifiers
+      .filter((identifier) => identifier != null && identifier['id'] != null)
+      .map((identifier) => identifier['id'] as TId);
   }
 
   public async update(id: TId, fields: Record<string, EntityValue>): Promise<void> {

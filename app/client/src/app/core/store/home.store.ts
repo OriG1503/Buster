@@ -1,6 +1,6 @@
 import { computed, effect, inject } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, Params } from '@angular/router';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from '@ngrx/signals';
 import { combineLatest, debounceTime, switchMap } from 'rxjs';
 
@@ -107,25 +107,12 @@ export const HomeStore = signalStore(
   withHooks((store) => ({
     onInit(): void {
       const route = inject(ActivatedRoute);
-      const router = inject(Router);
       const tableViewService = inject(TableViewService);
 
       const snapshot = route.snapshot.queryParams as Params;
       if (snapshot['table'] || snapshot['cols']) {
         store.syncFromUrl(snapshot);
       }
-
-      effect(() => {
-        const filterParams = Object.fromEntries(
-          Object.entries(store.filters())
-            .filter(([, v]) => v.length > 0)
-            .map(([col, v]) => [`f_${col}`, v]),
-        );
-        router.navigate([], {
-          queryParams: { table: store.selectedTable(), cols: store.selectedColumns().join(','), ...filterParams },
-          replaceUrl: true,
-        });
-      });
 
       combineLatest({
         tableName: toObservable(store.selectedTable),

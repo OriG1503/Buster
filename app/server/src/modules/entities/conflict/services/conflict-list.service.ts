@@ -10,7 +10,7 @@ export class ConflictListService {
     return this._conflictRepository.countOpenGroups();
   }
 
-  public async getOpenGroups(page: number, limit: number, tableName?: string, entityId?: string, sourceFile?: string): Promise<ConflictListResponse> {
-    return this._conflictRepository.findOpenGroups((page - 1) * limit, limit, tableName, entityId, sourceFile);
+  public async getOpenGroups(page: number, limit: number, tableName?: string, entityId?: string, conflictIds?: number[]): Promise<ConflictListResponse> {
+    return this._conflictRepository.findOpenGroups((page - 1) * limit, limit, tableName, entityId, conflictIds);
   }
 }

@@ -80,7 +80,7 @@
                 <span class="upload-dialog__meta-conflicts">
                   {{ file.newConflictsCount }} {{ _labelMap.newConflictsSuffix }}
                   @if (file.newConflictsCount > 0) {
-                    <a class="upload-dialog__conflicts-link" (click)="onViewConflicts(file.name)">{{ _labelMap.viewConflicts }}</a>
+                    <a class="upload-dialog__conflicts-link" [href]="getConflictsUrl(file.conflictIds)" target="_blank">{{ _labelMap.viewConflicts }}</a>
                   }
                 </span>
                 @if (file.reportFileName) {
