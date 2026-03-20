@@ -36,25 +36,26 @@
       <table class="history-popup__table">
         <thead>
           <tr>
+            <th class="history-popup__th history-popup__th--dot"></th>
+            <th class="history-popup__th">ערך</th>
+            <th class="history-popup__th">הערה</th>
             <th class="history-popup__th">מקור</th>
             <th class="history-popup__th">תאריך יצירה</th>
-            <th class="history-popup__th">ערך</th>
-            <th class="history-popup__th history-popup__th--note">הערה</th>
           </tr>
         </thead>
         <tbody>
           @for (entry of history.entries; track $index) {
             <tr class="history-popup__tr">
-              <td class="history-popup__td">{{ entry.source ?? 'N/A' }}</td>
-              <td class="history-popup__td">{{ formatDate(entry.createdAt) }}</td>
-              <td class="history-popup__td">{{ entry.value ?? 'N/A' }}</td>
-              <td class="history-popup__td history-popup__td--note">
+              <td class="history-popup__td history-popup__td--dot">
                 <span
                   class="history-popup__dot"
                   [class.history-popup__dot--winner]="entry.isWinner"
                 ></span>
-                <span class="history-popup__note">{{ entry.notes ?? 'N/A' }}</span>
               </td>
+              <td class="history-popup__td">{{ entry.value ?? 'N/A' }}</td>
+              <td class="history-popup__td">{{ entry.notes ?? 'N/A' }}</td>
+              <td class="history-popup__td">{{ entry.source ?? 'N/A' }}</td>
+              <td class="history-popup__td">{{ formatDate(entry.createdAt) }}</td>
             </tr>
           }
         </tbody>

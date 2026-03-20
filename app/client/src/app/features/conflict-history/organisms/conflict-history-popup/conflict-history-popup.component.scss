@@ -73,8 +73,9 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     white-space: nowrap;
 
-    &--note {
-      width: 7.5rem;
+    &--dot {
+      width: 2rem;
+      padding-left: 0.5rem;
     }
   }
 
@@ -93,10 +94,9 @@
     text-align: right;
     white-space: nowrap;
 
-    &--note {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+    &--dot {
+      text-align: center;
+      padding-left: 0.5rem;
     }
   }
 
