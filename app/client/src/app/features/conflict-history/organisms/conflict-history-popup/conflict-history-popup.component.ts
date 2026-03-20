@@ -3,6 +3,8 @@ import { Component, computed, effect, inject, input, output, signal } from '@ang
 import { ConflictHistoryService } from '../../../../core/services/conflict-history.service';
 import { ConflictHistoryResponse } from '../../../../shared/types/conflict-history-response.type';
 import { HistoryTarget } from '../../../../shared/types/history-target.type';
+import { ToastService } from '../../../../shared/services/toast.service';
+import { DEFAULT_USER_NAME } from '../../../../shared/consts/default-user.consts';
 
 @Component({
   selector: 'app-conflict-history-popup',
@@ -13,12 +15,19 @@ import { HistoryTarget } from '../../../../shared/types/history-target.type';
 export class ConflictHistoryPopupComponent {
   public readonly $target = input.required<HistoryTarget>();
   public readonly closed = output<void>();
+  public readonly reverted = output<void>();
 
   private readonly _historyService = inject(ConflictHistoryService);
+  private readonly _toastService = inject(ToastService);
 
   protected readonly _$history = signal<ConflictHistoryResponse | null>(null);
   protected readonly _$isLoading = signal(true);
   protected readonly _$isError = signal(false);
+  protected readonly _$isEditMode = signal(false);
+  protected readonly _$pendingWinnerValue = signal<string | null>(null);
+  protected readonly _$editNotes = signal('');
+  protected readonly _$isSaving = signal(false);
+  protected readonly _defaultUserName = DEFAULT_USER_NAME;
 
   protected readonly _$panelStyle = computed(() => {
     const { anchorBottom, anchorCenterX } = this.$target();
@@ -34,6 +43,9 @@ export class ConflictHistoryPopupComponent {
       const target = this.$target();
       this._$isLoading.set(true);
       this._$isError.set(false);
+      this._$isEditMode.set(false);
+      this._$pendingWinnerValue.set(null);
+      this._$editNotes.set('');
       this._$history.set(null);
       this._historyService.getHistory(target.tableName, target.entityId, target.columnName).subscribe({
         next: (response) => {
@@ -48,8 +60,58 @@ export class ConflictHistoryPopupComponent {
     });
   }
 
+  public onEditClick(): void {
+    if (this._$isEditMode()) {
+      this._$isEditMode.set(false);
+      this._$editNotes.set('');
+      return;
+    }
+    const currentWinner = this._$history()?.entries.find((e) => e.isWinner)?.value ?? null;
+    this._$pendingWinnerValue.set(currentWinner);
+    this._$editNotes.set('');
+    this._$isEditMode.set(true);
+  }
+
+  public onEntryDotClick(value: string | null): void {
+    if (!this._$isEditMode()) {
+      return;
+    }
+    this._$pendingWinnerValue.set(value);
+  }
+
   public onClose(): void {
-    this.closed.emit();
+    if (!this._$isEditMode()) {
+      this.closed.emit();
+      return;
+    }
+
+    const currentWinner = this._$history()?.entries.find((e) => e.isWinner)?.value ?? null;
+    const pendingValue = this._$pendingWinnerValue();
+
+    if (pendingValue === null || pendingValue === currentWinner) {
+      this._$isEditMode.set(false);
+      this._$editNotes.set('');
+      this.closed.emit();
+      return;
+    }
+
+    const { tableName, entityId, columnName } = this.$target();
+    this._$isSaving.set(true);
+    this._historyService
+      .revert({ tableName, entityId, columnName, revertValue: pendingValue, revertedBy: DEFAULT_USER_NAME, resolutionNotes: this._$editNotes() })
+      .subscribe({
+        next: () => {
+          this._$isSaving.set(false);
+          this._$editNotes.set('');
+          this._toastService.show('הערך עודכן בהצלחה', 'success');
+          this.reverted.emit();
+          this.closed.emit();
+        },
+        error: () => {
+          this._$isSaving.set(false);
+          this._toastService.show('שגיאה בעדכון הערך', 'error');
+        },
+      });
   }
 
   protected formatDate(iso: string | null): string {
@@ -59,5 +121,4 @@ export class ConflictHistoryPopupComponent {
     const d = new Date(iso);
     return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
   }
-
 }

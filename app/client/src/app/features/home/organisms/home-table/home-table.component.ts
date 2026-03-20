@@ -79,6 +79,11 @@ export class HomeTableComponent {
     this._$historyTarget.set(null);
   }
 
+  public onHistoryPopupReverted(): void {
+    this._$historyTarget.set(null);
+    this._store.refresh();
+  }
+
   public onCellInfoPopupClose(): void {
     this._$cellInfoTarget.set(null);
   }

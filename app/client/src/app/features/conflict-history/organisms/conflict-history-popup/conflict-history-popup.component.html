@@ -9,7 +9,14 @@
   <div class="history-popup__header">
     <span class="history-popup__title">היסטוריית קונפליקט מוכרע</span>
     <div class="history-popup__header-actions">
-      <button class="history-popup__btn-icon" type="button" aria-label="ערוך">
+      <button
+        class="history-popup__btn-icon"
+        [class.history-popup__btn-icon--active]="_$isEditMode()"
+        type="button"
+        aria-label="ערוך"
+        [disabled]="_$isLoading() || _$isError()"
+        (click)="onEditClick()"
+      >
         <i class="pi pi-pencil"></i>
       </button>
       <button class="history-popup__btn-icon" type="button" aria-label="סגור" (click)="onClose()">
@@ -36,48 +43,82 @@
       <table class="history-popup__table">
         <thead>
           <tr>
+            <th class="history-popup__th history-popup__th--dot"></th>
+            <th class="history-popup__th">ערך</th>
+            <th class="history-popup__th">הערה</th>
             <th class="history-popup__th">מקור</th>
             <th class="history-popup__th">תאריך יצירה</th>
-            <th class="history-popup__th">ערך</th>
-            <th class="history-popup__th history-popup__th--note">הערה</th>
           </tr>
         </thead>
         <tbody>
           @for (entry of history.entries; track $index) {
-            <tr class="history-popup__tr">
+            <tr
+              class="history-popup__tr"
+              [class.history-popup__tr--selectable]="_$isEditMode()"
+              [class.history-popup__tr--selected]="_$isEditMode() && _$pendingWinnerValue() === entry.value"
+              (click)="_$isEditMode() && onEntryDotClick(entry.value)"
+            >
+              <td class="history-popup__td history-popup__td--dot">
+                <button
+                  class="history-popup__dot-btn"
+                  type="button"
+                  [class.history-popup__dot-btn--clickable]="_$isEditMode()"
+                  (click)="$event.stopPropagation(); onEntryDotClick(entry.value)"
+                >
+                  <span
+                    class="history-popup__dot"
+                    [class.history-popup__dot--winner]="!_$isEditMode() && entry.isWinner"
+                    [class.history-popup__dot--pending]="_$isEditMode() && _$pendingWinnerValue() === entry.value"
+                  ></span>
+                </button>
+              </td>
+              <td class="history-popup__td">{{ entry.value ?? 'N/A' }}</td>
+              <td class="history-popup__td">{{ entry.notes ?? 'N/A' }}</td>
               <td class="history-popup__td">{{ entry.source ?? 'N/A' }}</td>
               <td class="history-popup__td">{{ formatDate(entry.createdAt) }}</td>
-              <td class="history-popup__td">{{ entry.value ?? 'N/A' }}</td>
-              <td class="history-popup__td history-popup__td--note">
-                <span
-                  class="history-popup__dot"
-                  [class.history-popup__dot--winner]="entry.isWinner"
-                ></span>
-                <span class="history-popup__note">{{ entry.notes ?? 'N/A' }}</span>
-              </td>
             </tr>
           }
         </tbody>
       </table>
 
-      <div class="history-popup__meta">
-        <div class="history-popup__meta-row">
-          <span class="history-popup__meta-label">שם מחליט</span>
-          <span class="history-popup__meta-value">{{ history.resolverName ?? 'N/A' }}</span>
-        </div>
-        <div class="history-popup__meta-row">
-          <span class="history-popup__meta-label">תאריך הכרעה</span>
-          <span class="history-popup__meta-value">{{ formatDate(history.resolutionDate) }}</span>
-        </div>
-        <div class="history-popup__meta-row">
-          <span class="history-popup__meta-label">הערות</span>
-          <span class="history-popup__meta-value">{{ history.resolutionNotes ?? 'N/A' }}</span>
-        </div>
+      <div class="history-popup__bottom">
+        @if (_$isEditMode()) {
+          <div class="history-popup__meta-field">
+            <span class="history-popup__meta-label">שם משתמש</span>
+            <span class="history-popup__meta-value history-popup__meta-value--muted">{{ _defaultUserName }}</span>
+          </div>
+          <div class="history-popup__edit-notes">
+            <label class="history-popup__edit-notes-label" for="edit-notes">הערות</label>
+            <textarea
+              id="edit-notes"
+              class="history-popup__edit-notes-input"
+              dir="rtl"
+              rows="2"
+              placeholder="הוסף הערה לשינוי..."
+              [value]="_$editNotes()"
+              (input)="_$editNotes.set($any($event.target).value)"
+            ></textarea>
+          </div>
+        } @else {
+          <div class="history-popup__bottom-top-row">
+            <div class="history-popup__meta-field">
+              <span class="history-popup__meta-label">שם משתמש</span>
+              <span class="history-popup__meta-value">{{ history.resolverName ?? 'N/A' }}</span>
+            </div>
+            <div class="history-popup__meta-field">
+              <span class="history-popup__meta-label">תאריך הכרעה</span>
+              <span class="history-popup__meta-value">{{ formatDate(history.resolutionDate) }}</span>
+            </div>
+          </div>
+          <div class="history-popup__meta-field">
+            <span class="history-popup__meta-label">הערות</span>
+            <span class="history-popup__meta-value">{{ history.resolutionNotes ?? 'N/A' }}</span>
+          </div>
+        }
+        <button class="history-popup__btn-confirm" type="button" [disabled]="_$isSaving()" (click)="onClose()">
+          {{ _$isSaving() ? '...' : 'אישור' }}
+        </button>
       </div>
     }
   }
-
-  <div class="history-popup__footer">
-    <button class="history-popup__btn-confirm" type="button" (click)="onClose()">אישור</button>
-  </div>
 </div>

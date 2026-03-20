@@ -1,0 +1,8 @@
+<div class="toast-container">
+  @for (msg of _toastService.$messages(); track msg.id) {
+    <div class="toast-container__item toast-container__item--{{ msg.type }}">
+      <i class="pi toast-container__icon" [class.pi-check-circle]="msg.type === 'success'" [class.pi-times-circle]="msg.type === 'error'"></i>
+      <span class="toast-container__text">{{ msg.text }}</span>
+    </div>
+  }
+</div>
