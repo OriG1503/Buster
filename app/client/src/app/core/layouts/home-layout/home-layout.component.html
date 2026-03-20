@@ -4,9 +4,12 @@
     [$columnGroups]="_store.columnGroups()"
     [$selectedTable]="_store.selectedTable()"
     [$selectedColumns]="_store.selectedColumns()"
+    [$hasActiveFilters]="_$hasActiveFilters()"
     (entitySelected)="onEntitySelected($event)"
     (columnToggle)="onColumnToggle($event)"
     (exportExcel)="onExportExcel()"
+    (clearFilters)="onClearFilters()"
+    (uploadClick)="onUploadClick()"
   />
   <app-home-table />
 </div>

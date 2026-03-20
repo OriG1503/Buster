@@ -76,6 +76,10 @@ export const HomeStore = signalStore(
       patchState(store, (state) => ({ filters: { ...state.filters, [col]: value }, page: 1, rows: [] }));
     },
 
+    clearFilters(): void {
+      patchState(store, { filters: {}, page: 1, rows: [] });
+    },
+
     setPage(page: number): void {
       patchState(store, { page, rows: [] });
     },

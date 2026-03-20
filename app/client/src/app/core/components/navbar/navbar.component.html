@@ -1,5 +1,5 @@
 <nav class="navbar">
-  <div class="navbar__logo">BUSTER</div>
+  <button class="navbar__logo" (click)="onHomeClick()">BUSTER</button>
 
   <div class="navbar__links">
     <button
@@ -16,11 +16,5 @@
       {{ _labelMap.conflicts }}
     </button>
 
-    <button
-      class="navbar__link"
-      (click)="onUploadClick()"
-    >
-      {{ _labelMap.upload }}
-    </button>
   </div>
 </nav>

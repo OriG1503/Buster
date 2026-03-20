@@ -1,9 +1,10 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 
 import { HomeTableComponent } from '../../../features/home/organisms/home-table/home-table.component';
 import { TableActionBarComponent } from '../../../features/home/organisms/table-action-bar/table-action-bar.component';
 import { ColumnToggleEvent } from '../../../shared/types/column-toggle-event.type';
 import { HomeStore } from '../../store/home.store';
+import { UploadDialogService } from '../../services/upload-dialog/upload-dialog.service';
 
 @Component({
   selector: 'app-home-layout',
@@ -13,6 +14,9 @@ import { HomeStore } from '../../store/home.store';
 })
 export class HomeLayoutComponent {
   protected readonly _store = inject(HomeStore);
+  private readonly _uploadDialogService = inject(UploadDialogService);
+
+  protected readonly _$hasActiveFilters = computed(() => Object.values(this._store.filters()).some((v) => v.length > 0));
 
   public onEntitySelected(tableName: string): void {
     this._store.selectTable(tableName);
@@ -20,6 +24,14 @@ export class HomeLayoutComponent {
 
   public onColumnToggle(event: ColumnToggleEvent): void {
     this._store.toggleColumn(event);
+  }
+
+  public onClearFilters(): void {
+    this._store.clearFilters();
+  }
+
+  public onUploadClick(): void {
+    this._uploadDialogService.open();
   }
 
   public onExportExcel(): void {}

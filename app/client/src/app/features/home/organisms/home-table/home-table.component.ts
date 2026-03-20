@@ -2,16 +2,18 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { ConflictHistoryPopupComponent } from '../../../conflict-history/organisms/conflict-history-popup/conflict-history-popup.component';
+import { CellInfoPopupComponent } from '../cell-info-popup/cell-info-popup.component';
 import { HomeStore } from '../../../../core/store/home.store';
 import { FK_TO_ENTITY_ID } from '../../../../shared/consts/fk-to-entity-id.consts';
 import { ENTITY_COLUMN_LABEL_MAP } from '../../../../shared/mapping/entity-column.label-map';
 import { TableCell } from '../../../../shared/types/table-cell.type';
 import { TableRow } from '../../../../shared/types/table-view-response.type';
 import { HistoryTarget } from '../../../../shared/types/history-target.type';
+import { CellInfoTarget } from '../../types/cell-info-target.type';
 
 @Component({
   selector: 'app-home-table',
-  imports: [ConflictHistoryPopupComponent],
+  imports: [ConflictHistoryPopupComponent, CellInfoPopupComponent],
   templateUrl: './home-table.component.html',
   styleUrl: './home-table.component.scss',
 })
@@ -19,6 +21,7 @@ export class HomeTableComponent {
   protected readonly _store = inject(HomeStore);
   private readonly _router = inject(Router);
   protected readonly _$historyTarget = signal<HistoryTarget | null>(null);
+  protected readonly _$cellInfoTarget = signal<CellInfoTarget | null>(null);
 
   protected readonly _$displayColumns = computed(() => {
     const cols = this._store.selectedColumns();
@@ -57,6 +60,18 @@ export class HomeTableComponent {
         anchorBottom: rect.bottom,
         anchorCenterX: rect.left + rect.width / 2,
       });
+      return;
+    }
+
+    if (cell.status === 'raw' && cell.value) {
+      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+      this._$cellInfoTarget.set({
+        anchorBottom: rect.bottom,
+        anchorCenterX: rect.left + rect.width / 2,
+        source: cell.source,
+        notes: cell.notes,
+        uploadedAt: cell.uploadedAt,
+      });
     }
   }
 
@@ -67,6 +82,10 @@ export class HomeTableComponent {
   public onHistoryPopupReverted(): void {
     this._$historyTarget.set(null);
     this._store.refresh();
+  }
+
+  public onCellInfoPopupClose(): void {
+    this._$cellInfoTarget.set(null);
   }
 
   public trackByIndex(index: number): number {

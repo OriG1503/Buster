@@ -3,6 +3,7 @@
     <button class="table-action-bar__btn" (click)="onTableSelectClick($event)">
       <i class="pi pi-table"></i>
       {{ _labelMap.selectTable }}
+      <span class="table-action-bar__table-badge">{{ _$selectedTableLabel() }}</span>
     </button>
     <button class="table-action-bar__btn" (click)="onColumnManageClick($event)">
       <i class="pi pi-sliders-h"></i>
@@ -12,11 +13,23 @@
       <i class="pi pi-download"></i>
       {{ _labelMap.exportExcel }}
     </button>
+    @if ($hasActiveFilters()) {
+      <button class="table-action-bar__btn table-action-bar__btn--clear" (click)="clearFilters.emit()">
+        <i class="pi pi-filter-slash"></i>
+        {{ _labelMap.clearFilters }}
+      </button>
+    }
   </div>
 
-  <span class="table-action-bar__count">
-    {{ _labelMap.resultsFound }}: {{ $resultCount() }} {{ _labelMap.results }}
-  </span>
+  <div class="table-action-bar__end">
+    <button class="table-action-bar__btn table-action-bar__btn--upload" (click)="uploadClick.emit()">
+      <i class="pi pi-upload"></i>
+      {{ _labelMap.upload }}
+    </button>
+    <span class="table-action-bar__count">
+      {{ _labelMap.resultsFound }}: {{ $resultCount() }} {{ _labelMap.results }}
+    </span>
+  </div>
 </div>
 
 <p-overlayPanel #entityPanel (onShow)="onEntityPanelShow()">
