@@ -1,0 +1,4 @@
+robot_UUID,cardboard_UUID,sensor_UUID,communication_UUID,wiring_UUID,sale_UUID,source,cardboard_type,cardboard_version,sensor_type,sensor_version,communication_type,plastic_UUID,iron_UUID,plastic_type,battery_UUID,battery_type,battery_version,lithium_version,sku,iron_type,iron_version,is_heat_conductor,wiring_type,district,municipality,storage_UUID,storage_type,storage_version,is_stock_netanya,is_stock_afula,carrier,online_store_name,salesperson,is_purchased,is_stock_ashdod,is_stock_telaviv,is_stock_rehovot,notes,data_source
+123,,,,,,Test-1-A,,,,,,765,,GREEN,,,,,,,,,,,,,,,,,,,,,,,,Test-1-A,
+123,,,444,,,Test-1-B,,,,,ELECTRICAL,765,,BLUE,,,,,,,,,,,,,,,,,,,,,,,,Test-1-B,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
