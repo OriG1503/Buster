@@ -56,6 +56,21 @@
       background: rgba(255, 255, 255, 0.08);
       color: rgba(255, 255, 255, 0.85);
     }
+
+    &--active {
+      background: rgba(63, 112, 227, 0.15);
+      color: var(--color-blue);
+
+      &:hover {
+        background: rgba(63, 112, 227, 0.25);
+        color: var(--color-blue);
+      }
+    }
+
+    &:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
   }
 
   &__table {
@@ -81,9 +96,26 @@
 
   &__tr {
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background 0.15s;
 
     &:last-child {
       border-bottom: none;
+    }
+
+    &--selectable {
+      cursor: pointer;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.04);
+      }
+    }
+
+    &--selected {
+      background: rgba(63, 112, 227, 0.12);
+
+      &:hover {
+        background: rgba(63, 112, 227, 0.18);
+      }
     }
   }
 
@@ -100,6 +132,26 @@
     }
   }
 
+  &__dot-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    padding: 0.25rem;
+    border-radius: 50%;
+    cursor: default;
+    transition: background 0.15s;
+
+    &--clickable {
+      cursor: pointer;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.08);
+      }
+    }
+  }
+
   &__dot {
     display: inline-block;
     width: 0.625rem;
@@ -111,6 +163,12 @@
     &--winner {
       background: var(--color-blue);
       border-color: var(--color-blue);
+    }
+
+    &--pending {
+      background: var(--color-blue);
+      border-color: var(--color-blue);
+      box-shadow: 0 0 0 3px rgba(63, 112, 227, 0.25);
     }
   }
 
@@ -152,6 +210,49 @@
 
   &__meta-value {
     color: rgba(255, 255, 255, 0.8);
+
+    &--muted {
+      color: rgba(255, 255, 255, 0.4);
+      font-style: italic;
+    }
+  }
+
+  &__edit-notes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  &__edit-notes-label {
+    font-size: var(--font-size-xs);
+    color: rgba(255, 255, 255, 0.4);
+
+    &::after {
+      content: ':';
+    }
+  }
+
+  &__edit-notes-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 0.375rem;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: var(--font-size-xs);
+    font-family: inherit;
+    padding: 0.5rem 0.625rem;
+    resize: none;
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.25);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: rgba(63, 112, 227, 0.5);
+    }
   }
 
   &__btn-confirm {

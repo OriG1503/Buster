@@ -64,6 +64,11 @@ export class HomeTableComponent {
     this._$historyTarget.set(null);
   }
 
+  public onHistoryPopupReverted(): void {
+    this._$historyTarget.set(null);
+    this._store.refresh();
+  }
+
   public trackByIndex(index: number): number {
     return index;
   }
