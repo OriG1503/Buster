@@ -98,10 +98,52 @@ export class TableViewService {
   }
 
   private _buildJoinClauses(rootTable: string, tablesInvolved: Set<string>): string[] {
-    return JOIN_ORDER.filter((table) => tablesInvolved.has(table) && table !== rootTable).map((table) => {
-      const { parentTable, fkColumn } = PARENT_JOIN[table];
-      return `LEFT JOIN "${table}" ON "${parentTable}"."${fkColumn}" = "${table}"."id" AND "${table}"."deletedAt" IS NULL`;
-    });
+    const available = new Set<string>([rootTable]);
+    const clauses: string[] = [];
+
+    // Tables in JOIN_ORDER first, then any remaining (e.g. 'robots' which is never in JOIN_ORDER).
+    const toJoin = [
+      ...JOIN_ORDER.filter((t) => tablesInvolved.has(t) && t !== rootTable),
+      ...[...tablesInvolved].filter((t) => t !== rootTable && !JOIN_ORDER.includes(t)),
+    ];
+
+    let remaining = toJoin;
+
+    while (remaining.length > 0) {
+      const sizeBefore = remaining.length;
+      const nextRemaining: string[] = [];
+
+      remaining.forEach((table) => {
+        const joinDef = PARENT_JOIN[table];
+
+        if (joinDef && available.has(joinDef.parentTable)) {
+          // Downward join: parent is already in the FROM/JOIN set.
+          clauses.push(
+            `LEFT JOIN "${table}" ON "${joinDef.parentTable}"."${joinDef.fkColumn}" = "${table}"."id" AND "${table}"."deletedAt" IS NULL`,
+          );
+          available.add(table);
+        } else {
+          // Upward join: find a child already available whose PARENT_JOIN points to this table.
+          const child = [...available].find((t) => PARENT_JOIN[t]?.parentTable === table);
+          if (child) {
+            const childFk = PARENT_JOIN[child].fkColumn;
+            clauses.push(
+              `LEFT JOIN "${table}" ON "${table}"."${childFk}" = "${child}"."id" AND "${table}"."deletedAt" IS NULL`,
+            );
+            available.add(table);
+          } else {
+            nextRemaining.push(table);
+          }
+        }
+      });
+
+      if (nextRemaining.length === sizeBefore) {
+        break; // No progress — avoid infinite loop.
+      }
+      remaining = nextRemaining;
+    }
+
+    return clauses;
   }
 
   private _buildSelectClauses(rootTable: string, columns: string[], tablesInvolved: Set<string>): string {
