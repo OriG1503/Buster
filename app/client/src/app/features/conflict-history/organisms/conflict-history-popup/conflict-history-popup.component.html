@@ -61,24 +61,23 @@
         </tbody>
       </table>
 
-      <div class="history-popup__meta">
-        <div class="history-popup__meta-row">
-          <span class="history-popup__meta-label">שם מחליט</span>
-          <span class="history-popup__meta-value">{{ history.resolverName ?? 'N/A' }}</span>
+      <div class="history-popup__bottom">
+        <div class="history-popup__bottom-top-row">
+          <div class="history-popup__meta-field">
+            <span class="history-popup__meta-label">שם משתמש</span>
+            <span class="history-popup__meta-value">{{ history.resolverName ?? 'N/A' }}</span>
+          </div>
+          <div class="history-popup__meta-field">
+            <span class="history-popup__meta-label">תאריך הכרעה</span>
+            <span class="history-popup__meta-value">{{ formatDate(history.resolutionDate) }}</span>
+          </div>
         </div>
-        <div class="history-popup__meta-row">
-          <span class="history-popup__meta-label">תאריך הכרעה</span>
-          <span class="history-popup__meta-value">{{ formatDate(history.resolutionDate) }}</span>
-        </div>
-        <div class="history-popup__meta-row">
+        <div class="history-popup__meta-field">
           <span class="history-popup__meta-label">הערות</span>
           <span class="history-popup__meta-value">{{ history.resolutionNotes ?? 'N/A' }}</span>
         </div>
+        <button class="history-popup__btn-confirm" type="button" (click)="onClose()">אישור</button>
       </div>
     }
   }
-
-  <div class="history-popup__footer">
-    <button class="history-popup__btn-confirm" type="button" (click)="onClose()">אישור</button>
-  </div>
 </div>
