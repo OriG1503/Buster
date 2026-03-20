@@ -243,6 +243,25 @@ export class TableViewService {
   private _buildResponseRow(columns: string[], row: Record<string, unknown>, conflictMap: ConflictMap): TableRow {
     const result: TableRow = {};
 
+    // Always include {table}.id for every involved table so the conflict history popup
+    // can resolve the entity ID regardless of which columns the user has selected.
+    const involvedTables = new Set(columns.map((col) => col.split('.')[0]));
+    involvedTables.forEach((table) => {
+      const idKey = `${table}.id`;
+      if (!columns.includes(idKey)) {
+        const entityId = row[`${table}__id`] as string | null;
+        const createdAt = row[`${table}__createdAt`];
+        result[idKey] = {
+          value: entityId,
+          status: 'raw',
+          source: null,
+          notes: null,
+          uploadedAt: createdAt instanceof Date ? createdAt.toISOString() : (createdAt as string | null) ?? null,
+          conflictId: null,
+        };
+      }
+    });
+
     columns.forEach((colKey) => {
       const [table, column] = colKey.split('.');
       const entityId = row[`${table}__id`] as string | null;
