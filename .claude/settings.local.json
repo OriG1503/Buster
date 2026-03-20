@@ -53,7 +53,13 @@
       "Bash(grep -r \"arrow\\\\|::before\\\\|::after\\\\|caret\\\\|p-op\" C:/Users/Ori/Desktop/Coding/buster/app/client/node_modules/@primeuix --include=*.css -l)",
       "Bash(find /c/Users/Ori/Desktop/Coding/buster/app/client/src/app/features/home/types -type f -name *.ts)",
       "Skill(commit-commands:commit)",
-      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d[''''projects''''][''''client''''][''''architect''''][''''serve''''], indent=2\\)\\)\")"
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d[''''projects''''][''''client''''][''''architect''''][''''serve''''], indent=2\\)\\)\")",
+      "Bash(python -c \":*)",
+      "Bash(pip install:*)",
+      "Bash(python3 -m pip install openpyxl -q)",
+      "Bash(py -m pip install openpyxl -q)",
+      "Bash(py -c \":*)",
+      "Bash(py:*)"
     ]
   }
 }

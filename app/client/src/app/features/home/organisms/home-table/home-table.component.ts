@@ -63,7 +63,7 @@ export class HomeTableComponent {
       return;
     }
 
-    if (cell.status === 'raw') {
+    if (cell.status === 'raw' && cell.value) {
       const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
       this._$cellInfoTarget.set({
         anchorBottom: rect.bottom,
