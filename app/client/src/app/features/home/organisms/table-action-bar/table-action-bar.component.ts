@@ -43,16 +43,19 @@ export class TableActionBarComponent {
     () => ENTITY_OPTIONS.find((opt) => opt.tableName === this.$selectedTable())?.label ?? this.$selectedTable(),
   );
 
-  /** All available columns across all groups, deduplicated. */
+  /** All available columns across all groups, deduplicated by key and by resolved label. */
   protected readonly _$allAvailableColumns = computed(() => {
-    const seen = new Set<string>();
+    const seenKeys = new Set<string>();
+    const seenLabels = new Set<string>();
     return this.$columnGroups()
       .flatMap((group) => group.columns)
       .filter((col) => {
-        if (seen.has(col.key)) {
+        const label = (this._columnLabelMap[col.key] ?? col.label).trim();
+        if (seenKeys.has(col.key) || seenLabels.has(label)) {
           return false;
         }
-        seen.add(col.key);
+        seenKeys.add(col.key);
+        seenLabels.add(label);
         return true;
       });
   });

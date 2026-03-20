@@ -74,17 +74,17 @@
           (drop)="onDrop($event, col.key)"
           (dragend)="onDragEnd()"
         >
+          <i
+            class="pi pi-bars column-panel__handle"
+            [class.column-panel__handle--inactive]="!$selectedColumns().includes(col.key)"
+          ></i>
+          <span class="column-panel__label">{{ _columnLabelMap[col.key] ?? col.label }}</span>
           <input
             class="column-panel__checkbox"
             type="checkbox"
             [checked]="$selectedColumns().includes(col.key)"
             (change)="onColumnToggle(col.key, $any($event.target).checked)"
           />
-          <span class="column-panel__label">{{ _columnLabelMap[col.key] ?? col.label }}</span>
-          <i
-            class="pi pi-bars column-panel__handle"
-            [class.column-panel__handle--inactive]="!$selectedColumns().includes(col.key)"
-          ></i>
         </div>
       }
       @if (_$orderedColumns().length === 0) {
@@ -93,9 +93,6 @@
     </div>
 
     <div class="column-panel__footer">
-      <button class="column-panel__btn column-panel__btn--secondary" type="button" (click)="onColumnPanelClose()">
-        הגדר כברירת מחדל אישית
-      </button>
       <button class="column-panel__btn column-panel__btn--primary" type="button" (click)="onColumnPanelClose()">
         סיימתי
       </button>
