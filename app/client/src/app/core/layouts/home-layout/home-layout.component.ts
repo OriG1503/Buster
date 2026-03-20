@@ -26,6 +26,10 @@ export class HomeLayoutComponent {
     this._store.toggleColumn(event);
   }
 
+  public onColumnReorder(newOrder: string[]): void {
+    this._store.reorderColumns(newOrder);
+  }
+
   public onClearFilters(): void {
     this._store.clearFilters();
   }

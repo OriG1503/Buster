@@ -9,6 +9,10 @@
       <i class="pi pi-sliders-h"></i>
       {{ _labelMap.manageColumns }}
     </button>
+    <button class="table-action-bar__btn" (click)="onColumn2ManageClick($event)">
+      <i class="pi pi-sort-alt"></i>
+      {{ _labelMap.manageColumns2 }}
+    </button>
     <button class="table-action-bar__btn" (click)="exportExcel.emit()">
       <i class="pi pi-download"></i>
       {{ _labelMap.exportExcel }}
@@ -62,6 +66,29 @@
           </label>
         }
       </div>
+    }
+  </div>
+</p-overlayPanel>
+
+<p-overlayPanel #column2Panel styleClass="column2-panel-overlay" (onShow)="onColumn2PanelShow()">
+  <div class="column2-panel">
+    @for (col of _$flatColumns(); track col; let i = $index) {
+      <div
+        class="column2-panel__item"
+        [class.column2-panel__item--drag-over]="_dragOverIndex === i"
+        [class.column2-panel__item--dragging]="_draggedIndex === i"
+        draggable="true"
+        (dragstart)="onDragStart(i)"
+        (dragover)="onDragOver($event, i)"
+        (drop)="onDrop($event, i)"
+        (dragend)="onDragEnd()"
+      >
+        <i class="pi pi-bars column2-panel__handle"></i>
+        <span>{{ _columnLabelMap[col] ?? col }}</span>
+      </div>
+    }
+    @if (_$flatColumns().length === 0) {
+      <span class="column2-panel__empty">אין עמודות נבחרות</span>
     }
   </div>
 </p-overlayPanel>

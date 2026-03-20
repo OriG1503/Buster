@@ -84,6 +84,10 @@ export const HomeStore = signalStore(
       patchState(store, { page, rows: [] });
     },
 
+    reorderColumns(newOrder: string[]): void {
+      patchState(store, { selectedColumns: newOrder, page: 1, rows: [] });
+    },
+
     refresh(): void {
       patchState(store, (state) => ({ refreshTick: state.refreshTick + 1, rows: [] }));
     },
