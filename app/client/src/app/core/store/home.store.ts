@@ -31,6 +31,7 @@ type HomeState = {
   rows: TableRow[];
   total: number;
   isLoading: boolean;
+  refreshTick: number;
 };
 
 export const HomeStore = signalStore(
@@ -43,6 +44,7 @@ export const HomeStore = signalStore(
     rows: [],
     total: 0,
     isLoading: false,
+    refreshTick: 0,
   }),
   withComputed((store) => ({
     columnGroups: computed<ColumnGroup[]>(() => ENTITY_COLUMN_TREE[store.selectedTable()]),
@@ -76,6 +78,10 @@ export const HomeStore = signalStore(
 
     setPage(page: number): void {
       patchState(store, { page, rows: [] });
+    },
+
+    refresh(): void {
+      patchState(store, (state) => ({ refreshTick: state.refreshTick + 1, rows: [] }));
     },
 
     syncFromUrl(params: Params): void {
@@ -122,6 +128,7 @@ export const HomeStore = signalStore(
         columns: toObservable(store.selectedColumns),
         filters: toObservable(store.filters),
         page: toObservable(store.page),
+        refreshTick: toObservable(store.refreshTick),
       })
         .pipe(
           debounceTime(300),

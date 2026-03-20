@@ -4,6 +4,15 @@ import { Observable } from 'rxjs';
 
 import { ConflictHistoryResponse } from '../../shared/types/conflict-history-response.type';
 
+type RevertConflictParams = {
+  tableName: string;
+  entityId: string;
+  columnName: string;
+  revertValue: string;
+  revertedBy: string;
+  resolutionNotes: string;
+};
+
 @Injectable({ providedIn: 'root' })
 export class ConflictHistoryService {
   private readonly _http = inject(HttpClient);
@@ -12,5 +21,9 @@ export class ConflictHistoryService {
     return this._http.get<ConflictHistoryResponse>('/api/conflicts/history', {
       params: { tableName, entityId, columnName },
     });
+  }
+
+  public revert(params: RevertConflictParams): Observable<unknown> {
+    return this._http.patch('/api/conflicts/revert', params);
   }
 }
