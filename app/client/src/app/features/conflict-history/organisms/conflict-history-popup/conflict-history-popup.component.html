@@ -112,7 +112,7 @@
           </div>
           <div class="history-popup__meta-field">
             <span class="history-popup__meta-label">הערות</span>
-            <span class="history-popup__meta-value">{{ history.resolutionNotes ?? 'N/A' }}</span>
+            <span class="history-popup__meta-value history-popup__meta-value--notes">{{ history.resolutionNotes ?? 'N/A' }}</span>
           </div>
         }
         <button class="history-popup__btn-confirm" type="button" [disabled]="_$isSaving()" (click)="onClose()">
