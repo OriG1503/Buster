@@ -17,6 +17,8 @@ import { MappedEntityBase } from '../types/mapped-entity-base.type';
 type EntityResult = { count: number; flyingField: FlyingField | null; totalFields: number };
 type RowResult = { conflictCount: number; flyingFields: FlyingField[]; totalFields: number };
 
+const BATCH_SIZE = 5;
+
 @Injectable()
 export class DataProcessorService {
   public constructor(
@@ -27,11 +29,17 @@ export class DataProcessorService {
     private readonly _registry: EntityServiceRegistry,
   ) {}
 
-  /** Processes all parsed rows sequentially and returns aggregate conflict/flying-field stats. */
+  /** Processes parsed rows in parallel batches to stay within the DB connection pool limit. */
   public async process(rows: ParsedRow[], username: string): Promise<ProcessResult> {
-    const results = await rows.reduce(
-      async (acc, row, i) => [...(await acc), await this._processRow(row, username, i)],
-      Promise.resolve([] as RowResult[]),
+    const batches = Array.from({ length: Math.ceil(rows.length / BATCH_SIZE) }, (_, b) =>
+      rows.slice(b * BATCH_SIZE, (b + 1) * BATCH_SIZE),
+    );
+    const results = await batches.reduce<Promise<RowResult[]>>(
+      async (acc, batch, b) => [
+        ...(await acc),
+        ...(await Promise.all(batch.map((row, i) => this._processRow(row, username, b * BATCH_SIZE + i)))),
+      ],
+      Promise.resolve([]),
     );
 
     const conflictCount = results.reduce((sum, r) => sum + r.conflictCount, 0);
@@ -63,18 +71,29 @@ export class DataProcessorService {
     const mappedComm = this._mapper.mapCommunication(enriched);
     const commWasRenamed = storedComm !== null && commPriorId !== undefined && mappedComm?.id != null && commPriorId !== mappedComm.id;
 
-    const results: EntityResult[] = [
-      await this._processEntity(this._mapper.mapBattery(enriched), this._registry.get('batteries'), username, rowIndex),
-      await this._processEntity(this._mapper.mapStorage(enriched), this._registry.get('storages'), username, rowIndex),
-      await this._processEntity(this._mapper.mapIron(enriched), this._registry.get('irons'), username, rowIndex),
-      await this._processEntity(this._mapper.mapPlastic(enriched), this._registry.get('plastics'), username, rowIndex, currentPlasticId ?? undefined),
-      await this._processEntity(this._mapper.mapWiring(enriched), this._registry.get('wirings'), username, rowIndex, currentWiringId ?? undefined),
-      await this._processEntity(mappedComm, this._registry.get('communications'), username, rowIndex, commPriorId),
-      await this._processEntity(this._mapper.mapCardboard(enriched), this._registry.get('cardboards'), username, rowIndex),
-      await this._processEntity(this._mapper.mapSensor(enriched), this._registry.get('sensors'), username, rowIndex),
-      await this._processEntity(this._mapper.mapSale(enriched), this._registry.get('sales'), username, rowIndex),
-      await this._processEntity(this._mapper.mapRobot(enriched), this._registry.get('robots'), username, rowIndex),
-    ];
+    // Level 1 — independent leaves: no FK dependencies on each other
+    const [batteryResult, storageResult, ironResult, cardboardResult, sensorResult, saleResult] = await Promise.all([
+      this._processEntity(this._mapper.mapBattery(enriched), this._registry.get('batteries'), username, rowIndex),
+      this._processEntity(this._mapper.mapStorage(enriched), this._registry.get('storages'), username, rowIndex),
+      this._processEntity(this._mapper.mapIron(enriched), this._registry.get('irons'), username, rowIndex),
+      this._processEntity(this._mapper.mapCardboard(enriched), this._registry.get('cardboards'), username, rowIndex),
+      this._processEntity(this._mapper.mapSensor(enriched), this._registry.get('sensors'), username, rowIndex),
+      this._processEntity(this._mapper.mapSale(enriched), this._registry.get('sales'), username, rowIndex),
+    ]);
+
+    // Level 2 — Plastic (needs Battery), Wiring (needs Storage): independent of each other
+    const [plasticResult, wiringResult] = await Promise.all([
+      this._processEntity(this._mapper.mapPlastic(enriched), this._registry.get('plastics'), username, rowIndex, currentPlasticId ?? undefined),
+      this._processEntity(this._mapper.mapWiring(enriched), this._registry.get('wirings'), username, rowIndex, currentWiringId ?? undefined),
+    ]);
+
+    // Level 3 — Communication (needs Plastic + Iron)
+    const commResult = await this._processEntity(mappedComm, this._registry.get('communications'), username, rowIndex, commPriorId);
+
+    // Level 4 — Robot (needs Communication, Wiring, Cardboard, Sensor, Sale)
+    const robotResult = await this._processEntity(this._mapper.mapRobot(enriched), this._registry.get('robots'), username, rowIndex);
+
+    const results: EntityResult[] = [batteryResult, storageResult, ironResult, cardboardResult, sensorResult, saleResult, plasticResult, wiringResult, commResult, robotResult];
 
     if (commWasRenamed) {
       const robotService = this._registry.get('robots');
@@ -183,7 +202,9 @@ export class DataProcessorService {
       incomingFields, incomingSource, username, incomingNotes,
     );
 
-    await Promise.all(result.conflictsToCreate.map((conflict) => this._conflictRepository.insert(conflict, true)));
+    if (result.conflictsToCreate.length > 0) {
+      await this._conflictRepository.insertMany(result.conflictsToCreate);
+    }
 
     if (Object.keys(result.fieldsToUpdate).length > 0) {
       await service.update(id, result.fieldsToUpdate, result.sourceUpdates, storedRecord.source, result.notesUpdates, storedRecord.notes);

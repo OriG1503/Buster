@@ -32,7 +32,7 @@ import { ConfigModule } from '@nestjs/config';
       retryAttempts: 10,
       retryDelay: 3000,
       extra: {
-        max: 5,
+        max: 20,
         idleTimeoutMillis: 30000,
         connectionTimeoutMillis: 10000,
         keepAlive: true,
