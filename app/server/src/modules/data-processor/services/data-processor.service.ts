@@ -203,7 +203,7 @@ export class DataProcessorService {
     );
 
     if (result.conflictsToCreate.length > 0) {
-      await this._conflictRepository.insertMany(result.conflictsToCreate);
+      await this._conflictRepository.insertMany(result.conflictsToCreate, true);
     }
 
     if (Object.keys(result.fieldsToUpdate).length > 0) {

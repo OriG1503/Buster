@@ -8,11 +8,13 @@ import { ConflictResolverService } from './services/conflict-resolver.service';
 import { ConflictController } from './conflict.controller';
 import { EntityServiceRegistryModule } from '../../../shared/modules/entity-service-registry.module';
 import { RevertService } from './services/revert.service';
+import { ConflictListService } from './services/conflict-list.service';
+import { ConflictEntityDetailService } from './services/conflict-entity-detail.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([ConflictEntity]), EntityServiceRegistryModule],
   controllers: [ConflictController],
-  providers: [ConflictRepository, ConflictService, ConflictResolverService, RevertService, ConflictHistoryService],
+  providers: [ConflictRepository, ConflictService, ConflictResolverService, RevertService, ConflictHistoryService, ConflictListService, ConflictEntityDetailService],
   exports: [ConflictRepository, ConflictService],
 })
 export class ConflictModule {}

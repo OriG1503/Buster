@@ -1,0 +1,126 @@
+import { Component, computed, inject, input, signal } from '@angular/core';
+import { forkJoin } from 'rxjs';
+
+import { ConflictGroup } from '../../../../shared/types/conflict-group.type';
+import { ConflictEntityDetail, ConflictColumnDetail } from '../../../../shared/types/conflict-entity-detail.type';
+import { ConflictsService } from '../../../../core/services/conflicts/conflicts.service';
+import { ConflictsStore } from '../../../../core/store/conflicts.store';
+import { ENTITY_COLUMN_LABEL_MAP } from '../../../../shared/mapping/entity-column.label-map';
+
+@Component({
+  selector: 'app-conflict-item',
+  standalone: true,
+  templateUrl: './conflict-item.component.html',
+  styleUrl: './conflict-item.component.scss',
+})
+export class ConflictItemComponent {
+  public readonly $group = input.required<ConflictGroup>();
+
+  private readonly _conflictsService = inject(ConflictsService);
+  private readonly _conflictsStore = inject(ConflictsStore);
+
+  protected readonly _isExpanded = signal(false);
+  protected readonly _$detail = signal<ConflictEntityDetail | null>(null);
+  protected readonly _$notes = signal('');
+  protected readonly _$selectedWinners = signal<Map<string, string>>(new Map());
+
+  protected readonly _$columns = computed<ConflictColumnDetail[]>(() => {
+    const detail = this._$detail();
+    if (!detail) {
+      return [];
+    }
+    const detailMap = new Map(detail.map((col) => [col.columnName, col]));
+    const prefix = `${this.$group().tableName}.`;
+    return Object.keys(ENTITY_COLUMN_LABEL_MAP)
+      .filter((key) => key.startsWith(prefix))
+      .map((key) => key.slice(prefix.length))
+      .map((columnName) => detailMap.get(columnName))
+      .filter((col): col is ConflictColumnDetail => col !== undefined);
+  });
+
+  protected readonly _$maxRows = computed(() => {
+    const cols = this._$columns();
+    const conflictedCols = cols.filter((c) => c.isConflicted);
+    if (conflictedCols.length === 0) {
+      return 1;
+    }
+    return Math.max(...conflictedCols.map((c) => c.conflictValues.length));
+  });
+
+  protected readonly _$rowIndices = computed(() =>
+    Array.from({ length: this._$maxRows() }, (_, i) => i),
+  );
+
+  protected readonly _$canResolve = computed(() => this._$selectedWinners().size > 0);
+
+  public toggle(): void {
+    this._isExpanded.update((v) => !v);
+    if (this._isExpanded() && !this._$detail()) {
+      this._conflictsService
+        .getEntityDetail(this.$group().tableName, this.$group().entityId)
+        .subscribe({ next: (detail) => this._$detail.set(detail) });
+    }
+  }
+
+  protected selectWinner(columnName: string, value: string): void {
+    this._$selectedWinners.update((map) => {
+      const next = new Map(map);
+      if (next.get(columnName) === value) {
+        next.delete(columnName);
+      } else {
+        next.set(columnName, value);
+      }
+      return next;
+    });
+  }
+
+  protected isWinnerSelected(columnName: string, value: string | null): boolean {
+    return this._$selectedWinners().get(columnName) === value;
+  }
+
+  public resolve(): void {
+    if (!this._$canResolve()) {
+      return;
+    }
+    const { tableName, entityId } = this.$group();
+    const notes = this._$notes();
+    const winners = this._$selectedWinners();
+    const calls = this._$columns()
+      .filter((c) => c.isConflicted && winners.has(c.columnName))
+      .map((c) =>
+        this._conflictsService.resolveConflict({
+          tableName,
+          entityId,
+          columnName: c.columnName,
+          winnerValue: winners.get(c.columnName)!,
+          conflictResolver: '',
+          resolutionNotes: notes,
+        }),
+      );
+    forkJoin(calls).subscribe({
+      next: () => {
+        this._$selectedWinners.set(new Map());
+        this._$detail.set(null);
+        const { tableName, entityId } = this.$group();
+        this._conflictsService
+          .getEntityDetail(tableName, entityId)
+          .subscribe({
+            next: (detail) => {
+              this._$detail.set(detail);
+              if (!detail.some((col) => col.isConflicted)) {
+                this._conflictsStore.removeConflict(tableName, entityId);
+              }
+            },
+          });
+      },
+    });
+  }
+
+  protected getLabel(columnName: string): string {
+    return ENTITY_COLUMN_LABEL_MAP[`${this.$group().tableName}.${columnName}`] ?? columnName;
+  }
+
+  protected formatDate(isoDate: string): string {
+    return new Date(isoDate).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit' });
+  }
+}

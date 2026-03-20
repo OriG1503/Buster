@@ -4,6 +4,8 @@ import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ButtonModule } from 'primeng/button';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 
+import { APP_ROUTES } from '../../../shared/consts/app-routes.consts';
+
 import { UPLOAD_DIALOG_LABEL_MAP } from '../mapping/upload-dialog.label-map';
 import { ENTITY_FORMAT_OPTIONS, EntityFormatOption } from '../consts/entity-format-options.consts';
 import { UploadedFile } from '../types/uploaded-file.type';
@@ -34,6 +36,10 @@ export class UploadDialogComponent {
 
   public onConfirm(): void {
     this._dialogRef.close();
+  }
+
+  public onViewConflicts(fileName: string): void {
+    window.open(`${APP_ROUTES.conflicts}?sourceFile=${encodeURIComponent(fileName)}`, '_blank');
   }
 
   public onBrowseClick(): void {

@@ -31,6 +31,51 @@ export class ConflictRepository extends BaseRepository<ConflictEntity, number> {
     });
   }
 
+  public async findOpenGroups(
+    skip: number,
+    take: number,
+    tableName?: string,
+    entityId?: string,
+    sourceFile?: string,
+  ): Promise<{ tableName: string; entityId: string }[]> {
+    const qb = this._repository
+      .createQueryBuilder('c')
+      .select('c.tableName', 'tableName')
+      .addSelect('c.entityId', 'entityId')
+      .where('c.isSolved = :isSolved', { isSolved: false })
+      .groupBy('c.tableName')
+      .addGroupBy('c.entityId')
+      .orderBy('c.tableName', 'ASC')
+      .addOrderBy('c.entityId', 'ASC')
+      .offset(skip)
+      .limit(take);
+    if (tableName) {
+      qb.andWhere('c.tableName = :tableName', { tableName });
+    }
+    if (entityId) {
+      qb.andWhere('c.entityId ILIKE :entityId', { entityId: `%${entityId}%` });
+    }
+    if (sourceFile) {
+      qb.andWhere('c.newSource ILIKE :sourceFile', { sourceFile: `%${sourceFile}%` });
+    }
+    return qb.getRawMany<{ tableName: string; entityId: string }>();
+  }
+
+  public async countOpenGroups(): Promise<number> {
+    const rows = await this._repository
+      .createQueryBuilder('c')
+      .select(['c.tableName', 'c.entityId'])
+      .where('c.isSolved = :isSolved', { isSolved: false })
+      .groupBy('c.tableName')
+      .addGroupBy('c.entityId')
+      .getRawMany();
+    return rows.length;
+  }
+
+  public findOpenByEntity(tableName: string, entityId: string): Promise<ConflictEntity[]> {
+    return this._repository.find({ where: { tableName, entityId, isSolved: false } });
+  }
+
   public async insertRevertConflict(data: Partial<ConflictEntity>): Promise<void> {
     await this.insert(data as Record<string, EntityValue>);
   }
