@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, ViewEncapsulation, computed, input, output } from '@angular/core';
+import { Component, ElementRef, ViewChild, ViewEncapsulation, computed, input, output, signal } from '@angular/core';
 
 import { OverlayPanel, OverlayPanelModule } from 'primeng/overlaypanel';
 
@@ -19,9 +19,7 @@ import { ColumnToggleEvent } from '../../../../shared/types/column-toggle-event.
 export class TableActionBarComponent {
   @ViewChild('entityPanel') private readonly _entityPanel!: OverlayPanel;
   @ViewChild('columnPanel') private readonly _columnPanel!: OverlayPanel;
-  @ViewChild('column2Panel') private readonly _column2Panel!: OverlayPanel;
   @ViewChild('entityPanelContent') private readonly _entityPanelContent!: ElementRef<HTMLElement>;
-  @ViewChild('columnPanelContent') private readonly _columnPanelContent!: ElementRef<HTMLElement>;
 
   public readonly $resultCount = input<number>(0);
   public readonly $columnGroups = input<ColumnGroup[]>([]);
@@ -39,29 +37,54 @@ export class TableActionBarComponent {
   protected readonly _labelMap = HOME_LABEL_MAP;
   protected readonly _columnLabelMap = ENTITY_COLUMN_LABEL_MAP;
   protected readonly ENTITY_OPTIONS = ENTITY_OPTIONS;
+  protected readonly _$searchQuery = signal('');
 
   protected readonly _$selectedTableLabel = computed(
     () => ENTITY_OPTIONS.find((opt) => opt.tableName === this.$selectedTable())?.label ?? this.$selectedTable(),
   );
 
-  /** Visible flat columns — hidden id cols (whose FK counterpart is also selected) are excluded. */
-  protected readonly _$flatColumns = computed(() => {
-    const cols = this.$selectedColumns();
-    return cols.filter((col) => {
-      if (!col.endsWith('.id')) {
+  /** All available columns across all groups, deduplicated. */
+  protected readonly _$allAvailableColumns = computed(() => {
+    const seen = new Set<string>();
+    return this.$columnGroups()
+      .flatMap((group) => group.columns)
+      .filter((col) => {
+        if (seen.has(col.key)) {
+          return false;
+        }
+        seen.add(col.key);
         return true;
-      }
-      const fkKey = FK_TO_ENTITY_ID[col];
-      return !(fkKey && cols.includes(fkKey));
-    });
+      });
   });
+
+  /** Ordered list: selected columns first (in their current order), then unselected. Filtered by search. */
+  protected readonly _$orderedColumns = computed(() => {
+    const allCols = this._$allAvailableColumns();
+    const selected = this.$selectedColumns();
+    const query = this._$searchQuery().trim().toLowerCase();
+
+    const availableByKey = new Map(allCols.map((c) => [c.key, c]));
+    const selectedSet = new Set(selected);
+
+    const selectedCols = selected.map((key) => availableByKey.get(key)).filter((c): c is { key: string; label: string } => !!c);
+    const unselectedCols = allCols.filter((c) => !selectedSet.has(c.key));
+    const ordered = [...selectedCols, ...unselectedCols];
+
+    if (!query) {
+      return ordered;
+    }
+    return ordered.filter((c) => (this._columnLabelMap[c.key] ?? c.label).toLowerCase().includes(query));
+  });
+
+  protected readonly _$selectedVisibleCount = computed(
+    () => this._$allAvailableColumns().filter((c) => this.$selectedColumns().includes(c.key)).length,
+  );
 
   private _entityPanelTarget: HTMLElement | null = null;
   private _columnPanelTarget: HTMLElement | null = null;
-  private _column2PanelTarget: HTMLElement | null = null;
 
-  protected _draggedIndex: number | null = null;
-  protected _dragOverIndex: number | null = null;
+  protected _draggedKey: string | null = null;
+  protected _dragOverKey: string | null = null;
 
   public onTableSelectClick(event: MouseEvent): void {
     this._entityPanelTarget = event.currentTarget as HTMLElement;
@@ -71,11 +94,6 @@ export class TableActionBarComponent {
   public onColumnManageClick(event: MouseEvent): void {
     this._columnPanelTarget = event.currentTarget as HTMLElement;
     this._columnPanel.toggle(event);
-  }
-
-  public onColumn2ManageClick(event: MouseEvent): void {
-    this._column2PanelTarget = event.currentTarget as HTMLElement;
-    this._column2Panel.toggle(event);
   }
 
   public onEntityPanelShow(): void {
@@ -91,14 +109,6 @@ export class TableActionBarComponent {
   public onColumnPanelShow(): void {
     requestAnimationFrame(() => {
       this._centerPanelBeneathTarget(this._columnPanel, this._columnPanelTarget);
-      const first = this._columnPanelContent.nativeElement.querySelector<HTMLInputElement>('input[type="checkbox"]');
-      first?.focus();
-    });
-  }
-
-  public onColumn2PanelShow(): void {
-    requestAnimationFrame(() => {
-      this._centerPanelBeneathTarget(this._column2Panel, this._column2PanelTarget);
     });
   }
 
@@ -118,24 +128,6 @@ export class TableActionBarComponent {
     }
   }
 
-  public onColumnPanelKeydown(event: KeyboardEvent): void {
-    const inputs = Array.from(
-      this._columnPanelContent.nativeElement.querySelectorAll<HTMLInputElement>('input[type="checkbox"]'),
-    );
-    const index = inputs.indexOf(document.activeElement as HTMLInputElement);
-
-    if (event.key === 'ArrowDown') {
-      event.preventDefault();
-      inputs[(index + 1) % inputs.length]?.focus();
-    } else if (event.key === 'ArrowUp') {
-      event.preventDefault();
-      inputs[(index - 1 + inputs.length) % inputs.length]?.focus();
-    } else if (event.key === 'Enter') {
-      event.preventDefault();
-      (document.activeElement as HTMLInputElement)?.click();
-    }
-  }
-
   public onEntitySelected(tableName: string): void {
     this.entitySelected.emit(tableName);
     this._entityPanel.hide();
@@ -145,56 +137,55 @@ export class TableActionBarComponent {
     this.columnToggle.emit({ key, checked });
   }
 
-  public onDragStart(index: number): void {
-    this._draggedIndex = index;
+  public onSearchInput(event: Event): void {
+    this._$searchQuery.set((event.target as HTMLInputElement).value);
   }
 
-  public onDragOver(event: DragEvent, index: number): void {
-    event.preventDefault();
-    this._dragOverIndex = index;
+  public onDragStart(key: string): void {
+    this._draggedKey = key;
   }
 
-  public onDrop(event: DragEvent, dropIndex: number): void {
+  public onDragOver(event: DragEvent, key: string): void {
     event.preventDefault();
-    if (this._draggedIndex === null || this._draggedIndex === dropIndex) {
-      this._draggedIndex = null;
-      this._dragOverIndex = null;
+    this._dragOverKey = key;
+  }
+
+  public onDrop(event: DragEvent, dropKey: string): void {
+    event.preventDefault();
+    const dragKey = this._draggedKey;
+
+    if (!dragKey || dragKey === dropKey) {
+      this._draggedKey = null;
+      this._dragOverKey = null;
       return;
     }
 
-    const flatCols = this._$flatColumns();
-    const newFlatOrder = [...flatCols];
-    const [moved] = newFlatOrder.splice(this._draggedIndex, 1);
-    newFlatOrder.splice(dropIndex, 0, moved);
+    const selected = this.$selectedColumns();
+    if (!selected.includes(dragKey) || !selected.includes(dropKey)) {
+      this._draggedKey = null;
+      this._dragOverKey = null;
+      return;
+    }
 
-    // Rebuild full selectedColumns: insert hidden id cols right after their linked FK col.
-    const allCols = this.$selectedColumns();
-    const hiddenCols = allCols.filter((col) => !flatCols.includes(col));
-    const newOrder: string[] = [];
+    const newSelected = [...selected];
+    const dragIdx = newSelected.indexOf(dragKey);
+    const dropIdx = newSelected.indexOf(dropKey);
+    newSelected.splice(dragIdx, 1);
+    newSelected.splice(dropIdx, 0, dragKey);
 
-    newFlatOrder.forEach((col) => {
-      newOrder.push(col);
-      hiddenCols.forEach((hiddenId) => {
-        if (FK_TO_ENTITY_ID[hiddenId] === col && !newOrder.includes(hiddenId)) {
-          newOrder.push(hiddenId);
-        }
-      });
-    });
-
-    hiddenCols.forEach((id) => {
-      if (!newOrder.includes(id)) {
-        newOrder.push(id);
-      }
-    });
-
-    this.columnReorder.emit(newOrder);
-    this._draggedIndex = null;
-    this._dragOverIndex = null;
+    this.columnReorder.emit(newSelected);
+    this._draggedKey = null;
+    this._dragOverKey = null;
   }
 
   public onDragEnd(): void {
-    this._draggedIndex = null;
-    this._dragOverIndex = null;
+    this._draggedKey = null;
+    this._dragOverKey = null;
+  }
+
+  public onColumnPanelClose(): void {
+    this._columnPanel.hide();
+    this._$searchQuery.set('');
   }
 
   private _centerPanelBeneathTarget(panel: OverlayPanel, target: HTMLElement | null): void {
