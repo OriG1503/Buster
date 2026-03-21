@@ -41,6 +41,9 @@ export class RevertService {
     const revertSource = originalConflict.newValue === revertValue ? originalConflict.newSource : originalConflict.oldSource;
     const revertNotes = originalConflict.newValue === revertValue ? originalConflict.newNotes : originalConflict.oldNotes;
 
+    const mostRecentResolved = await this._conflictRepository.findMostRecentResolved(tableName, entityId, columnName);
+    const cascadedNotes = [mostRecentResolved?.resolutionNotes, resolutionNotes].filter(Boolean).join('\n');
+
     await this._conflictRepository.insertRevertConflict({
       tableName, entityId, columnName,
       oldValue: currentValue,
@@ -48,7 +51,7 @@ export class RevertService {
       oldNotes: entity.notes?.[columnName] ?? null,
       newValue: revertValue, newSource: revertSource, newNotes: revertNotes,
       conflictCreator: revertedBy, conflictResolver: revertedBy,
-      resolutionNotes, isSolved: true,
+      resolutionNotes: cascadedNotes, isSolved: true,
     });
 
     if (columnName.endsWith('Id')) {

@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, computed, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { ConflictHistoryPopupComponent } from '../../../conflict-history/organisms/conflict-history-popup/conflict-history-popup.component';
@@ -17,7 +17,9 @@ import { CellInfoTarget } from '../../types/cell-info-target.type';
   templateUrl: './home-table.component.html',
   styleUrl: './home-table.component.scss',
 })
-export class HomeTableComponent {
+export class HomeTableComponent implements AfterViewInit, OnDestroy {
+  @ViewChild('scrollContainer') private readonly _scrollContainerRef!: ElementRef<HTMLElement>;
+
   protected readonly _store = inject(HomeStore);
   private readonly _router = inject(Router);
   protected readonly _$historyTarget = signal<HistoryTarget | null>(null);
@@ -35,6 +37,38 @@ export class HomeTableComponent {
   });
 
   protected readonly _columnLabelMap = ENTITY_COLUMN_LABEL_MAP;
+
+  constructor() {
+    effect(() => {
+      const isLoading = this._store.isLoading();
+      const isLoadingMore = this._store.isLoadingMore();
+      if (!isLoading && !isLoadingMore) {
+        requestAnimationFrame(() => this._checkScrollForMore());
+      }
+    });
+  }
+
+  public ngAfterViewInit(): void {
+    this._scrollContainerRef.nativeElement.addEventListener('scroll', this._onScroll);
+  }
+
+  public ngOnDestroy(): void {
+    this._scrollContainerRef?.nativeElement.removeEventListener('scroll', this._onScroll);
+  }
+
+  private readonly _onScroll = (): void => {
+    this._checkScrollForMore();
+  };
+
+  private _checkScrollForMore(): void {
+    const container = this._scrollContainerRef?.nativeElement;
+    if (!container || !this._store.hasMore() || this._store.isLoading() || this._store.isLoadingMore()) {
+      return;
+    }
+    if (container.scrollHeight - container.scrollTop - container.clientHeight < 200) {
+      this._store.loadMore();
+    }
+  }
 
   public onFilterChange(col: string, value: string): void {
     this._store.setFilter(col, value);
@@ -60,19 +94,30 @@ export class HomeTableComponent {
         anchorBottom: rect.bottom,
         anchorCenterX: rect.left + rect.width / 2,
       });
+    }
+  }
+
+  public onCellMouseEnter(row: TableRow, col: string, event: MouseEvent): void {
+    const cell = row[col];
+    if (cell?.status !== 'raw' || !cell.value) {
       return;
     }
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const thead = this._scrollContainerRef.nativeElement.querySelector('thead');
+    const tableHeaderBottom = thead?.getBoundingClientRect().bottom ?? 0;
+    this._$cellInfoTarget.set({
+      anchorTop: rect.top,
+      anchorBottom: rect.bottom,
+      anchorCenterX: rect.left + rect.width / 2,
+      tableHeaderBottom,
+      source: cell.source,
+      notes: cell.notes,
+      uploadedAt: cell.uploadedAt,
+    });
+  }
 
-    if (cell.status === 'raw' && cell.value) {
-      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-      this._$cellInfoTarget.set({
-        anchorBottom: rect.bottom,
-        anchorCenterX: rect.left + rect.width / 2,
-        source: cell.source,
-        notes: cell.notes,
-        uploadedAt: cell.uploadedAt,
-      });
-    }
+  public onCellMouseLeave(): void {
+    this._$cellInfoTarget.set(null);
   }
 
   public onHistoryPopupClose(): void {

@@ -1,5 +1,5 @@
 <div class="home-table">
-  <div class="home-table__scroll">
+  <div class="home-table__scroll" #scrollContainer>
     <table class="home-table__table">
       <thead>
         <tr>
@@ -46,10 +46,25 @@
                   class="home-table__td home-table__td--{{ cellStatus(row[col]) }}"
                   (click)="onCellClick(row, col, $event)"
                 >
-                  {{ cellValue(row[col]) }}
+                  <span
+                    class="home-table__cell-text"
+                    (mouseenter)="onCellMouseEnter(row, col, $event)"
+                    (mouseleave)="onCellMouseLeave()"
+                  >{{ cellValue(row[col]) }}</span>
                 </td>
               }
             </tr>
+          }
+          @if (_store.isLoadingMore()) {
+            @for (i of [1, 2, 3]; track i) {
+              <tr class="home-table__tr home-table__tr--skeleton">
+                @for (col of _$displayColumns(); track col) {
+                  <td class="home-table__td">
+                    <span class="home-table__skeleton"></span>
+                  </td>
+                }
+              </tr>
+            }
           }
           @if (_store.rows().length === 0 && !_store.isLoading()) {
             <tr>

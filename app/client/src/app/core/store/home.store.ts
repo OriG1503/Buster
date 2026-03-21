@@ -1,8 +1,8 @@
-import { computed, effect, inject } from '@angular/core';
+import { computed, effect, inject, signal } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from '@ngrx/signals';
-import { combineLatest, debounceTime, switchMap } from 'rxjs';
+import { combineLatest, debounceTime, filter, map, switchMap, take } from 'rxjs';
 
 import { TableViewService } from '../services/table-view.service';
 import { ENTITY_COLUMN_TREE } from '../../shared/consts/entity-column-tree.consts';
@@ -31,6 +31,7 @@ type HomeState = {
   rows: TableRow[];
   total: number;
   isLoading: boolean;
+  isLoadingMore: boolean;
   refreshTick: number;
 };
 
@@ -44,10 +45,12 @@ export const HomeStore = signalStore(
     rows: [],
     total: 0,
     isLoading: false,
+    isLoadingMore: false,
     refreshTick: 0,
   }),
   withComputed((store) => ({
     columnGroups: computed<ColumnGroup[]>(() => ENTITY_COLUMN_TREE[store.selectedTable()]),
+    hasMore: computed(() => store.rows().length < store.total()),
   })),
   withMethods((store) => ({
     selectTable(tableName: string): void {
@@ -57,6 +60,7 @@ export const HomeStore = signalStore(
         filters: {},
         page: 1,
         rows: [],
+        isLoadingMore: false,
       });
     },
 
@@ -65,27 +69,34 @@ export const HomeStore = signalStore(
       const linkedId = FK_TO_ENTITY_ID[key];
       if (checked) {
         const toAdd = [key, ...(linkedId && !cols.includes(linkedId) ? [linkedId] : [])];
-        patchState(store, { selectedColumns: [...cols, ...toAdd], page: 1, rows: [] });
+        patchState(store, { selectedColumns: [...cols, ...toAdd], page: 1, rows: [], isLoadingMore: false });
       } else {
         const toRemove = new Set([key, ...(linkedId ? [linkedId] : [])]);
-        patchState(store, { selectedColumns: cols.filter((col) => !toRemove.has(col)), page: 1, rows: [] });
+        patchState(store, { selectedColumns: cols.filter((col) => !toRemove.has(col)), page: 1, rows: [], isLoadingMore: false });
       }
     },
 
     setFilter(col: string, value: string): void {
-      patchState(store, (state) => ({ filters: { ...state.filters, [col]: value }, page: 1, rows: [] }));
+      patchState(store, (state) => ({ filters: { ...state.filters, [col]: value }, page: 1, rows: [], isLoadingMore: false }));
     },
 
     clearFilters(): void {
-      patchState(store, { filters: {}, page: 1, rows: [] });
+      patchState(store, { filters: {}, page: 1, rows: [], isLoadingMore: false });
     },
 
-    setPage(page: number): void {
-      patchState(store, { page, rows: [] });
+    reorderColumns(newOrder: string[]): void {
+      patchState(store, { selectedColumns: newOrder, page: 1, rows: [], isLoadingMore: false });
+    },
+
+    loadMore(): void {
+      if (store.isLoading() || store.isLoadingMore() || !store.hasMore()) {
+        return;
+      }
+      patchState(store, (state) => ({ page: state.page + 1, isLoadingMore: true }));
     },
 
     refresh(): void {
-      patchState(store, (state) => ({ refreshTick: state.refreshTick + 1, rows: [] }));
+      patchState(store, (state) => ({ refreshTick: state.refreshTick + 1, page: 1, rows: [], isLoadingMore: false }));
     },
 
     syncFromUrl(params: Params): void {
@@ -110,12 +121,30 @@ export const HomeStore = signalStore(
       const router = inject(Router);
       const tableViewService = inject(TableViewService);
 
-      const snapshot = route.snapshot.queryParams as Params;
-      if (snapshot['table'] || snapshot['cols']) {
-        store.syncFromUrl(snapshot);
-      }
+      // Wait for the router to finish the initial navigation before reading URL params.
+      // Reading snapshot before NavigationEnd would give empty params since the store
+      // (providedIn: 'root') may initialize before the router processes the URL.
+      const isInitialized = signal(false);
 
+      router.events
+        .pipe(
+          filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+          take(1),
+        )
+        .subscribe(() => {
+          const params = route.snapshot.queryParams as Params;
+          if (params['table'] || params['cols']) {
+            store.syncFromUrl(params);
+          }
+          isInitialized.set(true);
+        });
+
+      // Only write state to URL after the initial URL has been read, to avoid
+      // the effect overwriting the pasted URL with default state on first run.
       effect(() => {
+        if (!isInitialized()) {
+          return;
+        }
         const filterParams = Object.fromEntries(
           Object.entries(store.filters())
             .filter(([, v]) => v.length > 0)
@@ -127,7 +156,10 @@ export const HomeStore = signalStore(
         });
       });
 
+      // Gate data fetching behind isInitialized so we don't fire a request with
+      // default state before the URL params have been applied.
       combineLatest({
+        isReady: toObservable(isInitialized),
         tableName: toObservable(store.selectedTable),
         columns: toObservable(store.selectedColumns),
         filters: toObservable(store.filters),
@@ -135,15 +167,27 @@ export const HomeStore = signalStore(
         refreshTick: toObservable(store.refreshTick),
       })
         .pipe(
+          filter(({ isReady }) => isReady),
           debounceTime(300),
           switchMap(({ tableName, columns, filters, page }) => {
-            patchState(store, { isLoading: true });
-            return tableViewService.query({ tableName, columns, filters, page, pageSize: PAGE_SIZE });
+            const isAppend = store.isLoadingMore();
+            if (!isAppend) {
+              patchState(store, { isLoading: true });
+            }
+            return tableViewService
+              .query({ tableName, columns, filters, page, pageSize: PAGE_SIZE })
+              .pipe(map((res) => ({ res, isAppend })));
           }),
         )
         .subscribe({
-          next: (response) => patchState(store, { rows: response.rows, total: response.total, isLoading: false }),
-          error: () => patchState(store, { isLoading: false }),
+          next: ({ res, isAppend }) => {
+            if (isAppend) {
+              patchState(store, (state) => ({ rows: [...state.rows, ...res.rows], total: res.total, isLoadingMore: false }));
+            } else {
+              patchState(store, { rows: res.rows, total: res.total, isLoading: false });
+            }
+          },
+          error: () => patchState(store, { isLoading: false, isLoadingMore: false }),
         });
     },
   })),
