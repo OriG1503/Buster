@@ -1,1 +1,47 @@
-<div class="conflicts-layout"></div>
+<div class="conflicts-layout">
+  @if (_$filterTitle()) {
+    <div class="conflicts-layout__filter-title">
+      <i class="pi pi-filter"></i>
+      <span>{{ _$filterTitle() }}</span>
+      <button class="conflicts-layout__filter-clear" (click)="clearFilters()">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+  }
+
+  <div class="conflicts-layout__header">
+    <div class="conflicts-layout__filter">
+      <div class="conflicts-layout__filter-select-wrap">
+        <select
+          class="conflicts-layout__filter-select"
+          [value]="_$filterTableName()"
+          (change)="onTableNameChange($any($event.target).value)"
+        >
+          <option value="">בחר סוג ישות</option>
+          @for (opt of _entityOptions; track opt.tableName) {
+            <option [value]="opt.tableName">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+      <input
+        class="conflicts-layout__filter-search"
+        type="text"
+        [value]="_$filterEntityId()"
+        placeholder="חפש לפי מזהה ישות"
+        (input)="onEntityIdInput($any($event.target).value)"
+      />
+    </div>
+    <span class="conflicts-layout__count">נמצאו {{ _store.openCount() }} קונפליקטים</span>
+  </div>
+
+  <div class="conflicts-layout__list">
+    @for (group of _store.openConflicts(); track group.tableName + group.entityId) {
+      <app-conflict-item [$group]="group" />
+    }
+    <div #sentinel class="conflicts-layout__sentinel">
+      @if (_store.isLoadingMore()) {
+        <i class="pi pi-spin pi-spinner conflicts-layout__spinner"></i>
+      }
+    </div>
+  </div>
+</div>

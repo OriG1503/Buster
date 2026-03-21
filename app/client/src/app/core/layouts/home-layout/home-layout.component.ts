@@ -1,4 +1,5 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, effect, inject } from '@angular/core';
+import { Router } from '@angular/router';
 
 import { HomeTableComponent } from '../../../features/home/organisms/home-table/home-table.component';
 import { TableActionBarComponent } from '../../../features/home/organisms/table-action-bar/table-action-bar.component';
@@ -15,6 +16,21 @@ import { UploadDialogService } from '../../services/upload-dialog/upload-dialog.
 export class HomeLayoutComponent {
   protected readonly _store = inject(HomeStore);
   private readonly _uploadDialogService = inject(UploadDialogService);
+  private readonly _router = inject(Router);
+
+  public constructor() {
+    effect(() => {
+      const filterParams = Object.fromEntries(
+        Object.entries(this._store.filters())
+          .filter(([, v]) => v.length > 0)
+          .map(([col, v]) => [`f_${col}`, v]),
+      );
+      this._router.navigate([], {
+        queryParams: { table: this._store.selectedTable(), cols: this._store.selectedColumns().join(','), ...filterParams },
+        replaceUrl: true,
+      });
+    });
+  }
 
   protected readonly _$hasActiveFilters = computed(() => Object.values(this._store.filters()).some((v) => v.length > 0));
 

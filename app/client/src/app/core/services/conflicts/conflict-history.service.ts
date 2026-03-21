@@ -2,16 +2,8 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-import { ConflictHistoryResponse } from '../../shared/types/conflict-history-response.type';
-
-type RevertConflictParams = {
-  tableName: string;
-  entityId: string;
-  columnName: string;
-  revertValue: string;
-  revertedBy: string;
-  resolutionNotes: string;
-};
+import { ConflictHistoryResponse } from '../../../shared/types/conflict-history-response.type';
+import { RevertConflictParams } from '../../../shared/types/revert-conflict-params.type';
 
 @Injectable({ providedIn: 'root' })
 export class ConflictHistoryService {

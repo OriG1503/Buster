@@ -17,9 +17,7 @@ const DEFAULT_TABLE = 'robots';
 
 function defaultColumns(tableName: string): string[] {
   const keys = ENTITY_COLUMN_TREE[tableName][0].columns.map((col) => col.key);
-  const linked = keys
-    .map((key) => FK_TO_ENTITY_ID[key])
-    .filter((id): id is string => !!id && !keys.includes(id));
+  const linked = keys.map((key) => FK_TO_ENTITY_ID[key]).filter((id): id is string => !!id && !keys.includes(id));
   return [...keys, ...linked];
 }
 
@@ -72,12 +70,22 @@ export const HomeStore = signalStore(
         patchState(store, { selectedColumns: [...cols, ...toAdd], page: 1, rows: [], isLoadingMore: false });
       } else {
         const toRemove = new Set([key, ...(linkedId ? [linkedId] : [])]);
-        patchState(store, { selectedColumns: cols.filter((col) => !toRemove.has(col)), page: 1, rows: [], isLoadingMore: false });
+        patchState(store, {
+          selectedColumns: cols.filter((col) => !toRemove.has(col)),
+          page: 1,
+          rows: [],
+          isLoadingMore: false,
+        });
       }
     },
 
     setFilter(col: string, value: string): void {
-      patchState(store, (state) => ({ filters: { ...state.filters, [col]: value }, page: 1, rows: [], isLoadingMore: false }));
+      patchState(store, (state) => ({
+        filters: { ...state.filters, [col]: value },
+        page: 1,
+        rows: [],
+        isLoadingMore: false,
+      }));
     },
 
     clearFilters(): void {
@@ -182,7 +190,11 @@ export const HomeStore = signalStore(
         .subscribe({
           next: ({ res, isAppend }) => {
             if (isAppend) {
-              patchState(store, (state) => ({ rows: [...state.rows, ...res.rows], total: res.total, isLoadingMore: false }));
+              patchState(store, (state) => ({
+                rows: [...state.rows, ...res.rows],
+                total: res.total,
+                isLoadingMore: false,
+              }));
             } else {
               patchState(store, { rows: res.rows, total: res.total, isLoading: false });
             }

@@ -4,6 +4,8 @@ import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ButtonModule } from 'primeng/button';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 
+import { APP_ROUTES } from '../../../shared/consts/app-routes.consts';
+
 import { UPLOAD_DIALOG_LABEL_MAP } from '../mapping/upload-dialog.label-map';
 import { ENTITY_FORMAT_OPTIONS, EntityFormatOption } from '../consts/entity-format-options.consts';
 import { UploadedFile } from '../types/uploaded-file.type';
@@ -36,6 +38,10 @@ export class UploadDialogComponent {
     this._dialogRef.close();
   }
 
+  public getConflictsUrl(conflictIds: number[]): string {
+    return `${APP_ROUTES.conflicts}?conflictIds=${conflictIds.join(',')}`;
+  }
+
   public onBrowseClick(): void {
     this._fileInputRef.nativeElement.click();
   }
@@ -45,6 +51,7 @@ export class UploadDialogComponent {
     if (input.files?.length) {
       this._processFiles(Array.from(input.files));
     }
+    input.value = '';
   }
 
   public onDragOver(event: DragEvent): void {
@@ -103,7 +110,7 @@ export class UploadDialogComponent {
   private _processFiles(files: File[]): void {
     files.filter((file) => this._isValidFile(file)).forEach((file) => {
       const id = crypto.randomUUID();
-      const pending: UploadedFile = { id, name: file.name, successRate: 0, newConflictsCount: 0, status: 'pending' };
+      const pending: UploadedFile = { id, name: file.name, successRate: 0, newConflictsCount: 0, conflictIds: [], status: 'pending' };
       this._$uploadedFiles.update((prev) => [...prev, pending]);
 
       this._fileService.upload(file, 'default').subscribe({
@@ -116,6 +123,7 @@ export class UploadDialogComponent {
                     name: file.name,
                     successRate: summary.uploadPercentage,
                     newConflictsCount: summary.conflictCount,
+                    conflictIds: summary.conflictIds,
                     status: (summary.conflictCount > 0 || summary.uploadPercentage < 100) ? 'warning' : 'success',
                     reportFileName: summary.uploadPercentage < 100 ? summary.reportFileName : undefined,
                   }

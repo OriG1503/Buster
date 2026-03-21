@@ -40,6 +40,7 @@ export class FileService {
       void this._s3Service.upload(reportName, reportBuffer);
 
       return {
+        conflictIds: result.conflictIds,
         conflictCount: result.conflictCount,
         uploadPercentage: result.uploadPercentage,
         flyingFieldCount: result.flyingFields.reduce((sum, f) => sum + f.fields.length, 0),

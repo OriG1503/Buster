@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 
-import { ConflictHistoryService } from '../../../../core/services/conflict-history.service';
+import { ConflictHistoryService } from '../../../../core/services/conflicts/conflict-history.service';
 import { ConflictHistoryResponse } from '../../../../shared/types/conflict-history-response.type';
 import { HistoryTarget } from '../../../../shared/types/history-target.type';
 import { ToastService } from '../../../../shared/services/toast.service';
