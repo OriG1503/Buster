@@ -15,7 +15,7 @@
     justify-content: flex-start;
     padding: 0.75rem 1rem;
     flex-shrink: 0;
-    background-color: var(--color-surface-hover);
+    background-color: rgba(255, 255, 255, 0.04);
   }
 
   &__chevron {
@@ -25,6 +25,7 @@
   }
 
   &__label {
+    color: var(--p-surface-300);
     font-size: var(--font-size-sm);
     font-weight: 550;
   }
@@ -51,18 +52,24 @@
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
+  &__thead {
+    background-color: var(--color-surface-hover);
+  }
 
   &__th {
     padding: 0.625rem 1rem;
     font-size: var(--font-size-sm);
     font-weight: 600;
-    color: var(--color-navy-gray);
+    color: var(--p-surface-300);
     text-align: center;
     border-left: 1px solid rgba(255, 255, 255, 0.06);
 
     &:last-child {
       border-left: none;
     }
+  }
+  &__tbody {
+    background-color: rgba(255, 255, 255, 0.04);
   }
 
   &__row {
@@ -75,26 +82,17 @@
 
   &__cell {
     padding: 0.75rem 1rem;
-    vertical-align: top;
+    vertical-align: middle;
     text-align: center;
     border-left: 1px solid rgba(255, 255, 255, 0.06);
-    display: table-cell;
 
     &:last-child {
       border-left: none;
     }
 
     &--conflict {
-      background-color: rgba(231, 75, 59, 0.05);
-      cursor: pointer;
-
-      &:hover {
-        background-color: rgba(231, 75, 59, 0.12);
-      }
-    }
-
-    &--selected {
-      background-color: rgba(63, 112, 227, 0.15) !important;
+      vertical-align: top;
+      padding: 0.5rem;
     }
   }
 
@@ -102,21 +100,53 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 0.2rem;
   }
 
-  &__cell-value-row {
+  &__options {
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 0.5rem;
   }
 
+  &__option {
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    padding: 1.5rem 2rem;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    text-align: right;
+    transition:
+      background-color 0.15s,
+      border-color 0.15s;
+
+    &--selected {
+      border-color: var(--color-blue);
+      background-color: rgba(63, 112, 227, 0.15);
+
+      &:hover {
+        background-color: rgba(63, 112, 227, 0.2);
+      }
+    }
+  }
+
   &__cell-dot {
+    position: absolute;
+    top: 50%;
+    right: -0.5rem;
     flex-shrink: 0;
-    width: 0.75rem;
-    height: 0.75rem;
+    width: 1rem;
+    height: 1rem;
     border-radius: 50%;
-    border: 2px solid var(--color-navy-gray);
-    transition: background-color 0.15s, border-color 0.15s;
+    background-color: var(--color-navy-gray);
+    transform: translateY(-50%);
+    transition:
+      background-color 0.15s,
+      border-color 0.15s;
 
     &--active {
       background-color: var(--color-blue);
@@ -124,24 +154,26 @@
     }
   }
 
-  &__cell-conflict-row {
+  &__option-main {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    margin-bottom: 0.25rem;
+    gap: 1rem;
+    direction: rtl;
+  }
+
+  &__warn-icon {
+    font-size: 0.75rem;
+    color: var(--p-red-500);
+    flex-shrink: 0;
   }
 
   &__cell-value {
-    display: block;
     font-size: var(--font-size-sm);
     font-weight: 600;
-    color: var(--color-white-soft);
-    margin-bottom: 0.25rem;
+    color: var(--p-red-400);
 
-    .conflict-item__cell-conflict-row & {
-      display: inline;
-      margin-bottom: 0;
+    .conflict-item__cell-content & {
+      color: var(--p-surface-300);
     }
   }
 
@@ -149,7 +181,10 @@
     display: block;
     font-size: 0.7rem;
     color: var(--color-navy-gray);
-    margin-bottom: 0.2rem;
+    border: 1px solid var(--color-light-gray);
+    border-radius: 10px;
+    padding: 0.2rem 0.4rem;
+    background-color: var(--color-surface-hover);
   }
 
   &__cell-comment {
@@ -159,23 +194,9 @@
     font-style: italic;
   }
 
-  &__warn-icon {
-    font-size: 0.75rem;
-    color: var(--color-orange);
-    flex-shrink: 0;
-  }
-
-  &__cell-circle {
-    display: inline-block;
-    width: 0.875rem;
-    height: 0.875rem;
-    border-radius: 50%;
-    border: 2px solid var(--color-navy-gray);
-    flex-shrink: 0;
-  }
-
   &__footer {
     display: flex;
+    flex-direction: row-reverse;
     align-items: center;
     gap: 1rem;
     padding: 0.75rem 1rem;
@@ -211,11 +232,6 @@
     gap: 0.25rem;
   }
 
-  &__notes-label {
-    font-size: var(--font-size-xs);
-    color: var(--color-navy-gray);
-  }
-
   &__notes-input {
     width: 100%;
     background-color: rgba(255, 255, 255, 0.05);
@@ -223,7 +239,7 @@
     border-radius: 6px;
     padding: 0.5rem 0.75rem;
     font-size: var(--font-size-sm);
-    color: var(--color-navy-gray);
+    color: var(--p-surface-300);
     direction: rtl;
     outline: none;
 
@@ -237,6 +253,5 @@
   }
 
   &--expanded {
-    margin-block: 0.75rem;
   }
 }

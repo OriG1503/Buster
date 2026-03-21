@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { forkJoin } from 'rxjs';
 
 import { ConflictGroup } from '../../../../shared/types/conflict-group.type';
@@ -15,6 +15,8 @@ import { ENTITY_COLUMN_LABEL_MAP } from '../../../../shared/mapping/entity-colum
 })
 export class ConflictItemComponent {
   public readonly $group = input.required<ConflictGroup>();
+  public readonly $isOpen = input<boolean>(false);
+  public readonly toggled = output<string | null>();
 
   private readonly _conflictsService = inject(ConflictsService);
   private readonly _conflictsStore = inject(ConflictsStore);
@@ -38,27 +40,32 @@ export class ConflictItemComponent {
       .filter((col): col is ConflictColumnDetail => col !== undefined);
   });
 
-  protected readonly _$maxRows = computed(() => {
-    const cols = this._$columns();
-    const conflictedCols = cols.filter((c) => c.isConflicted);
-    if (conflictedCols.length === 0) {
-      return 1;
-    }
-    return Math.max(...conflictedCols.map((c) => c.conflictValues.length));
-  });
-
-  protected readonly _$rowIndices = computed(() =>
-    Array.from({ length: this._$maxRows() }, (_, i) => i),
-  );
-
   protected readonly _$canResolve = computed(() => this._$selectedWinners().size > 0);
+
+  public constructor() {
+    effect(() => {
+      if (this.$isOpen() && !this._isExpanded()) {
+        this._isExpanded.set(true);
+        if (!this._$detail()) {
+          this._conflictsService
+            .getEntityDetail(this.$group().tableName, this.$group().entityId)
+            .subscribe({ next: (detail) => this._$detail.set(detail) });
+        }
+      }
+    });
+  }
 
   public toggle(): void {
     this._isExpanded.update((v) => !v);
-    if (this._isExpanded() && !this._$detail()) {
-      this._conflictsService
-        .getEntityDetail(this.$group().tableName, this.$group().entityId)
-        .subscribe({ next: (detail) => this._$detail.set(detail) });
+    if (this._isExpanded()) {
+      if (!this._$detail()) {
+        this._conflictsService
+          .getEntityDetail(this.$group().tableName, this.$group().entityId)
+          .subscribe({ next: (detail) => this._$detail.set(detail) });
+      }
+      this.toggled.emit(this.$group().entityId);
+    } else {
+      this.toggled.emit(null);
     }
   }
 
