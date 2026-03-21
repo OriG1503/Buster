@@ -1,21 +1,37 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .home-table {
   flex: 1;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  background-color: var(--color-white);
+  border-radius: 0.375rem;
+  border-inline: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
 
   &__scroll {
     overflow-x: auto;
     overflow-y: auto;
-    height: 100%;
+    flex: 1;
+    min-height: 0;
+    direction: ltr;
 
     &::-webkit-scrollbar {
-      width: 4px;
+      width: 8px;
       height: 8px;
     }
 
     &::-webkit-scrollbar-track {
       background: transparent;
+      margin-top: 4rem;
     }
 
     &::-webkit-scrollbar-thumb {
@@ -33,6 +49,7 @@
   }
 
   &__table {
+    direction: rtl;
     width: max-content;
     min-width: 100%;
     border-collapse: collapse;

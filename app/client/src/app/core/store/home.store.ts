@@ -2,7 +2,7 @@ import { computed, effect, inject } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from '@ngrx/signals';
-import { combineLatest, debounceTime, switchMap } from 'rxjs';
+import { combineLatest, debounceTime, map, switchMap } from 'rxjs';
 
 import { TableViewService } from '../services/table-view.service';
 import { ENTITY_COLUMN_TREE } from '../../shared/consts/entity-column-tree.consts';
@@ -31,6 +31,7 @@ type HomeState = {
   rows: TableRow[];
   total: number;
   isLoading: boolean;
+  isLoadingMore: boolean;
   refreshTick: number;
 };
 
@@ -44,10 +45,12 @@ export const HomeStore = signalStore(
     rows: [],
     total: 0,
     isLoading: false,
+    isLoadingMore: false,
     refreshTick: 0,
   }),
   withComputed((store) => ({
     columnGroups: computed<ColumnGroup[]>(() => ENTITY_COLUMN_TREE[store.selectedTable()]),
+    hasMore: computed(() => store.rows().length < store.total()),
   })),
   withMethods((store) => ({
     selectTable(tableName: string): void {
@@ -57,6 +60,7 @@ export const HomeStore = signalStore(
         filters: {},
         page: 1,
         rows: [],
+        isLoadingMore: false,
       });
     },
 
@@ -65,31 +69,34 @@ export const HomeStore = signalStore(
       const linkedId = FK_TO_ENTITY_ID[key];
       if (checked) {
         const toAdd = [key, ...(linkedId && !cols.includes(linkedId) ? [linkedId] : [])];
-        patchState(store, { selectedColumns: [...cols, ...toAdd], page: 1, rows: [] });
+        patchState(store, { selectedColumns: [...cols, ...toAdd], page: 1, rows: [], isLoadingMore: false });
       } else {
         const toRemove = new Set([key, ...(linkedId ? [linkedId] : [])]);
-        patchState(store, { selectedColumns: cols.filter((col) => !toRemove.has(col)), page: 1, rows: [] });
+        patchState(store, { selectedColumns: cols.filter((col) => !toRemove.has(col)), page: 1, rows: [], isLoadingMore: false });
       }
     },
 
     setFilter(col: string, value: string): void {
-      patchState(store, (state) => ({ filters: { ...state.filters, [col]: value }, page: 1, rows: [] }));
+      patchState(store, (state) => ({ filters: { ...state.filters, [col]: value }, page: 1, rows: [], isLoadingMore: false }));
     },
 
     clearFilters(): void {
-      patchState(store, { filters: {}, page: 1, rows: [] });
-    },
-
-    setPage(page: number): void {
-      patchState(store, { page, rows: [] });
+      patchState(store, { filters: {}, page: 1, rows: [], isLoadingMore: false });
     },
 
     reorderColumns(newOrder: string[]): void {
-      patchState(store, { selectedColumns: newOrder, page: 1, rows: [] });
+      patchState(store, { selectedColumns: newOrder, page: 1, rows: [], isLoadingMore: false });
+    },
+
+    loadMore(): void {
+      if (store.isLoading() || store.isLoadingMore() || !store.hasMore()) {
+        return;
+      }
+      patchState(store, (state) => ({ page: state.page + 1, isLoadingMore: true }));
     },
 
     refresh(): void {
-      patchState(store, (state) => ({ refreshTick: state.refreshTick + 1, rows: [] }));
+      patchState(store, (state) => ({ refreshTick: state.refreshTick + 1, page: 1, rows: [], isLoadingMore: false }));
     },
 
     syncFromUrl(params: Params): void {
@@ -141,13 +148,24 @@ export const HomeStore = signalStore(
         .pipe(
           debounceTime(300),
           switchMap(({ tableName, columns, filters, page }) => {
-            patchState(store, { isLoading: true });
-            return tableViewService.query({ tableName, columns, filters, page, pageSize: PAGE_SIZE });
+            const isAppend = store.isLoadingMore();
+            if (!isAppend) {
+              patchState(store, { isLoading: true });
+            }
+            return tableViewService
+              .query({ tableName, columns, filters, page, pageSize: PAGE_SIZE })
+              .pipe(map((res) => ({ res, isAppend })));
           }),
         )
         .subscribe({
-          next: (response) => patchState(store, { rows: response.rows, total: response.total, isLoading: false }),
-          error: () => patchState(store, { isLoading: false }),
+          next: ({ res, isAppend }) => {
+            if (isAppend) {
+              patchState(store, (state) => ({ rows: [...state.rows, ...res.rows], total: res.total, isLoadingMore: false }));
+            } else {
+              patchState(store, { rows: res.rows, total: res.total, isLoading: false });
+            }
+          },
+          error: () => patchState(store, { isLoading: false, isLoadingMore: false }),
         });
     },
   })),
