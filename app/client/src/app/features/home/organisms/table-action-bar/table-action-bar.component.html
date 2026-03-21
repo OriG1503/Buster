@@ -22,10 +22,12 @@
   </div>
 
   <div class="table-action-bar__end">
-    <button class="table-action-bar__btn table-action-bar__btn--upload" (click)="uploadClick.emit()">
-      <i class="pi pi-upload"></i>
-      {{ _labelMap.upload }}
-    </button>
+    @if (_$canUpload()) {
+      <button class="table-action-bar__btn table-action-bar__btn--upload" (click)="uploadClick.emit()">
+        <i class="pi pi-upload"></i>
+        {{ _labelMap.upload }}
+      </button>
+    }
     <span class="table-action-bar__count">
       {{ _labelMap.resultsFound }}: {{ $resultCount() }} {{ _labelMap.results }}
     </span>

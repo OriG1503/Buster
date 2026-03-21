@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, ViewEncapsulation, computed, input, output, signal } from '@angular/core';
+import { Component, ElementRef, ViewChild, ViewEncapsulation, computed, inject, input, output, signal } from '@angular/core';
 
 import { OverlayPanel, OverlayPanelModule } from 'primeng/overlaypanel';
 
@@ -8,6 +8,7 @@ import { ENTITY_COLUMN_LABEL_MAP } from '../../../../shared/mapping/entity-colum
 import { HOME_LABEL_MAP } from '../../mapping/home.label-map';
 import { ColumnGroup } from '../../../../shared/types/column-group.type';
 import { ColumnToggleEvent } from '../../../../shared/types/column-toggle-event.type';
+import { PermissionsService } from '../../../../core/services/permissions/permissions.service';
 
 @Component({
   selector: 'app-table-action-bar',
@@ -34,10 +35,13 @@ export class TableActionBarComponent {
   public readonly clearFilters = output<void>();
   public readonly uploadClick = output<void>();
 
+  private readonly _permissionsService = inject(PermissionsService);
+
   protected readonly _labelMap = HOME_LABEL_MAP;
   protected readonly _columnLabelMap = ENTITY_COLUMN_LABEL_MAP;
   protected readonly ENTITY_OPTIONS = ENTITY_OPTIONS;
   protected readonly _$searchQuery = signal('');
+  protected readonly _$canUpload = computed(() => this._permissionsService.canUpload());
 
   protected readonly _$selectedTableLabel = computed(
     () => ENTITY_OPTIONS.find((opt) => opt.tableName === this.$selectedTable())?.label ?? this.$selectedTable(),

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { BaseEntity } from '../../../../shared/entities/base.entity';
 import { EntityService } from '../../../data-processor/types/entity-service.type';
 import { EntityServiceRegistry } from '../../../../shared/services/entity-service-registry.service';
@@ -7,6 +7,8 @@ import { RevertValueConflictDto } from '../dto/revert-value-conflict.dto';
 
 @Injectable()
 export class RevertService {
+  private readonly _logger = new Logger(RevertService.name);
+
   public constructor(
     private readonly _valueConflictRepository: ValueConflictRepository,
     private readonly _registry: EntityServiceRegistry,
@@ -18,6 +20,7 @@ export class RevertService {
    */
   public async revert(dto: RevertValueConflictDto): Promise<BaseEntity> {
     const { tableName, entityId, columnName, revertValue, revertedBy, resolutionNotes } = dto;
+    this._logger.log(`Reverting: ${tableName}/${entityId}/${columnName} → "${revertValue}" by ${revertedBy}`);
 
     const originalConflict = await this._valueConflictRepository.findResolvedByGroupValue(tableName, entityId, columnName, revertValue);
 
@@ -55,6 +58,7 @@ export class RevertService {
     });
 
     await this._applyFieldRevert(entityService, entityId, entity, columnName, revertValue, revertSource, revertNotes);
+    this._logger.log(`Reverted: ${tableName}/${entityId}/${columnName}`);
 
     return this._fetchUpdatedEntity(entityService, entityId, tableName);
   }

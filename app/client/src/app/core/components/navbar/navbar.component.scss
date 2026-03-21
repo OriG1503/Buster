@@ -24,6 +24,20 @@
     }
   }
 
+  &__role-badge {
+    position: absolute;
+    left: 1.5rem;
+    font-size: var(--font-size-xs, 0.7rem);
+    font-weight: 500;
+    color: var(--color-blue);
+    background-color: rgba(63, 112, 227, 0.1);
+    border: 1px solid rgba(63, 112, 227, 0.25);
+    border-radius: 0.75rem;
+    padding: 0.15rem 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04rem;
+  }
+
   &__links {
     position: absolute;
     right: 1.5rem;

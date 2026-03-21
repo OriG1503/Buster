@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(grep -n \"onConflictToggled\\\\|_$openEntityId\" /c/Users/Admin/projects/buster/app/client/src/app/core/layouts/conflicts-layout/conflicts-layout.component.ts)",
-      "Bash(grep -E \"\\\\.\\(ts|html|scss\\)$\")"
+      "Bash(grep -E \"\\\\.\\(ts|html|scss\\)$\")",
+      "Bash(find /c/Users/Admin/projects/buster/app/server -type f \\\\\\(-name *auth* -o -name *passport* -o -name *jwt* \\\\\\))",
+      "Bash(find /c/Users/Admin/projects/buster/app/client/src -type f \\\\\\(-name *interceptor* -o -name *guard* \\\\\\))",
+      "Bash(find /c/Users/Admin/projects/buster/app/client/src -name *.service.ts -type f)",
+      "Bash(find /c/Users/Admin/projects/buster/app/server/src -name *.consts.ts -o -name *.const.ts)",
+      "Read(//c/Users/Admin/projects/**)"
     ]
   },
   "enabledPlugins": {
