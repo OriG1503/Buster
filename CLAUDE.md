@@ -70,7 +70,7 @@ npx jest entities.integration --runInBand   # Run the single integration spec di
 The server reads two env vars from `.env`:
 
 - `DATABASE_URL` — Neon PostgreSQL connection string (TypeORM `synchronize: true` in non-production)
-- `PARSER_URL` — Python parser service URL (e.g. `http://localhost:8999`)
+- `PARSER_URL` — Python parser service URL (e.g. `http://localhost:8000`)
 
 Tests live in `src/tests/` and use a real database via the full `AppModule`.
 
@@ -81,7 +81,7 @@ Uploaded files are saved to `<repo-root>/files/` (outside `app/`).
 ```bash
 pip install -r requirements.txt    # Install dependencies
 uvicorn main:app --reload          # Dev mode with hot reload
-uvicorn main:app                   # Start once (default port 8999)
+uvicorn main:app                   # Start once (default port 8000)
 ```
 
 **Endpoint**: `POST /parse` — body: `{ "path": "<absolute path to .csv file>" }` — returns `ParsedRow[]`.

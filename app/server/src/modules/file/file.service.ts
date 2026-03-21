@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { promises as fs } from 'fs';
 import { tmpdir } from 'os';
 import { basename, extname, join } from 'path';
@@ -15,6 +15,8 @@ const ACCEPTED_EXTENSIONS = ['.csv', '.xlsx', '.xls'] as const;
 
 @Injectable()
 export class FileService {
+  private readonly _logger = new Logger(FileService.name);
+
   public constructor(
     private readonly _httpService: HttpService,
     private readonly _s3Service: S3Service,
@@ -24,6 +26,7 @@ export class FileService {
 
   /** Full upload pipeline: validate → convert → parse → process → generate report. */
   public async handleFile(file: Express.Multer.File, username: string): Promise<UploadSummary> {
+    this._logger.log(`Upload started — file: ${file?.originalname}, size: ${file?.size ?? 0} bytes, user: ${username}`);
     this._validateUsername(username);
     const csvFile = this._toCsvFile(file);
 
@@ -33,19 +36,22 @@ export class FileService {
 
     try {
       const parsedRows = await this._sendToParser(tmpCsvPath);
+      this._logger.log(`Processing ${parsedRows.length} parsed rows — file: ${csvFile.originalname}`);
       const result = await this._dataProcessorService.process(parsedRows, username);
 
       const reportName = `${basename(csvFile.originalname, '.csv')}_report.xlsx`;
       const reportBuffer = await this._reportService.generate(tmpCsvPath, result);
       void this._s3Service.upload(reportName, reportBuffer);
 
-      return {
+      const summary: UploadSummary = {
         conflictIds: result.conflictIds,
         conflictCount: result.conflictCount,
         uploadPercentage: result.uploadPercentage,
         flyingFieldCount: result.flyingFields.reduce((sum, f) => sum + f.fields.length, 0),
         reportFileName: reportName,
       };
+      this._logger.log(`Upload complete — ${summary.uploadPercentage}% uploaded, ${summary.conflictCount} conflicts, ${summary.flyingFieldCount} flying fields`);
+      return summary;
     } finally {
       await fs.unlink(tmpCsvPath).catch(() => {});
     }
@@ -81,9 +87,15 @@ export class FileService {
 
   /** Sends the CSV path to the parser service and returns the structured parsed rows. */
   private async _sendToParser(csvPath: string): Promise<ParsedRow[]> {
+    this._logger.log(`Sending to parser: ${csvPath}`);
+    const start = Date.now();
     const { data } = await firstValueFrom(
       this._httpService.post<ParsedRow[]>(process.env.PARSER_URL!, { path: csvPath }),
-    ).catch(() => { throw new InternalServerErrorException('Parser service failed to process the file'); });
+    ).catch((err) => {
+      this._logger.error(`Parser request failed: ${err?.message ?? err}`);
+      throw new InternalServerErrorException('Parser service failed to process the file');
+    });
+    this._logger.log(`Parser returned ${data.length} rows in ${Date.now() - start}ms`);
     return data;
   }
 }

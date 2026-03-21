@@ -12,7 +12,7 @@ Create a `.env` file in `app/server/`:
 
 ```env
 DATABASE_URL=postgresql://<user>:<password>@<host>/<db>?sslmode=require
-PARSER_URL=http://localhost:8999
+PARSER_URL=http://localhost:8000
 FILES_URL=http://localhost:<port>
 ```
 

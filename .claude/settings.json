@@ -6,7 +6,8 @@
       "Bash(find /c/Users/Admin/projects/buster/app/server -type f \\\\\\(-name *auth* -o -name *passport* -o -name *jwt* \\\\\\))",
       "Bash(find /c/Users/Admin/projects/buster/app/client/src -type f \\\\\\(-name *interceptor* -o -name *guard* \\\\\\))",
       "Bash(find /c/Users/Admin/projects/buster/app/client/src -name *.service.ts -type f)",
-      "Bash(find /c/Users/Admin/projects/buster/app/server/src -name *.consts.ts -o -name *.const.ts)"
+      "Bash(find /c/Users/Admin/projects/buster/app/server/src -name *.consts.ts -o -name *.const.ts)",
+      "Read(//c/Users/Admin/projects/**)"
     ]
   },
   "enabledPlugins": {

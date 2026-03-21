@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { QueryFailedError } from 'typeorm';
 import { PG_UNIQUE_VIOLATION } from '../../../shared/consts/pg-error-codes.const';
 import { FK_FIELD_TO_TABLE, ONE_TO_ONE_FK_FIELDS } from '../../../shared/consts/entity-relation-map.const';
@@ -23,6 +23,8 @@ const BATCH_SIZE = 5;
 
 @Injectable()
 export class DataProcessorService {
+  private readonly _logger = new Logger(DataProcessorService.name);
+
   public constructor(
     private readonly _mapper: ParserRowMapper,
     private readonly _enricher: ParsedRowEnricher,
@@ -34,6 +36,7 @@ export class DataProcessorService {
 
   /** Processes parsed rows in parallel batches to stay within the DB connection pool limit. */
   public async process(rows: ParsedRow[], username: string): Promise<ProcessResult> {
+    this._logger.log(`Processing ${rows.length} rows in ${Math.ceil(rows.length / BATCH_SIZE)} batches — user: ${username}`);
     const batches = Array.from({ length: Math.ceil(rows.length / BATCH_SIZE) }, (_, b) =>
       rows.slice(b * BATCH_SIZE, (b + 1) * BATCH_SIZE),
     );
@@ -52,6 +55,7 @@ export class DataProcessorService {
     const flyingFieldCount = flyingFields.reduce((sum, f) => sum + f.fields.length, 0);
     const uploadPercentage = totalFields > 0 ? Math.round(((totalFields - flyingFieldCount) / totalFields) * 100) : 100;
 
+    this._logger.log(`Processing done — ${uploadPercentage}% uploaded, ${conflictCount} conflicts detected`);
     return { conflictCount, conflictIds, flyingFields, uploadPercentage };
   }
 

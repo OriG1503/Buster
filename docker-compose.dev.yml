@@ -6,9 +6,9 @@ services:
       context: ./app/parser
       dockerfile: .docker/Dockerfile
     container_name: buster-parser-dev
-    command: uvicorn main:app --host 0.0.0.0 --port 8999 --reload
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
     expose:
-      - "8999"
+      - "8000"
     volumes:
       - ./app/parser:/app
       - shared-tmp:/tmp

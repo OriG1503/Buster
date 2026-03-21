@@ -7,7 +7,7 @@ services:
       dockerfile: .docker/Dockerfile
     container_name: buster-parser
     expose:
-      - "8999"
+      - "8000"
     volumes:
       - shared-tmp:/tmp
     networks:
