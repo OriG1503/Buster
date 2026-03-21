@@ -1,8 +1,8 @@
-import { computed, effect, inject } from '@angular/core';
+import { computed, effect, inject, signal } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from '@ngrx/signals';
-import { combineLatest, debounceTime, map, switchMap } from 'rxjs';
+import { combineLatest, debounceTime, filter, map, switchMap, take } from 'rxjs';
 
 import { TableViewService } from '../services/table-view.service';
 import { ENTITY_COLUMN_TREE } from '../../shared/consts/entity-column-tree.consts';
@@ -121,12 +121,30 @@ export const HomeStore = signalStore(
       const router = inject(Router);
       const tableViewService = inject(TableViewService);
 
-      const snapshot = route.snapshot.queryParams as Params;
-      if (snapshot['table'] || snapshot['cols']) {
-        store.syncFromUrl(snapshot);
-      }
+      // Wait for the router to finish the initial navigation before reading URL params.
+      // Reading snapshot before NavigationEnd would give empty params since the store
+      // (providedIn: 'root') may initialize before the router processes the URL.
+      const isInitialized = signal(false);
 
+      router.events
+        .pipe(
+          filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+          take(1),
+        )
+        .subscribe(() => {
+          const params = route.snapshot.queryParams as Params;
+          if (params['table'] || params['cols']) {
+            store.syncFromUrl(params);
+          }
+          isInitialized.set(true);
+        });
+
+      // Only write state to URL after the initial URL has been read, to avoid
+      // the effect overwriting the pasted URL with default state on first run.
       effect(() => {
+        if (!isInitialized()) {
+          return;
+        }
         const filterParams = Object.fromEntries(
           Object.entries(store.filters())
             .filter(([, v]) => v.length > 0)
@@ -138,7 +156,10 @@ export const HomeStore = signalStore(
         });
       });
 
+      // Gate data fetching behind isInitialized so we don't fire a request with
+      // default state before the URL params have been applied.
       combineLatest({
+        isReady: toObservable(isInitialized),
         tableName: toObservable(store.selectedTable),
         columns: toObservable(store.selectedColumns),
         filters: toObservable(store.filters),
@@ -146,6 +167,7 @@ export const HomeStore = signalStore(
         refreshTick: toObservable(store.refreshTick),
       })
         .pipe(
+          filter(({ isReady }) => isReady),
           debounceTime(300),
           switchMap(({ tableName, columns, filters, page }) => {
             const isAppend = store.isLoadingMore();
