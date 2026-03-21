@@ -135,19 +135,21 @@ export class DataProcessorService {
   ): Promise<EntityResult> {
     const cleanedFields = { ...incomingFields };
 
-    await Promise.all(
-      Object.keys(incomingFields)
-        .filter((field) => field.endsWith('Id') && ONE_TO_ONE_FK_FIELDS.has(field) && incomingFields[field] != null)
-        .map(async (fkField) => {
-          const childId = String(incomingFields[fkField]);
-          const existingOwner = await service.findByFkValue(fkField, childId, id);
+    const relationalConflictIds = (
+      await Promise.all(
+        Object.keys(incomingFields)
+          .filter((field) => field.endsWith('Id') && ONE_TO_ONE_FK_FIELDS.has(field) && incomingFields[field] != null)
+          .map(async (fkField) => {
+            const childId = String(incomingFields[fkField]);
+            const existingOwner = await service.findByFkValue(fkField, childId, id);
 
-          if (existingOwner) {
+            if (!existingOwner) { return null; }
+
             cleanedFields[fkField] = null;
             const childTable = FK_FIELD_TO_TABLE[fkField];
             const childEntity = await this._registry.get(childTable).findById(childId);
 
-            await this._relationalConflictDetectionService.detectTwoFathers(
+            return this._relationalConflictDetectionService.detectTwoFathers(
               childId, childTable,
               childEntity?.source?.[fkField] ?? null,
               childEntity?.notes?.[fkField] ?? null,
@@ -158,9 +160,9 @@ export class DataProcessorService {
               incomingSource, incomingNotes,
               username,
             );
-          }
-        }),
-    );
+          }),
+      )
+    ).filter((id): id is number => id !== null);
 
     try {
       await service.insert({ id, ...cleanedFields }, incomingSource, incomingNotes);
@@ -168,7 +170,7 @@ export class DataProcessorService {
       if (!(error instanceof QueryFailedError) || (error as any).code !== PG_UNIQUE_VIOLATION) { throw error; }
     }
 
-    return { count: 0, conflictIds: [], flyingField: null, totalFields: nonNullFieldCount };
+    return { count: relationalConflictIds.length, conflictIds: [], flyingField: null, totalFields: nonNullFieldCount };
   }
 
   /**
@@ -204,13 +206,13 @@ export class DataProcessorService {
       );
     }
 
-    await this._detectTwoChildsConflicts(service, id, storedRecord, incomingFields, incomingSource, incomingNotes, username);
+    const relationalCount = await this._detectTwoChildsConflicts(service, id, storedRecord, incomingFields, incomingSource, incomingNotes, username);
 
     if (Object.keys(result.fieldsToUpdate).length > 0) {
       await service.update(id, result.fieldsToUpdate, result.sourceUpdates, storedRecord.source, result.notesUpdates, storedRecord.notes);
     }
 
-    return { count: result.conflictsToCreate.length, conflictIds, flyingField: null, totalFields: nonNullFieldCount };
+    return { count: result.conflictsToCreate.length + relationalCount, conflictIds, flyingField: null, totalFields: nonNullFieldCount };
   }
 
   /**
@@ -223,10 +225,10 @@ export class DataProcessorService {
     incomingFields: Record<string, EntityValue>,
     incomingSource: string, incomingNotes: string | null,
     username: string,
-  ): Promise<void> {
+  ): Promise<number> {
     const storedRecord_ = storedRecord as unknown as Record<string, EntityValue>;
 
-    await Promise.all(
+    const results = await Promise.all(
       Object.keys(incomingFields)
         .filter((field) => {
           if (!field.endsWith('Id')) { return false; }
@@ -239,9 +241,9 @@ export class DataProcessorService {
           const newRelatedId = String(incomingFields[fkField]);
           const relatedTable = FK_FIELD_TO_TABLE[fkField];
 
-          if (!relatedTable) { return; }
+          if (!relatedTable) { return null; }
 
-          await this._relationalConflictDetectionService.detectTwoChilds(
+          return this._relationalConflictDetectionService.detectTwoChilds(
             id, service.tableName,
             storedRecord.source?.[fkField] ?? null,
             storedRecord.notes?.[fkField] ?? null,
@@ -253,5 +255,7 @@ export class DataProcessorService {
           );
         }),
     );
+
+    return results.filter((conflictId): conflictId is number => conflictId !== null).length;
   }
 }

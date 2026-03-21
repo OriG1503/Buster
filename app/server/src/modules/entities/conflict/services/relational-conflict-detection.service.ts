@@ -29,10 +29,10 @@ export class RelationalConflictDetectionService {
     newRelatedSource: string | null,
     newRelatedNotes: string | null,
     conflictCreator: string,
-  ): Promise<void> {
+  ): Promise<number | null> {
     const snapshot = await this._buildSnapshot(anchorId, anchorTable, oldRelatedId, newRelatedId, relatedTable);
 
-    await this._relationalConflictRepository.insertConflict({
+    return this._relationalConflictRepository.insertConflict({
       conflictType: RELATIONAL_CONFLICT_TYPE.TWO_CHILDS,
       anchorId,
       anchorTable,
@@ -69,10 +69,10 @@ export class RelationalConflictDetectionService {
     newRelatedSource: string | null,
     newRelatedNotes: string | null,
     conflictCreator: string,
-  ): Promise<void> {
+  ): Promise<number | null> {
     const snapshot = await this._buildSnapshot(anchorId, anchorTable, oldRelatedId, newRelatedId, relatedTable);
 
-    await this._relationalConflictRepository.insertConflict({
+    return this._relationalConflictRepository.insertConflict({
       conflictType: RELATIONAL_CONFLICT_TYPE.TWO_FATHERS,
       anchorId,
       anchorTable,
