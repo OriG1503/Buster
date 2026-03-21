@@ -10,9 +10,9 @@ import { ResolveRelationalConflictDto } from './dto/resolve-relational-conflict.
 import { RevertService } from './services/revert.service';
 import { RevertValueConflictDto } from './dto/revert-value-conflict.dto';
 import { ConflictHistoryResponse } from './types/conflict-history-response.type';
-import { ValueConflictListService } from './services/value-conflict-list.service';
+import { ConflictListService } from './services/conflict-list.service';
 import { ConflictListResponse } from './types/conflict-list-response.type';
-import { ValueConflictEntityDetailService } from './services/value-conflict-entity-detail.service';
+import { ConflictEntityDetailService } from './services/conflict-entity-detail.service';
 import { ConflictEntityDetailResponse } from './types/conflict-entity-detail-response.type';
 import { RelationalConflictEntity } from './entities/relational-conflict.entity';
 
@@ -24,8 +24,8 @@ export class ConflictController {
     private readonly _relationalConflictResolverService: RelationalConflictResolverService,
     private readonly _revertService: RevertService,
     private readonly _valueConflictHistoryService: ValueConflictHistoryService,
-    private readonly _valueConflictListService: ValueConflictListService,
-    private readonly _valueConflictEntityDetailService: ValueConflictEntityDetailService,
+    private readonly _conflictListService: ConflictListService,
+    private readonly _conflictEntityDetailService: ConflictEntityDetailService,
   ) {}
 
   @Get()
@@ -37,12 +37,12 @@ export class ConflictController {
     @Query('conflictIds') conflictIds?: string,
   ): Promise<ConflictListResponse> {
     const parsedConflictIds = conflictIds ? conflictIds.split(',').map(Number).filter((n) => !isNaN(n)) : undefined;
-    return this._valueConflictListService.getOpenGroups(Number(page), Number(limit), tableName, entityId, parsedConflictIds);
+    return this._conflictListService.getOpenGroups(Number(page), Number(limit), tableName, entityId, parsedConflictIds);
   }
 
   @Get('count')
   public async count(): Promise<{ count: number }> {
-    return { count: await this._valueConflictListService.countOpen() };
+    return { count: await this._conflictListService.countOpen() };
   }
 
   @RequireRole(Role.EDITOR)
@@ -68,7 +68,7 @@ export class ConflictController {
     @Query('tableName') tableName: string,
     @Query('entityId') entityId: string,
   ): Promise<ConflictEntityDetailResponse> {
-    return this._valueConflictEntityDetailService.getEntityDetail(tableName, entityId);
+    return this._conflictEntityDetailService.getEntityDetail(tableName, entityId);
   }
 
   @Get('history')

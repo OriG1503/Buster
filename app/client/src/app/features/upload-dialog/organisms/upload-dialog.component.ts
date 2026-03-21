@@ -5,6 +5,7 @@ import { ButtonModule } from 'primeng/button';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 
 import { APP_ROUTES } from '../../../shared/consts/app-routes.consts';
+import { DEFAULT_USER_NAME } from '../../../shared/consts/default-user.consts';
 
 import { UPLOAD_DIALOG_LABEL_MAP } from '../mapping/upload-dialog.label-map';
 import { ENTITY_FORMAT_OPTIONS, EntityFormatOption } from '../consts/entity-format-options.consts';

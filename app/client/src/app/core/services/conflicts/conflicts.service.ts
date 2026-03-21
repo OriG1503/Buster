@@ -6,13 +6,22 @@ import { ConflictCountResponse } from '../../../shared/types/conflict-count-resp
 import { ConflictGroup } from '../../../shared/types/conflict-group.type';
 import { ConflictEntityDetail } from '../../../shared/types/conflict-entity-detail.type';
 
-type ResolveConflictParams = {
+type ResolveValueConflictParams = {
   tableName: string;
   entityId: string;
   columnName: string;
   winnerValue: string;
   conflictResolver: string;
   resolutionNotes: string;
+};
+
+type ResolveRelationalConflictParams = {
+  conflictId: number;
+  winnerRelatedId: string;
+  winnerChildId?: string | null;
+  winnerChildFkField?: string | null;
+  conflictResolver: string;
+  resolutionNotes?: string | null;
 };
 
 @Injectable({ providedIn: 'root' })
@@ -37,7 +46,11 @@ export class ConflictsService {
     });
   }
 
-  public resolveConflict(params: ResolveConflictParams): Observable<unknown> {
-    return this._http.patch('/api/conflicts/resolve', params);
+  public resolveConflict(params: ResolveValueConflictParams): Observable<unknown> {
+    return this._http.patch('/api/conflicts/value/resolve', params);
+  }
+
+  public resolveRelationalConflict(params: ResolveRelationalConflictParams): Observable<unknown> {
+    return this._http.patch('/api/conflicts/relational/resolve', params);
   }
 }

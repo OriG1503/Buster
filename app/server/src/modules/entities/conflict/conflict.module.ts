@@ -15,6 +15,8 @@ import { EntityServiceRegistryModule } from '../../../shared/modules/entity-serv
 import { RevertService } from './services/revert.service';
 import { ValueConflictListService } from './services/value-conflict-list.service';
 import { ValueConflictEntityDetailService } from './services/value-conflict-entity-detail.service';
+import { ConflictListService } from './services/conflict-list.service';
+import { ConflictEntityDetailService } from './services/conflict-entity-detail.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([ValueConflictEntity, RelationalConflictEntity]), EntityServiceRegistryModule],
@@ -31,6 +33,8 @@ import { ValueConflictEntityDetailService } from './services/value-conflict-enti
     ValueConflictHistoryService,
     ValueConflictListService,
     ValueConflictEntityDetailService,
+    ConflictListService,
+    ConflictEntityDetailService,
   ],
   exports: [ValueConflictRepository, ValueConflictService, RelationalConflictDetectionService],
 })
