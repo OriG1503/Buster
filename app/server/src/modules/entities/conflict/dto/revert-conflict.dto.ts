@@ -1,6 +1,1 @@
-import { BaseConflictDto } from './base-conflict.dto';
-
-export interface RevertConflictDto extends BaseConflictDto {
-  revertValue: string;
-  revertedBy: string;
-}
+export { RevertValueConflictDto } from './revert-value-conflict.dto';

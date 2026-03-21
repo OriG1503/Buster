@@ -2,8 +2,8 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { BaseEntity } from '../../../../shared/entities/base.entity';
 import { EntityService } from '../../../data-processor/types/entity-service.type';
 import { EntityServiceRegistry } from '../../../../shared/services/entity-service-registry.service';
-import { ValueConflictRepository } from '../conflict.repository';
-import { RevertConflictDto } from '../dto/revert-conflict.dto';
+import { ValueConflictRepository } from '../value-conflict.repository';
+import { RevertValueConflictDto } from '../dto/revert-value-conflict.dto';
 
 @Injectable()
 export class RevertService {
@@ -16,7 +16,7 @@ export class RevertService {
    * Reverts an entity field to a previously held value from a resolved value conflict.
    * Records the revert as a new pre-solved conflict and applies the value to the entity.
    */
-  public async revert(dto: RevertConflictDto): Promise<BaseEntity> {
+  public async revert(dto: RevertValueConflictDto): Promise<BaseEntity> {
     const { tableName, entityId, columnName, revertValue, revertedBy, resolutionNotes } = dto;
 
     const originalConflict = await this._valueConflictRepository.findResolvedByGroupValue(tableName, entityId, columnName, revertValue);

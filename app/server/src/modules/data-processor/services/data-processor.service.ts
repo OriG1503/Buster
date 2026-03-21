@@ -5,8 +5,8 @@ import { FK_FIELD_TO_TABLE, ONE_TO_ONE_FK_FIELDS } from '../../../shared/consts/
 import { BaseEntity } from '../../../shared/entities/base.entity';
 import { EntityValue } from '../../../shared/types/entity-value.type';
 import { EntityServiceRegistry } from '../../../shared/services/entity-service-registry.service';
-import { ValueConflictRepository } from '../../entities/conflict/conflict.repository';
-import { ValueConflictService } from '../../entities/conflict/services/conflict.service';
+import { ValueConflictRepository } from '../../entities/conflict/value-conflict.repository';
+import { ValueConflictService } from '../../entities/conflict/services/value-conflict.service';
 import { RelationalConflictDetectionService } from '../../entities/conflict/services/relational-conflict-detection.service';
 import { ParserRowMapper } from '../mappers/parser-row.mapper';
 import { ParsedRowEnricher } from './parsed-row-enricher.service';

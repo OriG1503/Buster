@@ -1,6 +1,1 @@
-export type BaseConflictDto = {
-  tableName: string;
-  entityId: string;
-  columnName: string;
-  resolutionNotes: string;
-};
+export { BaseValueConflictDto } from './base-value-conflict.dto';

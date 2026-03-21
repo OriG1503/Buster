@@ -1,16 +1,16 @@
 import { Body, Controller, Get, Patch, Query } from '@nestjs/common';
 import { BaseEntity } from '../../../shared/entities/base.entity';
-import { ValueConflictHistoryService } from './conflict-history.service';
-import { ValueConflictResolverService } from './services/conflict-resolver.service';
+import { ValueConflictHistoryService } from './value-conflict-history.service';
+import { ValueConflictResolverService } from './services/value-conflict-resolver.service';
 import { RelationalConflictResolverService } from './services/relational-conflict-resolver.service';
-import { ResolveConflictDto } from './dto/resolve-conflict.dto';
+import { ResolveValueConflictDto } from './dto/resolve-value-conflict.dto';
 import { ResolveRelationalConflictDto } from './dto/resolve-relational-conflict.dto';
 import { RevertService } from './services/revert.service';
-import { RevertConflictDto } from './dto/revert-conflict.dto';
+import { RevertValueConflictDto } from './dto/revert-value-conflict.dto';
 import { ConflictHistoryResponse } from './types/conflict-history-response.type';
-import { ValueConflictListService } from './services/conflict-list.service';
+import { ValueConflictListService } from './services/value-conflict-list.service';
 import { ConflictListResponse } from './types/conflict-list-response.type';
-import { ValueConflictEntityDetailService } from './services/conflict-entity-detail.service';
+import { ValueConflictEntityDetailService } from './services/value-conflict-entity-detail.service';
 import { ConflictEntityDetailResponse } from './types/conflict-entity-detail-response.type';
 import { RelationalConflictEntity } from './entities/relational-conflict.entity';
 
@@ -43,7 +43,7 @@ export class ConflictController {
   }
 
   @Patch('value/resolve')
-  public async resolveValue(@Body() resolveConflictDto: ResolveConflictDto): Promise<BaseEntity> {
+  public async resolveValue(@Body() resolveConflictDto: ResolveValueConflictDto): Promise<BaseEntity> {
     return this._valueConflictResolverService.resolve(resolveConflictDto);
   }
 
@@ -53,7 +53,7 @@ export class ConflictController {
   }
 
   @Patch('revert')
-  public async revert(@Body() revertConflictDto: RevertConflictDto): Promise<BaseEntity> {
+  public async revert(@Body() revertConflictDto: RevertValueConflictDto): Promise<BaseEntity> {
     return this._revertService.revert(revertConflictDto);
   }
 

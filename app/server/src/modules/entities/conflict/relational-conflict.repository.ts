@@ -28,7 +28,6 @@ export class RelationalConflictRepository extends BaseRepository<RelationalConfl
       isSolved: true,
       conflictResolver,
       resolutionNotes,
-      resolvedAt: new Date(),
     });
   }
 
