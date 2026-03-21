@@ -2,19 +2,19 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { BaseEntity } from '../../../shared/entities/base.entity';
 import { EntityServiceRegistry } from '../../../shared/services/entity-service-registry.service';
-import { ConflictEntity } from './entities/conflict.entity';
-import { ConflictRepository } from './conflict.repository';
+import { ValueConflictEntity } from './entities/conflict.entity';
+import { ValueConflictRepository } from './conflict.repository';
 import { ConflictHistoryEntry, ConflictHistoryResponse } from './types/conflict-history-response.type';
 
 @Injectable()
-export class ConflictHistoryService {
+export class ValueConflictHistoryService {
   public constructor(
-    private readonly _conflictRepository: ConflictRepository,
+    private readonly _valueConflictRepository: ValueConflictRepository,
     private readonly _registry: EntityServiceRegistry,
   ) {}
 
   public async getHistory(tableName: string, entityId: string, columnName: string): Promise<ConflictHistoryResponse> {
-    const conflicts = await this._conflictRepository.findAllByGroup(tableName, entityId, columnName);
+    const conflicts = await this._valueConflictRepository.findAllByGroup(tableName, entityId, columnName);
 
     if (conflicts.length === 0) {
       throw new NotFoundException(`No resolved conflict history for ${tableName}/${entityId}/${columnName}`);
@@ -38,7 +38,7 @@ export class ConflictHistoryService {
     });
 
     // Each conflict's newValue is a competing value that was uploaded at conflict.createdAt.
-    conflicts.forEach((conflict: ConflictEntity) => {
+    conflicts.forEach((conflict: ValueConflictEntity) => {
       const key = conflict.newValue ?? null;
       if (!entryMap.has(key)) {
         entryMap.set(key, {

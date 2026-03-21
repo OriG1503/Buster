@@ -1,9 +1,9 @@
 import { Column, Entity, Index } from 'typeorm';
 import { GeneratedBaseEntity } from '../../../../shared/entities/generated-base.entity';
 
-@Entity('conflicts')
+@Entity('value_conflicts')
 @Index(['tableName', 'columnName', 'entityId', 'newValue'], { unique: true, where: '"isSolved" = false' })
-export class ConflictEntity extends GeneratedBaseEntity {
+export class ValueConflictEntity extends GeneratedBaseEntity {
   @Column({ type: 'varchar', nullable: true })
   public tableName: string | null;
 

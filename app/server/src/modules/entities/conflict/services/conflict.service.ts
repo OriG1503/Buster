@@ -1,14 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { EntityValue } from '../../../../shared/types/entity-value.type';
-import { ConflictDetectionResult } from '../types/conflict-detection-result.type';
+import { ValueConflictDetectionResult } from '../types/conflict-detection-result.type';
 
 @Injectable()
-export class ConflictService {
+export class ValueConflictService {
 
   /**
-   * Compares incoming field values against stored ones and classifies each field as:
+   * Compares incoming field values against stored ones and classifies each non-FK field as:
    * - A gap-fill (stored is null → queue for update)
-   * - A conflict (values differ → queue for ConflictEntity creation)
+   * - A conflict (values differ → queue for ValueConflictEntity creation)
+   * FK fields (ending in 'Id') are excluded from conflict creation — they are handled
+   * as relational conflicts by RelationalConflictDetectionService.
    * Returns all queued changes without persisting anything.
    */
   public detectConflicts(
@@ -18,7 +20,7 @@ export class ConflictService {
     storedNotes: Record<string, string | null> | null,
     incomingFields: Record<string, EntityValue>,
     incomingSource: string, conflictCreator: string, incomingNotes: string | null,
-  ): ConflictDetectionResult {
+  ): ValueConflictDetectionResult {
     const conflictsToCreate: Record<string, EntityValue>[] = [];
     const fieldsToUpdate: Record<string, EntityValue> = {};
     const sourceUpdates: Record<string, string> = {};
@@ -40,7 +42,7 @@ export class ConflictService {
         return;
       }
 
-      if (storedValue !== incomingValue) {
+      if (storedValue !== incomingValue && !field.endsWith('Id')) {
         conflictsToCreate.push({
           tableName, columnName: field, entityId,
           newValue: String(incomingValue as string | number | boolean),

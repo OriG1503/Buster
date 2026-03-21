@@ -1,20 +1,37 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConflictEntity } from './entities/conflict.entity';
-import { ConflictRepository } from './conflict.repository';
-import { ConflictService } from './services/conflict.service';
-import { ConflictHistoryService } from './conflict-history.service';
-import { ConflictResolverService } from './services/conflict-resolver.service';
+import { ValueConflictEntity } from './entities/conflict.entity';
+import { RelationalConflictEntity } from './entities/relational-conflict.entity';
+import { ValueConflictRepository } from './conflict.repository';
+import { RelationalConflictRepository } from './relational-conflict.repository';
+import { ValueConflictService } from './services/conflict.service';
+import { ValueConflictHistoryService } from './conflict-history.service';
+import { ValueConflictResolverService } from './services/conflict-resolver.service';
+import { RelationalConflictDetectionService } from './services/relational-conflict-detection.service';
+import { RelationalConflictResolverService } from './services/relational-conflict-resolver.service';
+import { SnapshotBuilderService } from './services/snapshot-builder.service';
 import { ConflictController } from './conflict.controller';
 import { EntityServiceRegistryModule } from '../../../shared/modules/entity-service-registry.module';
 import { RevertService } from './services/revert.service';
-import { ConflictListService } from './services/conflict-list.service';
-import { ConflictEntityDetailService } from './services/conflict-entity-detail.service';
+import { ValueConflictListService } from './services/conflict-list.service';
+import { ValueConflictEntityDetailService } from './services/conflict-entity-detail.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ConflictEntity]), EntityServiceRegistryModule],
+  imports: [TypeOrmModule.forFeature([ValueConflictEntity, RelationalConflictEntity]), EntityServiceRegistryModule],
   controllers: [ConflictController],
-  providers: [ConflictRepository, ConflictService, ConflictResolverService, RevertService, ConflictHistoryService, ConflictListService, ConflictEntityDetailService],
-  exports: [ConflictRepository, ConflictService],
+  providers: [
+    ValueConflictRepository,
+    RelationalConflictRepository,
+    ValueConflictService,
+    ValueConflictResolverService,
+    RelationalConflictDetectionService,
+    RelationalConflictResolverService,
+    SnapshotBuilderService,
+    RevertService,
+    ValueConflictHistoryService,
+    ValueConflictListService,
+    ValueConflictEntityDetailService,
+  ],
+  exports: [ValueConflictRepository, ValueConflictService, RelationalConflictDetectionService],
 })
 export class ConflictModule {}
