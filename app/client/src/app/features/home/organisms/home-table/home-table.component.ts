@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, computed, effect, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, computed, effect, inject, input, output, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { ConflictHistoryPopupComponent } from '../../../conflict-history/organisms/conflict-history-popup/conflict-history-popup.component';
@@ -24,6 +24,10 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
   private readonly _router = inject(Router);
   protected readonly _$historyTarget = signal<HistoryTarget | null>(null);
   protected readonly _$cellInfoTarget = signal<CellInfoTarget | null>(null);
+
+  public readonly $isExportMode = input<boolean>(false);
+  public readonly $selectedExportIndices = input<Set<number>>(new Set());
+  public readonly rowExportToggled = output<number>();
 
   protected readonly _$displayColumns = computed(() => {
     const cols = this._store.selectedColumns();
@@ -133,6 +137,10 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
 
   public onCellInfoPopupClose(): void {
     this._$cellInfoTarget.set(null);
+  }
+
+  public onRowCheckboxChange(index: number): void {
+    this.rowExportToggled.emit(index);
   }
 
   public trackByIndex(index: number): number {

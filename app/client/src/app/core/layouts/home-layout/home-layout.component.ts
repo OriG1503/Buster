@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import * as XLSX from 'xlsx';
 
@@ -37,6 +37,10 @@ export class HomeLayoutComponent {
 
   protected readonly _$hasActiveFilters = computed(() => Object.values(this._store.filters()).some((v) => v.length > 0));
 
+  protected readonly _$isExportMode = signal(false);
+  protected readonly _$selectedExportIndices = signal<Set<number>>(new Set());
+  protected readonly _$selectedExportCount = computed(() => this._$selectedExportIndices().size);
+
   public onEntitySelected(tableName: string): void {
     this._store.selectTable(tableName);
   }
@@ -58,6 +62,12 @@ export class HomeLayoutComponent {
   }
 
   public onExportExcel(): void {
+    this._$selectedExportIndices.set(new Set());
+    this._$isExportMode.set(true);
+  }
+
+  public onExportConfirm(): void {
+    const selectedIndices = this._$selectedExportIndices();
     const cols = this._store.selectedColumns();
     const displayCols = cols.filter((col) => {
       if (!col.endsWith('.id')) { return true; }
@@ -65,12 +75,33 @@ export class HomeLayoutComponent {
       return !(fkKey && cols.includes(fkKey));
     });
 
+    const rows = this._store.rows().filter((_, i) => selectedIndices.has(i));
     const headers = displayCols.map((col) => ENTITY_COLUMN_LABEL_MAP[col] ?? col);
-    const dataRows = this._store.rows().map((row) => displayCols.map((col) => row[col]?.value ?? ''));
+    const dataRows = rows.map((row) => displayCols.map((col) => row[col]?.value ?? ''));
 
     const ws = XLSX.utils.aoa_to_sheet([headers, ...dataRows]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, this._store.selectedTable());
     XLSX.writeFile(wb, `${this._store.selectedTable()}.xlsx`);
+
+    this._$isExportMode.set(false);
+    this._$selectedExportIndices.set(new Set());
+  }
+
+  public onExportCancel(): void {
+    this._$isExportMode.set(false);
+    this._$selectedExportIndices.set(new Set());
+  }
+
+  public onRowExportToggled(index: number): void {
+    this._$selectedExportIndices.update((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
   }
 }
