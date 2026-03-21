@@ -1,4 +1,12 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(find /c/Users/Admin/projects/buster -type f -name Dockerfile -o -name docker-compose* -o -name .env*)",
+      "Bash(grep -r \"uvicorn\\\\|port\\\\|8000\" /c/Users/Admin/projects/buster/app/parser --include=*.py)",
+      "Bash(find /c/Users/Admin/projects/buster -name .env* -o -name *.env)",
+      "Bash(docker run:*)"
+    ]
+  },
   "enabledPlugins": {
     "typescript-lsp@claude-plugins-official": true,
     "commit-commands@claude-plugins-official": true,

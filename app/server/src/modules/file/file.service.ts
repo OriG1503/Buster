@@ -1,42 +1,53 @@
 import { HttpService } from '@nestjs/axios';
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
-import { basename, extname } from 'path';
+import { promises as fs } from 'fs';
+import { tmpdir } from 'os';
+import { basename, extname, join } from 'path';
 import { firstValueFrom } from 'rxjs';
 import * as XLSX from 'xlsx';
 import { DataProcessorService } from '../data-processor/services/data-processor.service';
 import { ProcessReportService } from '../data-processor/services/process-report.service';
 import { ParsedRow } from '../data-processor/types/parsed-row.type';
+import { S3Service } from './s3.service';
 import { UploadSummary } from './types/upload-summary.type';
 
 const ACCEPTED_EXTENSIONS = ['.csv', '.xlsx', '.xls'] as const;
-const FILES_SERVER_URL = process.env.FILES_SERVER_URL;
 
 @Injectable()
 export class FileService {
   public constructor(
     private readonly _httpService: HttpService,
+    private readonly _s3Service: S3Service,
     private readonly _dataProcessorService: DataProcessorService,
     private readonly _reportService: ProcessReportService,
   ) {}
 
-  /** Full upload pipeline: validate → convert → upload → parse → process → generate report. */
+  /** Full upload pipeline: validate → convert → parse → process → generate report. */
   public async handleFile(file: Express.Multer.File, username: string): Promise<UploadSummary> {
     this._validateUsername(username);
     const csvFile = this._toCsvFile(file);
 
-    const { path: csvPath } = await this._uploadToFilesServer(csvFile.originalname, csvFile.buffer);
-    const parsedRows = await this._sendToParser(csvPath);
-    const result = await this._dataProcessorService.process(parsedRows, username);
+    const tmpCsvPath = join(tmpdir(), csvFile.originalname);
+    await fs.writeFile(tmpCsvPath, csvFile.buffer);
+    void this._s3Service.upload(csvFile.originalname, csvFile.buffer);
 
-    const reportName = `${basename(csvFile.originalname, '.csv')}_report.xlsx`;
-    await this._uploadToFilesServer(reportName, await this._reportService.generate(csvPath, result));
+    try {
+      const parsedRows = await this._sendToParser(tmpCsvPath);
+      const result = await this._dataProcessorService.process(parsedRows, username);
 
-    return {
-      conflictCount: result.conflictCount,
-      uploadPercentage: result.uploadPercentage,
-      flyingFieldCount: result.flyingFields.reduce((sum, f) => sum + f.fields.length, 0),
-      reportFileName: reportName,
-    };
+      const reportName = `${basename(csvFile.originalname, '.csv')}_report.xlsx`;
+      const reportBuffer = await this._reportService.generate(tmpCsvPath, result);
+      void this._s3Service.upload(reportName, reportBuffer);
+
+      return {
+        conflictCount: result.conflictCount,
+        uploadPercentage: result.uploadPercentage,
+        flyingFieldCount: result.flyingFields.reduce((sum, f) => sum + f.fields.length, 0),
+        reportFileName: reportName,
+      };
+    } finally {
+      await fs.unlink(tmpCsvPath).catch(() => {});
+    }
   }
 
   /** Throws if the file extension is not in the accepted list. */
@@ -58,23 +69,13 @@ export class FileService {
   private _toCsvFile(file: Express.Multer.File): Express.Multer.File {
     this._validateFile(file);
     const ext = extname(file.originalname).toLowerCase();
-    if (ext === '.csv') { return file; }
+    if (ext === '.csv') {
+      return file;
+    }
 
     const workbook = XLSX.read(file.buffer, { type: 'buffer' });
     const csvContent = XLSX.utils.sheet_to_csv(workbook.Sheets[workbook.SheetNames[0]]);
     return { ...file, originalname: `${basename(file.originalname, ext)}.csv`, buffer: Buffer.from(csvContent) };
-  }
-
-  /** POSTs a file buffer to the files server and returns its stored filename and path. */
-  private async _uploadToFilesServer(filename: string, buffer: Buffer): Promise<{ filename: string; path: string }> {
-    const { data } = await firstValueFrom(
-      this._httpService.post<{ filename: string; path: string }>(
-        `${FILES_SERVER_URL}/upload?filename=${encodeURIComponent(filename)}`,
-        buffer,
-        { headers: { 'Content-Type': 'application/octet-stream' } },
-      ),
-    ).catch(() => { throw new InternalServerErrorException('Failed to upload file to files server'); });
-    return data;
   }
 
   /** Sends the CSV path to the parser service and returns the structured parsed rows. */
