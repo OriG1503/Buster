@@ -17,4 +17,8 @@
     </button>
 
   </div>
+
+  @if (_$role()) {
+    <span class="navbar__role-badge">{{ _$role() }}</span>
+  }
 </nav>

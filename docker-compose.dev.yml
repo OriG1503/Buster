@@ -1,4 +1,4 @@
-version: '3.9'
+version: "3.9"
 
 services:
   parser:
@@ -6,9 +6,9 @@ services:
       context: ./app/parser
       dockerfile: .docker/Dockerfile
     container_name: buster-parser-dev
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn main:app --host 0.0.0.0 --port 8999 --reload
     expose:
-      - "8000"
+      - "8999"
     volumes:
       - ./app/parser:/app
       - shared-tmp:/tmp
@@ -25,8 +25,6 @@ services:
       - "3000"
     env_file:
       - ./app/server/.env
-    environment:
-      - PARSER_URL=http://parser:8000
     volumes:
       - ./app/server:/app
       - server_node_modules:/app/node_modules

@@ -1,4 +1,4 @@
-version: '3.9'
+version: "3.9"
 
 services:
   parser:
@@ -7,7 +7,7 @@ services:
       dockerfile: .docker/Dockerfile
     container_name: buster-parser
     expose:
-      - "8000"
+      - "8999"
     volumes:
       - shared-tmp:/tmp
     networks:
@@ -23,8 +23,6 @@ services:
       - "3000"
     env_file:
       - ./app/server/.env
-    environment:
-      - PARSER_URL=http://parser:8000
     volumes:
       - shared-tmp:/tmp
     networks:

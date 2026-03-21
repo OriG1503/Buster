@@ -2,7 +2,7 @@
   "permissions": {
     "allow": [
       "Bash(find /c/Users/Admin/projects/buster -type f -name Dockerfile -o -name docker-compose* -o -name .env*)",
-      "Bash(grep -r \"uvicorn\\\\|port\\\\|8000\" /c/Users/Admin/projects/buster/app/parser --include=*.py)",
+      "Bash(grep -r \"uvicorn\\\\|port\\\\|8999\" /c/Users/Admin/projects/buster/app/parser --include=*.py)",
       "Bash(find /c/Users/Admin/projects/buster -name .env* -o -name *.env)",
       "Bash(docker run:*)",
       "Bash(npm install:*)",

@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Patch, Query } from '@nestjs/common';
 import { BaseEntity } from '../../../shared/entities/base.entity';
+import { RequireRole } from '../../auth/decorators/require-role.decorator';
+import { Role } from '../../auth/types/role.type';
 import { ConflictHistoryService } from './conflict-history.service';
 import { ConflictResolverService } from './services/conflict-resolver.service';
 import { ResolveConflictDto } from './dto/resolve-conflict.dto';
@@ -11,6 +13,7 @@ import { ConflictListResponse } from './types/conflict-list-response.type';
 import { ConflictEntityDetailService } from './services/conflict-entity-detail.service';
 import { ConflictEntityDetailResponse } from './types/conflict-entity-detail-response.type';
 
+@RequireRole(Role.VIEWER)
 @Controller('conflicts')
 export class ConflictController {
   public constructor(
@@ -38,11 +41,13 @@ export class ConflictController {
     return { count: await this._conflictListService.countOpen() };
   }
 
+  @RequireRole(Role.EDITOR)
   @Patch('resolve')
   public async resolve(@Body() resolveConflictDto: ResolveConflictDto): Promise<BaseEntity> {
     return this._conflictResolverService.resolve(resolveConflictDto);
   }
 
+  @RequireRole(Role.EDITOR)
   @Patch('revert')
   public async revert(@Body() revertConflictDto: RevertConflictDto): Promise<BaseEntity> {
     return this._revertService.revert(revertConflictDto);
