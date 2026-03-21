@@ -15,12 +15,15 @@ export class CellInfoPopupComponent {
 
   protected readonly _$panelStyle = computed(() => {
     const { anchorTop, anchorBottom, anchorCenterX, tableHeaderBottom } = this.$target();
-    const left = Math.max(CELL_INFO_SCREEN_MARGIN, Math.min(anchorCenterX - CELL_INFO_POPUP_WIDTH / 2, window.innerWidth - CELL_INFO_POPUP_WIDTH - CELL_INFO_SCREEN_MARGIN));
-    const spaceAbove = anchorTop - tableHeaderBottom;
-    if (spaceAbove < CELL_INFO_POPUP_HEIGHT + CELL_INFO_POPUP_GAP) {
-      return { top: `${anchorBottom + CELL_INFO_POPUP_GAP}px`, bottom: 'auto', left: `${left}px` };
-    }
-    return { top: 'auto', bottom: `${window.innerHeight - anchorTop + CELL_INFO_POPUP_GAP}px`, left: `${left}px` };
+    const clampedLeft = Math.max(
+      CELL_INFO_SCREEN_MARGIN,
+      Math.min(anchorCenterX - CELL_INFO_POPUP_WIDTH / 2, window.innerWidth - CELL_INFO_POPUP_WIDTH - CELL_INFO_SCREEN_MARGIN),
+    );
+    const sharedStyle = { left: `${clampedLeft}px` };
+    const hasSpaceAbove = anchorTop - tableHeaderBottom >= CELL_INFO_POPUP_HEIGHT + CELL_INFO_POPUP_GAP;
+    return hasSpaceAbove
+      ? { ...sharedStyle, top: 'auto', bottom: `${window.innerHeight - anchorTop + CELL_INFO_POPUP_GAP}px` }
+      : { ...sharedStyle, top: `${anchorBottom + CELL_INFO_POPUP_GAP}px`, bottom: 'auto' };
   });
 
   protected _formatDate(iso: string | null): string {
