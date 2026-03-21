@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { EntityValue } from '../../../../shared/types/entity-value.type';
 import { ValueConflictDetectionResult } from '../types/value-conflict-detection-result.type';
 
 @Injectable()
 export class ValueConflictService {
+  private readonly _logger = new Logger(ValueConflictService.name);
 
   /**
    * Compares incoming field values against stored ones and classifies each non-FK field as:
@@ -54,6 +55,13 @@ export class ValueConflictService {
         });
       }
     });
+
+    if (conflictsToCreate.length > 0) {
+      this._logger.warn(`${tableName}/${entityId}: ${conflictsToCreate.length} conflict(s) on [${conflictsToCreate.map((c) => c['columnName']).join(', ')}]`);
+    }
+    if (Object.keys(fieldsToUpdate).length > 0) {
+      this._logger.log(`${tableName}/${entityId}: ${Object.keys(fieldsToUpdate).length} gap-fill(s) on [${Object.keys(fieldsToUpdate).join(', ')}]`);
+    }
 
     return { conflictsToCreate, fieldsToUpdate, sourceUpdates, notesUpdates };
   }

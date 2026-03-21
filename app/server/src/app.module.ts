@@ -1,6 +1,5 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
-import { LoggingMiddleware } from './shared/middleware/logging.middleware';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BatteryModule } from './modules/entities/battery/battery.module';
 import { PlasticModule } from './modules/entities/plastic/plastic.module';
@@ -65,8 +64,4 @@ import { RolesGuard } from './modules/auth/guards/roles.guard';
     { provide: APP_GUARD, useClass: RolesGuard },
   ],
 })
-export class AppModule implements NestModule {
-  public configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(LoggingMiddleware).forRoutes('*');
-  }
-}
+export class AppModule {}

@@ -19,10 +19,14 @@ export class NavbarComponent {
   protected readonly _$role = computed(() => this._authService.getPayload()?.role ?? '');
 
   public onHomeClick(): void {
-    this._router.navigate([APP_ROUTES.home]);
+    if (this._router.url.split('?')[0] !== APP_ROUTES.home) {
+      this._router.navigate([APP_ROUTES.home]);
+    }
   }
 
   public onConflictsClick(): void {
-    this._router.navigate([APP_ROUTES.conflicts]);
+    if (this._router.url.split('?')[0] !== APP_ROUTES.conflicts) {
+      this._router.navigate([APP_ROUTES.conflicts]);
+    }
   }
 }
