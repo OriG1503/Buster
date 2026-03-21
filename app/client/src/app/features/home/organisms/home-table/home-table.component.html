@@ -46,11 +46,21 @@
                   class="home-table__td home-table__td--{{ cellStatus(row[col]) }}"
                   (click)="onCellClick(row, col, $event)"
                 >
-                  <span
-                    class="home-table__cell-text"
-                    (mouseenter)="onCellMouseEnter(row, col, $event)"
-                    (mouseleave)="onCellMouseLeave()"
-                  >{{ cellValue(row[col]) }}</span>
+                  @if (getConflictHref(row, col); as href) {
+                    <a
+                      class="home-table__cell-text home-table__cell-link"
+                      [href]="href"
+                      (click)="$event.preventDefault()"
+                      (mouseenter)="onCellMouseEnter(row, col, $event)"
+                      (mouseleave)="onCellMouseLeave()"
+                    >{{ cellValue(row[col]) }}</a>
+                  } @else {
+                    <span
+                      class="home-table__cell-text"
+                      (mouseenter)="onCellMouseEnter(row, col, $event)"
+                      (mouseleave)="onCellMouseLeave()"
+                    >{{ cellValue(row[col]) }}</span>
+                  }
                 </td>
               }
             </tr>

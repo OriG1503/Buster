@@ -80,7 +80,9 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
       return;
     }
     if (cell.status === 'open' && cell.conflictId !== null) {
-      this._router.navigate(['/conflicts'], { queryParams: { id: cell.conflictId } });
+      const [tableName] = col.split('.');
+      const entityId = row[`${tableName}.id`]?.value ?? '';
+      this._router.navigate(['/conflicts'], { queryParams: { tableName, open: entityId } });
       return;
     }
     if (cell.status === 'resolved') {
@@ -143,5 +145,17 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
 
   public cellStatus(cell: TableCell | undefined): string {
     return cell?.status ?? 'raw';
+  }
+
+  public getConflictHref(row: TableRow, col: string): string | null {
+    const cell = row[col];
+    if (!cell || cell.status !== 'open' || cell.conflictId === null) {
+      return null;
+    }
+    const [tableName] = col.split('.');
+    const entityId = row[`${tableName}.id`]?.value ?? '';
+    return this._router.serializeUrl(
+      this._router.createUrlTree(['/conflicts'], { queryParams: { tableName, open: entityId } }),
+    );
   }
 }

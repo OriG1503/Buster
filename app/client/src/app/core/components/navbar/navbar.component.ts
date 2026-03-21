@@ -3,7 +3,6 @@ import { Router } from '@angular/router';
 
 import { NAVBAR_LABEL_MAP } from './mapping/navbar.label-map';
 import { APP_ROUTES } from '../../../shared/consts/app-routes.consts';
-import { HomeStore } from '../../store/home.store';
 
 @Component({
   selector: 'app-navbar',
@@ -14,10 +13,8 @@ export class NavbarComponent {
   protected readonly _labelMap = NAVBAR_LABEL_MAP;
 
   private readonly _router = inject(Router);
-  private readonly _homeStore = inject(HomeStore);
 
   public onHomeClick(): void {
-    this._homeStore.selectTable('robots');
     this._router.navigate([APP_ROUTES.home]);
   }
 

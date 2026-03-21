@@ -1,4 +1,5 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { animate, style, transition, trigger } from '@angular/animations';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { forkJoin } from 'rxjs';
 
 import { ConflictGroup } from '../../../../shared/types/conflict-group.type';
@@ -12,9 +13,29 @@ import { ENTITY_COLUMN_LABEL_MAP } from '../../../../shared/mapping/entity-colum
   standalone: true,
   templateUrl: './conflict-item.component.html',
   styleUrl: './conflict-item.component.scss',
+  animations: [
+    trigger('slideDown', [
+      transition(':enter', [
+        style({ height: '0', overflow: 'hidden', opacity: 0 }),
+        animate('220ms ease-out', style({ height: '*', overflow: 'hidden', opacity: 1 })),
+      ]),
+      transition(':leave', [
+        style({ height: '*', overflow: 'hidden', opacity: 1 }),
+        animate('180ms ease-in', style({ height: '0', overflow: 'hidden', opacity: 0 })),
+      ]),
+    ]),
+    trigger('fadeSlideIn', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(-6px)' }),
+        animate('200ms ease-out', style({ opacity: 1, transform: 'translateY(0)' })),
+      ]),
+    ]),
+  ],
 })
 export class ConflictItemComponent {
   public readonly $group = input.required<ConflictGroup>();
+  public readonly $isOpen = input<boolean>(false);
+  public readonly toggled = output<string | null>();
 
   private readonly _conflictsService = inject(ConflictsService);
   private readonly _conflictsStore = inject(ConflictsStore);
@@ -38,27 +59,32 @@ export class ConflictItemComponent {
       .filter((col): col is ConflictColumnDetail => col !== undefined);
   });
 
-  protected readonly _$maxRows = computed(() => {
-    const cols = this._$columns();
-    const conflictedCols = cols.filter((c) => c.isConflicted);
-    if (conflictedCols.length === 0) {
-      return 1;
-    }
-    return Math.max(...conflictedCols.map((c) => c.conflictValues.length));
-  });
-
-  protected readonly _$rowIndices = computed(() =>
-    Array.from({ length: this._$maxRows() }, (_, i) => i),
-  );
-
   protected readonly _$canResolve = computed(() => this._$selectedWinners().size > 0);
+
+  public constructor() {
+    effect(() => {
+      if (this.$isOpen() && !this._isExpanded()) {
+        this._isExpanded.set(true);
+        if (!this._$detail()) {
+          this._conflictsService
+            .getEntityDetail(this.$group().tableName, this.$group().entityId)
+            .subscribe({ next: (detail) => this._$detail.set(detail) });
+        }
+      }
+    });
+  }
 
   public toggle(): void {
     this._isExpanded.update((v) => !v);
-    if (this._isExpanded() && !this._$detail()) {
-      this._conflictsService
-        .getEntityDetail(this.$group().tableName, this.$group().entityId)
-        .subscribe({ next: (detail) => this._$detail.set(detail) });
+    if (this._isExpanded()) {
+      if (!this._$detail()) {
+        this._conflictsService
+          .getEntityDetail(this.$group().tableName, this.$group().entityId)
+          .subscribe({ next: (detail) => this._$detail.set(detail) });
+      }
+      this.toggled.emit(this.$group().entityId);
+    } else {
+      this.toggled.emit(null);
     }
   }
 

@@ -149,8 +149,13 @@ export const HomeStore = signalStore(
 
       // Only write state to URL after the initial URL has been read, to avoid
       // the effect overwriting the pasted URL with default state on first run.
+      // Also guard against running while on a different route (e.g. /conflicts).
       effect(() => {
         if (!isInitialized()) {
+          return;
+        }
+        const urlPath = router.url.split('?')[0];
+        if (urlPath !== '/') {
           return;
         }
         const filterParams = Object.fromEntries(
