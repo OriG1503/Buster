@@ -2,24 +2,24 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { BaseEntity } from '../../../../shared/entities/base.entity';
 import { EntityService } from '../../../data-processor/types/entity-service.type';
 import { EntityServiceRegistry } from '../../../../shared/services/entity-service-registry.service';
-import { ConflictRepository } from '../conflict.repository';
-import { RevertConflictDto } from '../dto/revert-conflict.dto';
+import { ValueConflictRepository } from '../value-conflict.repository';
+import { RevertValueConflictDto } from '../dto/revert-value-conflict.dto';
 
 @Injectable()
 export class RevertService {
   public constructor(
-    private readonly _conflictRepository: ConflictRepository,
+    private readonly _valueConflictRepository: ValueConflictRepository,
     private readonly _registry: EntityServiceRegistry,
   ) {}
 
   /**
-   * Reverts an entity field to a previously held value from a resolved conflict.
+   * Reverts an entity field to a previously held value from a resolved value conflict.
    * Records the revert as a new pre-solved conflict and applies the value to the entity.
    */
-  public async revert(dto: RevertConflictDto): Promise<BaseEntity> {
+  public async revert(dto: RevertValueConflictDto): Promise<BaseEntity> {
     const { tableName, entityId, columnName, revertValue, revertedBy, resolutionNotes } = dto;
 
-    const originalConflict = await this._conflictRepository.findResolvedByGroupValue(tableName, entityId, columnName, revertValue);
+    const originalConflict = await this._valueConflictRepository.findResolvedByGroupValue(tableName, entityId, columnName, revertValue);
 
     if (!originalConflict) {
       throw new BadRequestException('No resolved conflict found for the specified revert value');
@@ -41,10 +41,10 @@ export class RevertService {
     const revertSource = originalConflict.newValue === revertValue ? originalConflict.newSource : originalConflict.oldSource;
     const revertNotes = originalConflict.newValue === revertValue ? originalConflict.newNotes : originalConflict.oldNotes;
 
-    const mostRecentResolved = await this._conflictRepository.findMostRecentResolved(tableName, entityId, columnName);
+    const mostRecentResolved = await this._valueConflictRepository.findMostRecentResolved(tableName, entityId, columnName);
     const cascadedNotes = [mostRecentResolved?.resolutionNotes, resolutionNotes].filter(Boolean).join('\n');
 
-    await this._conflictRepository.insertRevertConflict({
+    await this._valueConflictRepository.insertRevertConflict({
       tableName, entityId, columnName,
       oldValue: currentValue,
       oldSource: entity.source?.[columnName] ?? null,
@@ -54,39 +54,9 @@ export class RevertService {
       resolutionNotes: cascadedNotes, isSolved: true,
     });
 
-    if (columnName.endsWith('Id')) {
-      await this._applyFkIdRevert(entityService, entityId, entity, columnName, currentValue, revertValue, revertSource, revertNotes);
-    } else {
-      await this._applyFieldRevert(entityService, entityId, entity, columnName, revertValue, revertSource, revertNotes);
-    }
+    await this._applyFieldRevert(entityService, entityId, entity, columnName, revertValue, revertSource, revertNotes);
 
     return this._fetchUpdatedEntity(entityService, entityId, tableName);
-  }
-
-  /**
-   * Reverts an FK column: renames the referenced entity back to the revert ID
-   * and updates the owning entity's source tracking.
-   */
-  private async _applyFkIdRevert(
-    entityService: EntityService<{ id: string }>, entityId: string, entity: BaseEntity,
-    columnName: string, currentFkId: string, revertValue: string, revertSource: string | null, revertNotes: string | null,
-  ): Promise<void> {
-    const referencedTableName = `${columnName.slice(0, -2)}s`;
-    const referencedService = this._registry.get(referencedTableName);
-    const referencedEntity = await referencedService.findById(currentFkId);
-
-    if (referencedEntity) {
-      await referencedService.update(
-        currentFkId,
-        { id: revertValue },
-        { id: revertSource ?? '' },
-        referencedEntity.source,
-        { id: revertNotes },
-        referencedEntity.notes,
-      );
-    }
-
-    await entityService.update(entityId, {}, { [columnName]: revertSource ?? '' }, entity.source, { [columnName]: revertNotes }, entity.notes);
   }
 
   /** Reverts a plain field value on the entity. */

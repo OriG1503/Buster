@@ -11,6 +11,10 @@ export abstract class BaseService<T extends BaseEntity, TInsertData extends { id
     return this._repository.findById(id);
   }
 
+  public findByFkValue(column: string, value: string, excludeId?: string): Promise<T | null> {
+    return this._repository.findByFkValue(column, value, excludeId);
+  }
+
   public async insert(data: TInsertData, source: string, notes: string | null): Promise<void> {
     const { id, ...fields } = data;
     const buildTracking = (value: string | null): Record<string, string | null> => ({

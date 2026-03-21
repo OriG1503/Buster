@@ -55,4 +55,14 @@ export abstract class BaseRepository<T extends { id: TId }, TId extends string |
   public async softDelete(id: TId): Promise<void> {
     await this._repository.softDelete(id);
   }
+
+  /** Finds an entity where the given column equals the given value, optionally excluding one id. */
+  public findByFkValue(column: string, value: string, excludeId?: string): Promise<T | null> {
+    return this._repository
+      .createQueryBuilder('e')
+      .where(`e."${column}" = :value`, { value })
+      .andWhere(excludeId ? `e.id != :excludeId` : '1=1', { excludeId })
+      .loadAllRelationIds()
+      .getOne();
+  }
 }
