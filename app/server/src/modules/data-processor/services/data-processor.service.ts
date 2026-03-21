@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { QueryFailedError } from 'typeorm';
 import { PG_UNIQUE_VIOLATION } from '../../../shared/consts/pg-error-codes.const';
 import { FK_FIELD_TO_TABLE, ONE_TO_ONE_FK_FIELDS } from '../../../shared/consts/entity-relation-map.const';
@@ -23,6 +23,8 @@ const BATCH_SIZE = 5;
 
 @Injectable()
 export class DataProcessorService {
+  private readonly _logger = new Logger(DataProcessorService.name);
+
   public constructor(
     private readonly _mapper: ParserRowMapper,
     private readonly _enricher: ParsedRowEnricher,
@@ -34,6 +36,7 @@ export class DataProcessorService {
 
   /** Processes parsed rows in parallel batches to stay within the DB connection pool limit. */
   public async process(rows: ParsedRow[], username: string): Promise<ProcessResult> {
+    this._logger.log(`Processing ${rows.length} rows in ${Math.ceil(rows.length / BATCH_SIZE)} batches — user: ${username}`);
     const batches = Array.from({ length: Math.ceil(rows.length / BATCH_SIZE) }, (_, b) =>
       rows.slice(b * BATCH_SIZE, (b + 1) * BATCH_SIZE),
     );
@@ -52,28 +55,13 @@ export class DataProcessorService {
     const flyingFieldCount = flyingFields.reduce((sum, f) => sum + f.fields.length, 0);
     const uploadPercentage = totalFields > 0 ? Math.round(((totalFields - flyingFieldCount) / totalFields) * 100) : 100;
 
+    this._logger.log(`Processing done — ${uploadPercentage}% uploaded, ${conflictCount} conflicts detected`);
     return { conflictCount, conflictIds, flyingFields, uploadPercentage };
   }
 
-  /**
-   * Processes a single parsed row leaf-first.
-   * Looks up prior FK IDs from the stored robot so renamed intermediate entities
-   * (Communication, Plastic, Wiring) can be renamed in-place rather than re-inserted.
-   */
+  /** Processes a single parsed row leaf-first. */
   private async _processRow(row: ParsedRow, username: string, rowIndex: number): Promise<RowResult> {
     const enriched = this._enricher.enrich(row);
-
-    const storedRobot = await this._registry.get('robots').findById(enriched.robot_UUID);
-    const storedRobotFields = storedRobot as unknown as Record<string, string | null> | null;
-    const currentCommId = storedRobotFields?.['communicationId'] ?? null;
-    const currentWiringId = storedRobotFields?.['wiringId'] ?? null;
-
-    const storedComm = currentCommId ? await this._registry.get('communications').findById(currentCommId) : null;
-    const currentPlasticId = storedComm ? (storedComm as unknown as Record<string, string | null>)['plasticId'] ?? null : null;
-
-    const commPriorId = currentCommId ?? undefined;
-    const mappedComm = this._mapper.mapCommunication(enriched);
-    const commWasRenamed = storedComm !== null && commPriorId !== undefined && mappedComm?.id != null && commPriorId !== mappedComm.id;
 
     // Level 1 — independent leaves: no FK dependencies on each other
     const [batteryResult, storageResult, ironResult, cardboardResult, sensorResult, saleResult] = await Promise.all([
@@ -87,25 +75,17 @@ export class DataProcessorService {
 
     // Level 2 — Plastic (needs Battery), Wiring (needs Storage): independent of each other
     const [plasticResult, wiringResult] = await Promise.all([
-      this._processEntity(this._mapper.mapPlastic(enriched), this._registry.get('plastics'), username, rowIndex, currentPlasticId ?? undefined),
-      this._processEntity(this._mapper.mapWiring(enriched), this._registry.get('wirings'), username, rowIndex, currentWiringId ?? undefined),
+      this._processEntity(this._mapper.mapPlastic(enriched), this._registry.get('plastics'), username, rowIndex),
+      this._processEntity(this._mapper.mapWiring(enriched), this._registry.get('wirings'), username, rowIndex),
     ]);
 
     // Level 3 — Communication (needs Plastic + Iron)
-    const commResult = await this._processEntity(mappedComm, this._registry.get('communications'), username, rowIndex, commPriorId);
+    const commResult = await this._processEntity(this._mapper.mapCommunication(enriched), this._registry.get('communications'), username, rowIndex);
 
     // Level 4 — Robot (needs Communication, Wiring, Cardboard, Sensor, Sale)
     const robotResult = await this._processEntity(this._mapper.mapRobot(enriched), this._registry.get('robots'), username, rowIndex);
 
     const results: EntityResult[] = [batteryResult, storageResult, ironResult, cardboardResult, sensorResult, saleResult, plasticResult, wiringResult, commResult, robotResult];
-
-    if (commWasRenamed) {
-      const robotService = this._registry.get('robots');
-      const currentRobot = await robotService.findById(enriched.robot_UUID);
-      if (currentRobot) {
-        await robotService.update(enriched.robot_UUID, {}, { communicationId: mappedComm!.source }, currentRobot.source, { communicationId: mappedComm!.notes }, currentRobot.notes);
-      }
-    }
 
     return {
       conflictCount: results.reduce((sum, r) => sum + r.count, 0),
@@ -122,7 +102,7 @@ export class DataProcessorService {
   private async _processEntity(
     mapped: MappedEntityBase | null,
     service: EntityService<{ id: string }>,
-    username: string, rowIndex: number, priorId?: string,
+    username: string, rowIndex: number,
   ): Promise<EntityResult> {
     if (!mapped) { return { count: 0, conflictIds: [], flyingField: null, totalFields: 0 }; }
 
@@ -136,31 +116,13 @@ export class DataProcessorService {
     const { source: incomingSource, notes: incomingNotes, id, ...incomingFields } = mappedRecord;
     const nonNullFieldCount = Object.keys(incomingFields).filter((k) => incomingFields[k] !== null).length;
 
-    let storedRecord = await service.findById(id);
-    if (!storedRecord && priorId && priorId !== id) {
-      storedRecord = await this._resolveByPriorId(service, id, priorId, incomingSource, incomingNotes);
-    }
+    const storedRecord = await service.findById(id);
 
     if (!storedRecord) {
       return this._insertEntity(service, id, incomingFields, incomingSource, incomingNotes, username, nonNullFieldCount);
     }
 
     return this._updateExistingEntity(service, id, storedRecord, incomingFields, incomingSource, incomingNotes, username, nonNullFieldCount);
-  }
-
-  /**
-   * Renames a prior entity ID to the new incoming ID and updates its source tracking.
-   * Returns the record under the new ID, or null if the prior record was not found.
-   */
-  private async _resolveByPriorId(
-    service: EntityService<{ id: string }>,
-    id: string, priorId: string, incomingSource: string, incomingNotes: string | null,
-  ) {
-    const priorRecord = await service.findById(priorId);
-    if (!priorRecord) { return null; }
-    await service.renameId(priorId, id);
-    await service.update(id, {}, { id: incomingSource }, priorRecord.source, { id: incomingNotes }, priorRecord.notes);
-    return service.findById(id);
   }
 
   /**
@@ -177,19 +139,21 @@ export class DataProcessorService {
   ): Promise<EntityResult> {
     const cleanedFields = { ...incomingFields };
 
-    await Promise.all(
-      Object.keys(incomingFields)
-        .filter((field) => field.endsWith('Id') && ONE_TO_ONE_FK_FIELDS.has(field) && incomingFields[field] != null)
-        .map(async (fkField) => {
-          const childId = String(incomingFields[fkField]);
-          const existingOwner = await service.findByFkValue(fkField, childId, id);
+    const relationalConflictIds = (
+      await Promise.all(
+        Object.keys(incomingFields)
+          .filter((field) => field.endsWith('Id') && ONE_TO_ONE_FK_FIELDS.has(field) && incomingFields[field] != null)
+          .map(async (fkField) => {
+            const childId = String(incomingFields[fkField]);
+            const existingOwner = await service.findByFkValue(fkField, childId, id);
 
-          if (existingOwner) {
+            if (!existingOwner) { return null; }
+
             cleanedFields[fkField] = null;
             const childTable = FK_FIELD_TO_TABLE[fkField];
             const childEntity = await this._registry.get(childTable).findById(childId);
 
-            await this._relationalConflictDetectionService.detectTwoFathers(
+            return this._relationalConflictDetectionService.detectTwoFathers(
               childId, childTable,
               childEntity?.source?.[fkField] ?? null,
               childEntity?.notes?.[fkField] ?? null,
@@ -200,9 +164,9 @@ export class DataProcessorService {
               incomingSource, incomingNotes,
               username,
             );
-          }
-        }),
-    );
+          }),
+      )
+    ).filter((id): id is number => id !== null);
 
     try {
       await service.insert({ id, ...cleanedFields }, incomingSource, incomingNotes);
@@ -210,7 +174,7 @@ export class DataProcessorService {
       if (!(error instanceof QueryFailedError) || (error as any).code !== PG_UNIQUE_VIOLATION) { throw error; }
     }
 
-    return { count: 0, conflictIds: [], flyingField: null, totalFields: nonNullFieldCount };
+    return { count: relationalConflictIds.length, conflictIds: [], flyingField: null, totalFields: nonNullFieldCount };
   }
 
   /**
@@ -246,13 +210,13 @@ export class DataProcessorService {
       );
     }
 
-    await this._detectTwoChildsConflicts(service, id, storedRecord, incomingFields, incomingSource, incomingNotes, username);
+    const relationalCount = await this._detectTwoChildsConflicts(service, id, storedRecord, incomingFields, incomingSource, incomingNotes, username);
 
     if (Object.keys(result.fieldsToUpdate).length > 0) {
       await service.update(id, result.fieldsToUpdate, result.sourceUpdates, storedRecord.source, result.notesUpdates, storedRecord.notes);
     }
 
-    return { count: result.conflictsToCreate.length, conflictIds, flyingField: null, totalFields: nonNullFieldCount };
+    return { count: result.conflictsToCreate.length + relationalCount, conflictIds, flyingField: null, totalFields: nonNullFieldCount };
   }
 
   /**
@@ -265,10 +229,10 @@ export class DataProcessorService {
     incomingFields: Record<string, EntityValue>,
     incomingSource: string, incomingNotes: string | null,
     username: string,
-  ): Promise<void> {
+  ): Promise<number> {
     const storedRecord_ = storedRecord as unknown as Record<string, EntityValue>;
 
-    await Promise.all(
+    const results = await Promise.all(
       Object.keys(incomingFields)
         .filter((field) => {
           if (!field.endsWith('Id')) { return false; }
@@ -281,9 +245,9 @@ export class DataProcessorService {
           const newRelatedId = String(incomingFields[fkField]);
           const relatedTable = FK_FIELD_TO_TABLE[fkField];
 
-          if (!relatedTable) { return; }
+          if (!relatedTable) { return null; }
 
-          await this._relationalConflictDetectionService.detectTwoChilds(
+          return this._relationalConflictDetectionService.detectTwoChilds(
             id, service.tableName,
             storedRecord.source?.[fkField] ?? null,
             storedRecord.notes?.[fkField] ?? null,
@@ -295,5 +259,7 @@ export class DataProcessorService {
           );
         }),
     );
+
+    return results.filter((conflictId): conflictId is number => conflictId !== null).length;
   }
 }

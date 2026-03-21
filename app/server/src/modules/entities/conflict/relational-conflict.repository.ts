@@ -31,7 +31,9 @@ export class RelationalConflictRepository extends BaseRepository<RelationalConfl
     });
   }
 
-  public async insertConflict(data: Partial<RelationalConflictEntity>): Promise<void> {
-    await this.insert(data as Record<string, EntityValue>, true);
+  /** Inserts a new conflict. Returns the new conflict's ID, or null if it already existed (unique violation ignored). */
+  public async insertConflict(data: Partial<RelationalConflictEntity>): Promise<number | null> {
+    const ids = await this.insertMany([data as Record<string, EntityValue>], true);
+    return ids.length > 0 ? (ids[0] as number) : null;
   }
 }

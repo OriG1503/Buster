@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { BaseEntity } from '../../../../shared/entities/base.entity';
 import { EntityServiceRegistry } from '../../../../shared/services/entity-service-registry.service';
 import { ValueConflictEntity } from '../entities/value-conflict.entity';
@@ -7,6 +7,8 @@ import { ResolveValueConflictDto } from '../dto/resolve-value-conflict.dto';
 
 @Injectable()
 export class ValueConflictResolverService {
+  private readonly _logger = new Logger(ValueConflictResolverService.name);
+
   public constructor(
     private readonly _valueConflictRepository: ValueConflictRepository,
     private readonly _registry: EntityServiceRegistry,
@@ -15,6 +17,7 @@ export class ValueConflictResolverService {
   /** Picks a winner value for an open value-conflict group and persists the resolution. */
   public async resolve(resolveConflictDto: ResolveValueConflictDto): Promise<BaseEntity> {
     const { tableName, entityId, columnName, winnerValue, conflictResolver, resolutionNotes } = resolveConflictDto;
+    this._logger.log(`Resolving: ${tableName}/${entityId}/${columnName} → "${winnerValue}" by ${conflictResolver}`);
 
     const conflicts = await this._fetchAndValidateConflicts(tableName, entityId, columnName, winnerValue);
     const entityService = this._registry.get(tableName);
@@ -36,6 +39,7 @@ export class ValueConflictResolverService {
     }
 
     await this._valueConflictRepository.resolveMany(tableName, entityId, columnName, conflictResolver, resolutionNotes);
+    this._logger.log(`Resolved: ${tableName}/${entityId}/${columnName}`);
 
     return this._fetchUpdatedEntity(entityService, entityId, tableName);
   }

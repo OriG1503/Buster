@@ -63,6 +63,78 @@
                       }
                     </div>
                   </td>
+                } @else if (col.relationalConflict) {
+                  <td class="conflict-item__cell conflict-item__cell--conflict">
+                    <div class="conflict-item__options">
+                      <div
+                        class="conflict-item__option"
+                        [class.conflict-item__option--selected]="isRelationalWinnerSelected(col.columnName, col.relationalConflict.oldRelatedId)"
+                        (click)="selectRelationalWinner(col.columnName, col.relationalConflict.oldRelatedId)"
+                      >
+                        <span
+                          class="conflict-item__cell-dot"
+                          [class.conflict-item__cell-dot--active]="isRelationalWinnerSelected(col.columnName, col.relationalConflict.oldRelatedId)"
+                        ></span>
+                        <div class="conflict-item__option-main">
+                          <i class="conflict-item__warn-icon pi pi-exclamation-triangle"></i>
+                          <span class="conflict-item__cell-value">{{ col.relationalConflict.oldRelatedId }}</span>
+                        </div>
+                        <span class="conflict-item__cell-meta">{{ col.relationalConflict.oldRelatedSource ?? 'אין מקור' }}</span>
+                      </div>
+                      <div
+                        class="conflict-item__option"
+                        [class.conflict-item__option--selected]="isRelationalWinnerSelected(col.columnName, col.relationalConflict.newRelatedId)"
+                        (click)="selectRelationalWinner(col.columnName, col.relationalConflict.newRelatedId)"
+                      >
+                        <span
+                          class="conflict-item__cell-dot"
+                          [class.conflict-item__cell-dot--active]="isRelationalWinnerSelected(col.columnName, col.relationalConflict.newRelatedId)"
+                        ></span>
+                        <div class="conflict-item__option-main">
+                          <i class="conflict-item__warn-icon pi pi-exclamation-triangle"></i>
+                          <span class="conflict-item__cell-value">{{ col.relationalConflict.newRelatedId }}</span>
+                        </div>
+                        <span class="conflict-item__cell-meta">{{ col.relationalConflict.newRelatedSource ?? 'אין מקור' }}</span>
+                      </div>
+                      @if (col.relationalConflict.conflictType === 'TWO_CHILDS' && getRelationalWinner(col.columnName)) {
+                        @for (entry of getRelatedChildEntries(col.relationalConflict); track entry.field) {
+                          <div class="conflict-item__child-selector">
+                            <span class="conflict-item__child-label">
+                              {{ getLabelForKey(col.relationalConflict.relatedTable + '.' + entry.field) }}
+                            </span>
+                            <div class="conflict-item__options conflict-item__options--compact">
+                              @if (entry.oldId) {
+                                <div
+                                  class="conflict-item__option conflict-item__option--compact"
+                                  [class.conflict-item__option--selected]="isChildWinnerSelected(col.columnName, entry.field, entry.oldId)"
+                                  (click)="selectRelationalChild(col.columnName, entry.field, entry.oldId)"
+                                >
+                                  <span
+                                    class="conflict-item__cell-dot"
+                                    [class.conflict-item__cell-dot--active]="isChildWinnerSelected(col.columnName, entry.field, entry.oldId)"
+                                  ></span>
+                                  <span class="conflict-item__cell-value">{{ entry.oldId }}</span>
+                                </div>
+                              }
+                              @if (entry.newId) {
+                                <div
+                                  class="conflict-item__option conflict-item__option--compact"
+                                  [class.conflict-item__option--selected]="isChildWinnerSelected(col.columnName, entry.field, entry.newId)"
+                                  (click)="selectRelationalChild(col.columnName, entry.field, entry.newId)"
+                                >
+                                  <span
+                                    class="conflict-item__cell-dot"
+                                    [class.conflict-item__cell-dot--active]="isChildWinnerSelected(col.columnName, entry.field, entry.newId)"
+                                  ></span>
+                                  <span class="conflict-item__cell-value">{{ entry.newId }}</span>
+                                </div>
+                              }
+                            </div>
+                          </div>
+                        }
+                      }
+                    </div>
+                  </td>
                 } @else {
                   <td class="conflict-item__cell">
                     <div class="conflict-item__cell-content">
@@ -77,24 +149,26 @@
           </tbody>
         </table>
 
-        <div class="conflict-item__footer">
-          <button
-            class="conflict-item__resolve-btn"
-            [disabled]="!_$canResolve()"
-            (click)="resolve()"
-          >
-            אישור
-          </button>
-          <div class="conflict-item__notes-wrap">
-            <input
-              class="conflict-item__notes-input"
-              type="text"
-              placeholder="פרט את סיבת הבחירה..."
-              [value]="_$notes()"
-              (input)="_$notes.set($any($event.target).value)"
-            />
+        @if (_$canEdit()) {
+          <div class="conflict-item__footer">
+            <button
+              class="conflict-item__resolve-btn"
+              [disabled]="!_$canResolve()"
+              (click)="resolve()"
+            >
+              אישור
+            </button>
+            <div class="conflict-item__notes-wrap">
+              <input
+                class="conflict-item__notes-input"
+                type="text"
+                placeholder="פרט את סיבת הבחירה..."
+                [value]="_$notes()"
+                (input)="_$notes.set($any($event.target).value)"
+              />
+            </div>
           </div>
-        </div>
+        }
         </div>
       }
     </div>

@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 
+import { FK_FIELD_TO_TABLE } from '../../shared/consts/entity-relation-map.const';
 import { ALLOWED_COLUMNS, ALLOWED_TABLES } from './consts/allowed-entities.consts';
 import { JOIN_ORDER, PARENT_JOIN } from './consts/join-chain.consts';
 import { TableViewQueryDto } from './dto/table-view-query.dto';
@@ -16,8 +17,27 @@ type ConflictRow = {
   id: number;
 };
 
+type RelationalConflictRow = {
+  anchorTable: string;
+  anchorId: string;
+  relatedTable: string;
+  conflictType: string;
+  oldRelatedId: string;
+  newRelatedId: string;
+  isSolved: boolean | null;
+  id: number;
+};
+
+type ConflictEntry = { status: 'open' | 'resolved'; conflictId: number | null };
+
 /** conflictMap[tableName][entityId][columnName] */
-type ConflictMap = Record<string, Record<string, Record<string, { status: 'open' | 'resolved'; conflictId: number | null }>>>;
+type ConflictMap = Record<string, Record<string, Record<string, ConflictEntry>>>;
+
+/**
+ * nullConflictMap[rootTable][rootEntityId][colKey]
+ * Used when a joined entity's ID is null — the cell is colored based on the root row's entity.
+ */
+type NullConflictMap = Record<string, Record<string, Record<string, ConflictEntry>>>;
 
 @Injectable()
 export class TableViewService {
@@ -52,10 +72,10 @@ export class TableViewService {
       this._dataSource.query(countSql, whereParams) as Promise<[{ total: string }]>,
     ]);
 
-    const conflictMap = await this._buildConflictMap(tablesInvolved, rows);
+    const { conflictMap, nullConflictMap } = await this._buildConflictMap(tablesInvolved, rows);
 
     return {
-      rows: rows.map((row) => this._buildResponseRow(columns, row, conflictMap)),
+      rows: rows.map((row) => this._buildResponseRow(columns, row, conflictMap, nullConflictMap, tableName)),
       total: parseInt(countResult[0].total, 10),
     };
   }
@@ -186,8 +206,12 @@ export class TableViewService {
     return { whereClauses, whereParams };
   }
 
-  private async _buildConflictMap(tablesInvolved: Set<string>, rows: Record<string, unknown>[]): Promise<ConflictMap> {
+  private async _buildConflictMap(
+    tablesInvolved: Set<string>,
+    rows: Record<string, unknown>[],
+  ): Promise<{ conflictMap: ConflictMap; nullConflictMap: NullConflictMap }> {
     const conflictMap: ConflictMap = {};
+    const nullConflictMap: NullConflictMap = {};
 
     const entityIdsByTable: Record<string, string[]> = {};
     tablesInvolved.forEach((table) => {
@@ -200,48 +224,127 @@ export class TableViewService {
     });
 
     if (Object.keys(entityIdsByTable).length === 0) {
-      return conflictMap;
+      return { conflictMap, nullConflictMap };
     }
 
-    const conditions: string[] = [];
-    const params: unknown[] = [];
-
+    // --- Value conflicts ---
+    const valueConditions: string[] = [];
+    const valueParams: unknown[] = [];
     Object.entries(entityIdsByTable).forEach(([table, ids]) => {
-      params.push(ids);
-      conditions.push(`("tableName" = '${table}' AND "entityId" = ANY($${params.length}))`);
+      valueParams.push(ids);
+      valueConditions.push(`("tableName" = '${table}' AND "entityId" = ANY($${valueParams.length}))`);
     });
 
-    const conflictSql = `
+    const valueConflictSql = `
       SELECT "tableName", "entityId", "columnName", "isSolved", "id"
-      FROM conflicts
-      WHERE "deletedAt" IS NULL AND (${conditions.join(' OR ')})
+      FROM value_conflicts
+      WHERE "deletedAt" IS NULL AND (${valueConditions.join(' OR ')})
     `;
 
-    const conflicts: ConflictRow[] = await this._dataSource.query(conflictSql, params);
+    // --- Relational conflicts by anchor (anchorTable/anchorId in our entity set) ---
+    const anchorConditions: string[] = [];
+    const anchorParams: unknown[] = [];
+    Object.entries(entityIdsByTable).forEach(([table, ids]) => {
+      anchorParams.push(ids);
+      anchorConditions.push(`("anchorTable" = '${table}' AND "anchorId" = ANY($${anchorParams.length}))`);
+    });
 
-    conflicts.forEach(({ tableName, entityId, columnName, isSolved, id }) => {
-      if (!conflictMap[tableName]) {
-        conflictMap[tableName] = {};
+    const relByAnchorSql = `
+      SELECT "anchorTable", "anchorId", "relatedTable", "conflictType", "oldRelatedId", "newRelatedId", "isSolved", "id"
+      FROM relational_conflicts
+      WHERE "deletedAt" IS NULL AND (${anchorConditions.join(' OR ')})
+    `;
+
+    // --- Relational conflicts by related (relatedTable + oldRelatedId/newRelatedId in our entity set) ---
+    const relatedConditions: string[] = [];
+    const relatedParams: unknown[] = [];
+    Object.entries(entityIdsByTable).forEach(([table, ids]) => {
+      relatedParams.push(ids);
+      const idx = relatedParams.length;
+      relatedConditions.push(`("relatedTable" = '${table}' AND ("oldRelatedId" = ANY($${idx}) OR "newRelatedId" = ANY($${idx})))`);
+    });
+
+    const relByRelatedSql = `
+      SELECT "anchorTable", "anchorId", "relatedTable", "conflictType", "oldRelatedId", "newRelatedId", "isSolved", "id"
+      FROM relational_conflicts
+      WHERE "deletedAt" IS NULL AND (${relatedConditions.join(' OR ')})
+    `;
+
+    const [valueConflicts, relByAnchor, relByRelated] = await Promise.all([
+      this._dataSource.query(valueConflictSql, valueParams) as Promise<ConflictRow[]>,
+      this._dataSource.query(relByAnchorSql, anchorParams) as Promise<RelationalConflictRow[]>,
+      this._dataSource.query(relByRelatedSql, relatedParams) as Promise<RelationalConflictRow[]>,
+    ]);
+
+    const markCell = (map: ConflictMap, table: string, entityId: string, column: string, entry: ConflictEntry): void => {
+      if (!map[table]) { map[table] = {}; }
+      if (!map[table][entityId]) { map[table][entityId] = {}; }
+      const existing = map[table][entityId][column];
+      if (!existing || (entry.status === 'open' && existing.status !== 'open')) {
+        map[table][entityId][column] = entry;
       }
-      if (!conflictMap[tableName][entityId]) {
-        conflictMap[tableName][entityId] = {};
+    };
+
+    const markNull = (relatedTable: string, relatedId: string, colKey: string, entry: ConflictEntry): void => {
+      if (!nullConflictMap[relatedTable]) { nullConflictMap[relatedTable] = {}; }
+      if (!nullConflictMap[relatedTable][relatedId]) { nullConflictMap[relatedTable][relatedId] = {}; }
+      const existing = nullConflictMap[relatedTable][relatedId][colKey];
+      if (!existing || (entry.status === 'open' && existing.status !== 'open')) {
+        nullConflictMap[relatedTable][relatedId][colKey] = entry;
+      }
+    };
+
+    const toEntry = (isSolved: boolean | null, id: number): ConflictEntry => ({
+      status: isSolved === false ? 'open' : 'resolved',
+      conflictId: isSolved === false ? id : null,
+    });
+
+    // Process value conflicts.
+    valueConflicts.forEach(({ tableName, entityId, columnName, isSolved, id }) => {
+      markCell(conflictMap, tableName, entityId, columnName, toEntry(isSolved, id));
+    });
+
+    // Process relational conflicts from both queries (union via idempotent markCell).
+    [...relByAnchor, ...relByRelated].forEach((rc) => {
+      const entry = toEntry(rc.isSolved, rc.id);
+
+      if (rc.conflictType === 'TWO_CHILDS') {
+        // 1. Anchor entity's FK column (e.g. robots/robot123/communicationId).
+        const fkColumn = `${rc.relatedTable.slice(0, -1)}Id`;
+        markCell(conflictMap, rc.anchorTable, rc.anchorId, fkColumn, entry);
+
+        // 2. Old related entity's id cell (e.g. communications/comm555/id).
+        markCell(conflictMap, rc.relatedTable, rc.oldRelatedId, 'id', entry);
+
+        // 3. New related entity's joined-anchor cell will be null → mark in nullConflictMap
+        //    so that when viewing the relatedTable with anchorTable.id joined, the null cell turns red.
+        markNull(rc.relatedTable, rc.newRelatedId, `${rc.anchorTable}.id`, entry);
       }
 
-      const existing = conflictMap[tableName][entityId][columnName];
-      // Open conflict takes priority over resolved.
-      if (!existing || (isSolved === false && existing.status !== 'open')) {
-        conflictMap[tableName][entityId][columnName] = {
-          status: isSolved === false ? 'open' : 'resolved',
-          conflictId: isSolved === false ? id : null,
-        };
+      if (rc.conflictType === 'TWO_FATHERS') {
+        // 1. Old related entity (first owner) id cell (e.g. robots/robot123/id).
+        markCell(conflictMap, rc.relatedTable, rc.oldRelatedId, 'id', entry);
+
+        // 2. New related entity's FK field that was nulled out (e.g. robots/robot777/communicationId).
+        const fkField = Object.keys(FK_FIELD_TO_TABLE).find((k) => FK_FIELD_TO_TABLE[k] === rc.anchorTable);
+        if (fkField) {
+          markCell(conflictMap, rc.relatedTable, rc.newRelatedId, fkField, entry);
+        }
       }
     });
 
-    return conflictMap;
+    return { conflictMap, nullConflictMap };
   }
 
-  private _buildResponseRow(columns: string[], row: Record<string, unknown>, conflictMap: ConflictMap): TableRow {
+  private _buildResponseRow(
+    columns: string[],
+    row: Record<string, unknown>,
+    conflictMap: ConflictMap,
+    nullConflictMap: NullConflictMap,
+    rootTableName: string,
+  ): TableRow {
     const result: TableRow = {};
+    const rootEntityId = row[`${rootTableName}__id`] as string | null;
 
     // Always include {table}.id for every involved table so the conflict history popup
     // can resolve the entity ID regardless of which columns the user has selected.
@@ -269,7 +372,11 @@ export class TableViewService {
       const sourceMap = row[`${table}__source`] as Record<string, string | null> | null;
       const notesMap = row[`${table}__notes`] as Record<string, string | null> | null;
 
-      const conflictEntry = entityId ? conflictMap[table]?.[entityId]?.[column] : undefined;
+      // Primary lookup: by (table, entityId, column).
+      // Fallback for null joined entity: by (rootTable, rootEntityId, colKey) in nullConflictMap.
+      const conflictEntry = entityId
+        ? conflictMap[table]?.[entityId]?.[column]
+        : (rootEntityId ? nullConflictMap[rootTableName]?.[rootEntityId]?.[colKey] : undefined);
 
       const createdAt = row[`${table}__createdAt`];
 
