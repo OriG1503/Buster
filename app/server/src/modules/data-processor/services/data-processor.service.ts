@@ -55,25 +55,9 @@ export class DataProcessorService {
     return { conflictCount, conflictIds, flyingFields, uploadPercentage };
   }
 
-  /**
-   * Processes a single parsed row leaf-first.
-   * Looks up prior FK IDs from the stored robot so renamed intermediate entities
-   * (Communication, Plastic, Wiring) can be renamed in-place rather than re-inserted.
-   */
+  /** Processes a single parsed row leaf-first. */
   private async _processRow(row: ParsedRow, username: string, rowIndex: number): Promise<RowResult> {
     const enriched = this._enricher.enrich(row);
-
-    const storedRobot = await this._registry.get('robots').findById(enriched.robot_UUID);
-    const storedRobotFields = storedRobot as unknown as Record<string, string | null> | null;
-    const currentCommId = storedRobotFields?.['communicationId'] ?? null;
-    const currentWiringId = storedRobotFields?.['wiringId'] ?? null;
-
-    const storedComm = currentCommId ? await this._registry.get('communications').findById(currentCommId) : null;
-    const currentPlasticId = storedComm ? (storedComm as unknown as Record<string, string | null>)['plasticId'] ?? null : null;
-
-    const commPriorId = currentCommId ?? undefined;
-    const mappedComm = this._mapper.mapCommunication(enriched);
-    const commWasRenamed = storedComm !== null && commPriorId !== undefined && mappedComm?.id != null && commPriorId !== mappedComm.id;
 
     // Level 1 — independent leaves: no FK dependencies on each other
     const [batteryResult, storageResult, ironResult, cardboardResult, sensorResult, saleResult] = await Promise.all([
@@ -87,25 +71,17 @@ export class DataProcessorService {
 
     // Level 2 — Plastic (needs Battery), Wiring (needs Storage): independent of each other
     const [plasticResult, wiringResult] = await Promise.all([
-      this._processEntity(this._mapper.mapPlastic(enriched), this._registry.get('plastics'), username, rowIndex, currentPlasticId ?? undefined),
-      this._processEntity(this._mapper.mapWiring(enriched), this._registry.get('wirings'), username, rowIndex, currentWiringId ?? undefined),
+      this._processEntity(this._mapper.mapPlastic(enriched), this._registry.get('plastics'), username, rowIndex),
+      this._processEntity(this._mapper.mapWiring(enriched), this._registry.get('wirings'), username, rowIndex),
     ]);
 
     // Level 3 — Communication (needs Plastic + Iron)
-    const commResult = await this._processEntity(mappedComm, this._registry.get('communications'), username, rowIndex, commPriorId);
+    const commResult = await this._processEntity(this._mapper.mapCommunication(enriched), this._registry.get('communications'), username, rowIndex);
 
     // Level 4 — Robot (needs Communication, Wiring, Cardboard, Sensor, Sale)
     const robotResult = await this._processEntity(this._mapper.mapRobot(enriched), this._registry.get('robots'), username, rowIndex);
 
     const results: EntityResult[] = [batteryResult, storageResult, ironResult, cardboardResult, sensorResult, saleResult, plasticResult, wiringResult, commResult, robotResult];
-
-    if (commWasRenamed) {
-      const robotService = this._registry.get('robots');
-      const currentRobot = await robotService.findById(enriched.robot_UUID);
-      if (currentRobot) {
-        await robotService.update(enriched.robot_UUID, {}, { communicationId: mappedComm!.source }, currentRobot.source, { communicationId: mappedComm!.notes }, currentRobot.notes);
-      }
-    }
 
     return {
       conflictCount: results.reduce((sum, r) => sum + r.count, 0),
@@ -122,7 +98,7 @@ export class DataProcessorService {
   private async _processEntity(
     mapped: MappedEntityBase | null,
     service: EntityService<{ id: string }>,
-    username: string, rowIndex: number, priorId?: string,
+    username: string, rowIndex: number,
   ): Promise<EntityResult> {
     if (!mapped) { return { count: 0, conflictIds: [], flyingField: null, totalFields: 0 }; }
 
@@ -136,31 +112,13 @@ export class DataProcessorService {
     const { source: incomingSource, notes: incomingNotes, id, ...incomingFields } = mappedRecord;
     const nonNullFieldCount = Object.keys(incomingFields).filter((k) => incomingFields[k] !== null).length;
 
-    let storedRecord = await service.findById(id);
-    if (!storedRecord && priorId && priorId !== id) {
-      storedRecord = await this._resolveByPriorId(service, id, priorId, incomingSource, incomingNotes);
-    }
+    const storedRecord = await service.findById(id);
 
     if (!storedRecord) {
       return this._insertEntity(service, id, incomingFields, incomingSource, incomingNotes, username, nonNullFieldCount);
     }
 
     return this._updateExistingEntity(service, id, storedRecord, incomingFields, incomingSource, incomingNotes, username, nonNullFieldCount);
-  }
-
-  /**
-   * Renames a prior entity ID to the new incoming ID and updates its source tracking.
-   * Returns the record under the new ID, or null if the prior record was not found.
-   */
-  private async _resolveByPriorId(
-    service: EntityService<{ id: string }>,
-    id: string, priorId: string, incomingSource: string, incomingNotes: string | null,
-  ) {
-    const priorRecord = await service.findById(priorId);
-    if (!priorRecord) { return null; }
-    await service.renameId(priorId, id);
-    await service.update(id, {}, { id: incomingSource }, priorRecord.source, { id: incomingNotes }, priorRecord.notes);
-    return service.findById(id);
   }
 
   /**
