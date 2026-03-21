@@ -3,6 +3,9 @@
     <table class="home-table__table">
       <thead>
         <tr>
+          @if ($isExportMode()) {
+            <th class="home-table__th home-table__th--checkbox"></th>
+          }
           @for (col of _$displayColumns(); track col) {
             <th class="home-table__th">
               <span class="home-table__th-label">{{ _columnLabelMap[col] }}</span>
@@ -31,6 +34,9 @@
         @if (_store.isLoading() && _store.rows().length === 0) {
           @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
             <tr class="home-table__tr home-table__tr--skeleton">
+              @if ($isExportMode()) {
+                <td class="home-table__td home-table__td--checkbox"></td>
+              }
               @for (col of _$displayColumns(); track col) {
                 <td class="home-table__td">
                   <span class="home-table__skeleton"></span>
@@ -40,7 +46,20 @@
           }
         } @else {
           @for (row of _store.rows(); track trackByIndex($index)) {
-            <tr class="home-table__tr">
+            <tr
+              class="home-table__tr"
+              [class.home-table__tr--selected]="$isExportMode() && $selectedExportIndices().has($index)"
+            >
+              @if ($isExportMode()) {
+                <td class="home-table__td home-table__td--checkbox" (click)="$event.stopPropagation()">
+                  <input
+                    type="checkbox"
+                    class="home-table__export-checkbox"
+                    [checked]="$selectedExportIndices().has($index)"
+                    (change)="onRowCheckboxChange($index)"
+                  />
+                </td>
+              }
               @for (col of _$displayColumns(); track col) {
                 <td
                   class="home-table__td home-table__td--{{ cellStatus(row[col]) }}"
@@ -68,6 +87,9 @@
           @if (_store.isLoadingMore()) {
             @for (i of [1, 2, 3]; track i) {
               <tr class="home-table__tr home-table__tr--skeleton">
+                @if ($isExportMode()) {
+                  <td class="home-table__td home-table__td--checkbox"></td>
+                }
                 @for (col of _$displayColumns(); track col) {
                   <td class="home-table__td">
                     <span class="home-table__skeleton"></span>

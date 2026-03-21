@@ -5,12 +5,20 @@
     [$selectedTable]="_store.selectedTable()"
     [$selectedColumns]="_store.selectedColumns()"
     [$hasActiveFilters]="_$hasActiveFilters()"
+    [$isExportMode]="_$isExportMode()"
+    [$selectedExportCount]="_$selectedExportCount()"
     (entitySelected)="onEntitySelected($event)"
     (columnToggle)="onColumnToggle($event)"
     (columnReorder)="onColumnReorder($event)"
     (exportExcel)="onExportExcel()"
+    (exportConfirm)="onExportConfirm()"
+    (exportCancel)="onExportCancel()"
     (clearFilters)="onClearFilters()"
     (uploadClick)="onUploadClick()"
   />
-  <app-home-table />
+  <app-home-table
+    [$isExportMode]="_$isExportMode()"
+    [$selectedExportIndices]="_$selectedExportIndices()"
+    (rowExportToggled)="onRowExportToggled($event)"
+  />
 </div>

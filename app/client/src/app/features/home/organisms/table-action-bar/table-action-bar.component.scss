@@ -95,6 +95,21 @@
       }
     }
 
+    &--confirm-export {
+      border-color: var(--color-blue);
+      color: var(--color-blue);
+
+      .pi {
+        color: var(--color-blue);
+      }
+
+      &:hover {
+        background-color: rgba(63, 112, 227, 0.08);
+        border-color: var(--color-blue);
+        color: var(--color-blue);
+      }
+    }
+
     &--clear {
       border-color: var(--color-red);
       color: var(--color-red);

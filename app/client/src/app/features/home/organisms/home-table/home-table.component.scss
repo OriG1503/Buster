@@ -149,6 +149,14 @@
     &:hover {
       background-color: rgba(255, 255, 255, 0.03);
     }
+
+    &--selected {
+      background-color: rgba(63, 112, 227, 0.15);
+
+      &:hover {
+        background-color: rgba(63, 112, 227, 0.22);
+      }
+    }
   }
 
   &__td {
@@ -190,6 +198,27 @@
     .home-table__td--raw &:hover {
       background-color: #202F4C;
     }
+  }
+
+  &__th--checkbox {
+    min-width: 3rem;
+    width: 3rem;
+    padding: 0.625rem 1rem;
+  }
+
+  &__td--checkbox {
+    min-width: 3rem;
+    width: 3rem;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    cursor: default;
+  }
+
+  &__export-checkbox {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--color-blue);
+    cursor: pointer;
   }
 
   &__empty {

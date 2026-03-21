@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { Brackets, FindOptionsWhere, Repository } from 'typeorm';
 import { BaseRepository } from '../../../shared/repositories/base.repository';
 import { EntityValue } from '../../../shared/types/entity-value.type';
 import { ValueConflictEntity } from './entities/value-conflict.entity';
@@ -90,13 +90,17 @@ export class ValueConflictRepository extends BaseRepository<ValueConflictEntity,
     const qb = this._repository
       .createQueryBuilder('c')
       .select('c.id', 'id')
-      .where('c.isSolved = :isSolved', { isSolved: false });
-    conflicts.forEach((c, i) => {
-      qb.orWhere(
-        `(c.tableName = :t${i} AND c.columnName = :col${i} AND c.entityId = :e${i} AND c.newValue = :v${i} AND c.isSolved = false)`,
-        { [`t${i}`]: c.tableName, [`col${i}`]: c.columnName, [`e${i}`]: c.entityId, [`v${i}`]: c.newValue },
+      .where('c.isSolved = :isSolved', { isSolved: false })
+      .andWhere(
+        new Brackets((qb2) => {
+          conflicts.forEach((c, i) => {
+            qb2.orWhere(
+              `(c.tableName = :tableName${i} AND c.entityId = :entityId${i} AND c.columnName = :columnName${i} AND c.newValue = :newValue${i})`,
+              { [`tableName${i}`]: c.tableName, [`entityId${i}`]: c.entityId, [`columnName${i}`]: c.columnName, [`newValue${i}`]: c.newValue },
+            );
+          });
+        }),
       );
-    });
     const rows = await qb.getRawMany<{ id: number }>();
     return rows.map((r) => r.id);
   }

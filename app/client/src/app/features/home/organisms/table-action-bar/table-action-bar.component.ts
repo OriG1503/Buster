@@ -31,7 +31,12 @@ export class TableActionBarComponent {
   public readonly entitySelected = output<string>();
   public readonly columnToggle = output<ColumnToggleEvent>();
   public readonly columnReorder = output<string[]>();
+  public readonly $isExportMode = input<boolean>(false);
+  public readonly $selectedExportCount = input<number>(0);
+
   public readonly exportExcel = output<void>();
+  public readonly exportConfirm = output<void>();
+  public readonly exportCancel = output<void>();
   public readonly clearFilters = output<void>();
   public readonly uploadClick = output<void>();
 
