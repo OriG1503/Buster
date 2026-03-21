@@ -1,11 +1,11 @@
-FROM node:20-alpine AS builder
+FROM node:22.14.0 AS builder
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM node:20-alpine AS production
+FROM node:22.14.0 AS production
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
