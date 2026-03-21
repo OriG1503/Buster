@@ -38,8 +38,8 @@ export class UploadDialogComponent {
     this._dialogRef.close();
   }
 
-  public getConflictsUrl(conflictIds: number[]): string {
-    return `${APP_ROUTES.conflicts}?conflictIds=${conflictIds.join(',')}`;
+  public onViewConflicts(conflictIds: number[]): void {
+    window.open(`${APP_ROUTES.conflicts}?conflictIds=${conflictIds.join(',')}`, '_blank');
   }
 
   public onBrowseClick(): void {
