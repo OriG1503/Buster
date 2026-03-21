@@ -7,6 +7,7 @@ import { ConflictEntityDetail, ConflictColumnDetail, RelationalConflictDetail } 
 import { ConflictsService } from '../../../../core/services/conflicts/conflicts.service';
 import { ConflictsStore } from '../../../../core/store/conflicts.store';
 import { ENTITY_COLUMN_LABEL_MAP } from '../../../../shared/mapping/entity-column.label-map';
+import { PermissionsService } from '../../../../core/services/permissions/permissions.service';
 import { FK_TO_ENTITY_ID } from '../../../../shared/consts/fk-to-entity-id.consts';
 import { DEFAULT_USER_NAME } from '../../../../shared/consts/default-user.consts';
 
@@ -53,6 +54,7 @@ export class ConflictItemComponent {
 
   private readonly _conflictsService = inject(ConflictsService);
   private readonly _conflictsStore = inject(ConflictsStore);
+  private readonly _permissionsService = inject(PermissionsService);
 
   protected readonly _isExpanded = signal(false);
   protected readonly _$detail = signal<ConflictEntityDetail | null>(null);
@@ -77,6 +79,7 @@ export class ConflictItemComponent {
   protected readonly _$canResolve = computed(
     () => this._$selectedWinners().size > 0 || this._$selectedRelationalWinners().size > 0,
   );
+  protected readonly _$canEdit = computed(() => this._permissionsService.canEdit());
 
   public constructor() {
     effect(() => {

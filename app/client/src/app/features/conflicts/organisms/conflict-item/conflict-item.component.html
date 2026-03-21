@@ -149,24 +149,26 @@
           </tbody>
         </table>
 
-        <div class="conflict-item__footer">
-          <button
-            class="conflict-item__resolve-btn"
-            [disabled]="!_$canResolve()"
-            (click)="resolve()"
-          >
-            אישור
-          </button>
-          <div class="conflict-item__notes-wrap">
-            <input
-              class="conflict-item__notes-input"
-              type="text"
-              placeholder="פרט את סיבת הבחירה..."
-              [value]="_$notes()"
-              (input)="_$notes.set($any($event.target).value)"
-            />
+        @if (_$canEdit()) {
+          <div class="conflict-item__footer">
+            <button
+              class="conflict-item__resolve-btn"
+              [disabled]="!_$canResolve()"
+              (click)="resolve()"
+            >
+              אישור
+            </button>
+            <div class="conflict-item__notes-wrap">
+              <input
+                class="conflict-item__notes-input"
+                type="text"
+                placeholder="פרט את סיבת הבחירה..."
+                [value]="_$notes()"
+                (input)="_$notes.set($any($event.target).value)"
+              />
+            </div>
           </div>
-        </div>
+        }
         </div>
       }
     </div>

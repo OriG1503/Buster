@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BatteryModule } from './modules/entities/battery/battery.module';
 import { PlasticModule } from './modules/entities/plastic/plastic.module';
@@ -15,6 +16,9 @@ import { FileModule } from './modules/file/file.module';
 import { DataProcessorModule } from './modules/data-processor/data-processor.module';
 import { TableViewModule } from './modules/table-view/table-view.module';
 import { ConfigModule } from '@nestjs/config';
+import { AuthModule } from './modules/auth/auth.module';
+import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
+import { RolesGuard } from './modules/auth/guards/roles.guard';
 
 @Module({
   imports: [
@@ -53,6 +57,11 @@ import { ConfigModule } from '@nestjs/config';
     FileModule,
     DataProcessorModule,
     TableViewModule,
+    AuthModule,
+  ],
+  providers: [
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
   ],
 })
 export class AppModule {}

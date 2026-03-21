@@ -1,4 +1,4 @@
-version: '3.9'
+version: "3.9"
 
 services:
   parser:
@@ -23,8 +23,6 @@ services:
       - "3000"
     env_file:
       - ./app/server/.env
-    environment:
-      - PARSER_URL=http://parser:8000/parse
     volumes:
       - shared-tmp:/tmp
     networks:
