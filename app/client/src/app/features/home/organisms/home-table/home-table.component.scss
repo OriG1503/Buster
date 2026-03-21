@@ -177,6 +177,16 @@
     }
   }
 
+  &__cell-text {
+    border-radius: 0.2rem;
+    padding: 0.1rem 0.35rem;
+    transition: background-color 0.1s;
+
+    .home-table__td--raw &:hover {
+      background-color: #202F4C;
+    }
+  }
+
   &__empty {
     padding: 3rem;
     text-align: center;

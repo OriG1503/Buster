@@ -94,19 +94,30 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
         anchorBottom: rect.bottom,
         anchorCenterX: rect.left + rect.width / 2,
       });
+    }
+  }
+
+  public onCellMouseEnter(row: TableRow, col: string, event: MouseEvent): void {
+    const cell = row[col];
+    if (cell?.status !== 'raw' || !cell.value) {
       return;
     }
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const thead = this._scrollContainerRef.nativeElement.querySelector('thead');
+    const tableHeaderBottom = thead?.getBoundingClientRect().bottom ?? 0;
+    this._$cellInfoTarget.set({
+      anchorTop: rect.top,
+      anchorBottom: rect.bottom,
+      anchorCenterX: rect.left + rect.width / 2,
+      tableHeaderBottom,
+      source: cell.source,
+      notes: cell.notes,
+      uploadedAt: cell.uploadedAt,
+    });
+  }
 
-    if (cell.status === 'raw' && cell.value) {
-      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-      this._$cellInfoTarget.set({
-        anchorBottom: rect.bottom,
-        anchorCenterX: rect.left + rect.width / 2,
-        source: cell.source,
-        notes: cell.notes,
-        uploadedAt: cell.uploadedAt,
-      });
-    }
+  public onCellMouseLeave(): void {
+    this._$cellInfoTarget.set(null);
   }
 
   public onHistoryPopupClose(): void {

@@ -46,7 +46,11 @@
                   class="home-table__td home-table__td--{{ cellStatus(row[col]) }}"
                   (click)="onCellClick(row, col, $event)"
                 >
-                  {{ cellValue(row[col]) }}
+                  <span
+                    class="home-table__cell-text"
+                    (mouseenter)="onCellMouseEnter(row, col, $event)"
+                    (mouseleave)="onCellMouseLeave()"
+                  >{{ cellValue(row[col]) }}</span>
                 </td>
               }
             </tr>

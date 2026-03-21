@@ -1,10 +1,4 @@
 .cell-info-popup {
-  &__backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-  }
-
   &__panel {
     position: fixed;
     z-index: 101;
