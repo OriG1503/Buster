@@ -1,3 +1,4 @@
+import { animate, style, transition, trigger } from '@angular/animations';
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { forkJoin } from 'rxjs';
 
@@ -12,6 +13,24 @@ import { ENTITY_COLUMN_LABEL_MAP } from '../../../../shared/mapping/entity-colum
   standalone: true,
   templateUrl: './conflict-item.component.html',
   styleUrl: './conflict-item.component.scss',
+  animations: [
+    trigger('slideDown', [
+      transition(':enter', [
+        style({ height: '0', overflow: 'hidden', opacity: 0 }),
+        animate('220ms ease-out', style({ height: '*', overflow: 'hidden', opacity: 1 })),
+      ]),
+      transition(':leave', [
+        style({ height: '*', overflow: 'hidden', opacity: 1 }),
+        animate('180ms ease-in', style({ height: '0', overflow: 'hidden', opacity: 0 })),
+      ]),
+    ]),
+    trigger('fadeSlideIn', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(-6px)' }),
+        animate('200ms ease-out', style({ opacity: 1, transform: 'translateY(0)' })),
+      ]),
+    ]),
+  ],
 })
 export class ConflictItemComponent {
   public readonly $group = input.required<ConflictGroup>();

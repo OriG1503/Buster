@@ -17,10 +17,14 @@
   </button>
 
   @if (_isExpanded()) {
-    <div class="conflict-item__body">
+    <div
+      @slideDown
+      class="conflict-item__body"
+    >
       @if (!_$detail()) {
         <div class="conflict-item__loading"><i class="pi pi-spin pi-spinner"></i></div>
       } @else {
+        <div @fadeSlideIn class="conflict-item__detail">
         <table class="conflict-item__table">
           <thead class="conflict-item__thead">
             <tr class="conflict-item__head-row">
@@ -90,6 +94,7 @@
               (input)="_$notes.set($any($event.target).value)"
             />
           </div>
+        </div>
         </div>
       }
     </div>
