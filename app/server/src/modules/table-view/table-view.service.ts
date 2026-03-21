@@ -16,6 +16,14 @@ type ConflictRow = {
   id: number;
 };
 
+type RelationalConflictRow = {
+  anchorTable: string;
+  anchorId: string;
+  relatedTable: string;
+  isSolved: boolean | null;
+  id: number;
+};
+
 /** conflictMap[tableName][entityId][columnName] */
 type ConflictMap = Record<string, Record<string, Record<string, { status: 'open' | 'resolved'; conflictId: number | null }>>>;
 
@@ -211,15 +219,31 @@ export class TableViewService {
       conditions.push(`("tableName" = '${table}' AND "entityId" = ANY($${params.length}))`);
     });
 
-    const conflictSql = `
+    const valueConflictSql = `
       SELECT "tableName", "entityId", "columnName", "isSolved", "id"
-      FROM conflicts
+      FROM value_conflicts
       WHERE "deletedAt" IS NULL AND (${conditions.join(' OR ')})
     `;
 
-    const conflicts: ConflictRow[] = await this._dataSource.query(conflictSql, params);
+    const relationalConditions: string[] = [];
+    const relationalParams: unknown[] = [];
+    Object.entries(entityIdsByTable).forEach(([table, ids]) => {
+      relationalParams.push(ids);
+      relationalConditions.push(`("anchorTable" = '${table}' AND "anchorId" = ANY($${relationalParams.length}))`);
+    });
 
-    conflicts.forEach(({ tableName, entityId, columnName, isSolved, id }) => {
+    const relationalConflictSql = `
+      SELECT "anchorTable", "anchorId", "relatedTable", "isSolved", "id"
+      FROM relational_conflicts
+      WHERE "deletedAt" IS NULL AND "conflictType" = 'TWO_CHILDS' AND (${relationalConditions.join(' OR ')})
+    `;
+
+    const [valueConflicts, relationalConflicts] = await Promise.all([
+      this._dataSource.query(valueConflictSql, params) as Promise<ConflictRow[]>,
+      this._dataSource.query(relationalConflictSql, relationalParams) as Promise<RelationalConflictRow[]>,
+    ]);
+
+    valueConflicts.forEach(({ tableName, entityId, columnName, isSolved, id }) => {
       if (!conflictMap[tableName]) {
         conflictMap[tableName] = {};
       }
@@ -231,6 +255,24 @@ export class TableViewService {
       // Open conflict takes priority over resolved.
       if (!existing || (isSolved === false && existing.status !== 'open')) {
         conflictMap[tableName][entityId][columnName] = {
+          status: isSolved === false ? 'open' : 'resolved',
+          conflictId: isSolved === false ? id : null,
+        };
+      }
+    });
+
+    relationalConflicts.forEach(({ anchorTable, anchorId, relatedTable, isSolved, id }) => {
+      const fkColumn = `${relatedTable.slice(0, -1)}Id`;
+      if (!conflictMap[anchorTable]) {
+        conflictMap[anchorTable] = {};
+      }
+      if (!conflictMap[anchorTable][anchorId]) {
+        conflictMap[anchorTable][anchorId] = {};
+      }
+
+      const existing = conflictMap[anchorTable][anchorId][fkColumn];
+      if (!existing || (isSolved === false && existing.status !== 'open')) {
+        conflictMap[anchorTable][anchorId][fkColumn] = {
           status: isSolved === false ? 'open' : 'resolved',
           conflictId: isSolved === false ? id : null,
         };

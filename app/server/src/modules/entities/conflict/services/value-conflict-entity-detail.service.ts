@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ValueConflictRepository } from '../value-conflict.repository';
+import { RelationalConflictRepository } from '../relational-conflict.repository';
 import { EntityServiceRegistry } from '../../../../shared/services/entity-service-registry.service';
 import { ConflictColumnDetail, ConflictEntityDetailResponse } from '../types/conflict-entity-detail-response.type';
+import { RelationalConflictEntity } from '../entities/relational-conflict.entity';
+import { FK_FIELD_TO_TABLE } from '../../../../shared/consts/entity-relation-map.const';
 
 const EXCLUDED_COLUMNS = new Set(['source', 'notes', 'createdAt', 'updatedAt', 'deletedAt']);
 
@@ -9,6 +12,7 @@ const EXCLUDED_COLUMNS = new Set(['source', 'notes', 'createdAt', 'updatedAt', '
 export class ValueConflictEntityDetailService {
   public constructor(
     private readonly _valueConflictRepository: ValueConflictRepository,
+    private readonly _relationalConflictRepository: RelationalConflictRepository,
     private readonly _entityServiceRegistry: EntityServiceRegistry,
   ) {}
 
@@ -20,11 +24,20 @@ export class ValueConflictEntityDetailService {
       throw new NotFoundException(`Entity not found: ${tableName}/${entityId}`);
     }
 
-    const openConflicts = await this._valueConflictRepository.findOpenByEntity(tableName, entityId);
+    const [openConflicts, relationalConflicts] = await Promise.all([
+      this._valueConflictRepository.findOpenByEntity(tableName, entityId),
+      this._relationalConflictRepository.findOpenByAnchor(entityId, tableName),
+    ]);
 
     const conflictsByColumn = openConflicts.reduce<Record<string, typeof openConflicts>>((acc, conflict) => {
       const col = conflict.columnName!;
       acc[col] = [...(acc[col] ?? []), conflict];
+      return acc;
+    }, {});
+
+    const relationalByFkField = relationalConflicts.reduce<Record<string, RelationalConflictEntity>>((acc, rc) => {
+      const fkField = Object.keys(FK_FIELD_TO_TABLE).find((k) => FK_FIELD_TO_TABLE[k] === rc.relatedTable);
+      if (fkField) { acc[fkField] = rc; }
       return acc;
     }, {});
 
@@ -38,6 +51,7 @@ export class ValueConflictEntityDetailService {
       .map<ConflictColumnDetail>((columnName) => {
         const conflicts = conflictsByColumn[columnName] ?? [];
         const isConflicted = conflicts.length > 0;
+        const rc = relationalByFkField[columnName];
 
         return {
           columnName,
@@ -52,6 +66,20 @@ export class ValueConflictEntityDetailService {
                 { value: c.newValue, source: c.newSource, notes: c.newNotes, createdAt: c.createdAt.toISOString() },
               ])
             : [],
+          ...(rc
+            ? {
+                relationalConflict: {
+                  conflictId: rc.id,
+                  conflictType: rc.conflictType,
+                  oldRelatedId: rc.oldRelatedId,
+                  newRelatedId: rc.newRelatedId,
+                  relatedTable: rc.relatedTable,
+                  oldRelatedSource: rc.oldRelatedSource,
+                  newRelatedSource: rc.newRelatedSource,
+                  snapshot: rc.snapshot,
+                },
+              }
+            : {}),
         };
       });
   }

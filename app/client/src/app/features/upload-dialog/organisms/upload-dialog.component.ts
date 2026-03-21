@@ -5,6 +5,7 @@ import { ButtonModule } from 'primeng/button';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 
 import { APP_ROUTES } from '../../../shared/consts/app-routes.consts';
+import { DEFAULT_USER_NAME } from '../../../shared/consts/default-user.consts';
 
 import { UPLOAD_DIALOG_LABEL_MAP } from '../mapping/upload-dialog.label-map';
 import { ENTITY_FORMAT_OPTIONS, EntityFormatOption } from '../consts/entity-format-options.consts';
@@ -113,7 +114,7 @@ export class UploadDialogComponent {
       const pending: UploadedFile = { id, name: file.name, successRate: 0, newConflictsCount: 0, conflictIds: [], status: 'pending' };
       this._$uploadedFiles.update((prev) => [...prev, pending]);
 
-      this._fileService.upload(file, 'default').subscribe({
+      this._fileService.upload(file, DEFAULT_USER_NAME).subscribe({
         next: (summary) => {
           this._$uploadedFiles.update((prev) =>
             prev.map((f) =>
