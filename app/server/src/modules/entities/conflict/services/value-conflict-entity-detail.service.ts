@@ -1,14 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ConflictRepository } from '../conflict.repository';
+import { ValueConflictRepository } from '../value-conflict.repository';
 import { EntityServiceRegistry } from '../../../../shared/services/entity-service-registry.service';
 import { ConflictColumnDetail, ConflictEntityDetailResponse } from '../types/conflict-entity-detail-response.type';
 
 const EXCLUDED_COLUMNS = new Set(['source', 'notes', 'createdAt', 'updatedAt', 'deletedAt']);
 
 @Injectable()
-export class ConflictEntityDetailService {
+export class ValueConflictEntityDetailService {
   public constructor(
-    private readonly _conflictRepository: ConflictRepository,
+    private readonly _valueConflictRepository: ValueConflictRepository,
     private readonly _entityServiceRegistry: EntityServiceRegistry,
   ) {}
 
@@ -20,7 +20,7 @@ export class ConflictEntityDetailService {
       throw new NotFoundException(`Entity not found: ${tableName}/${entityId}`);
     }
 
-    const openConflicts = await this._conflictRepository.findOpenByEntity(tableName, entityId);
+    const openConflicts = await this._valueConflictRepository.findOpenByEntity(tableName, entityId);
 
     const conflictsByColumn = openConflicts.reduce<Record<string, typeof openConflicts>>((acc, conflict) => {
       const col = conflict.columnName!;

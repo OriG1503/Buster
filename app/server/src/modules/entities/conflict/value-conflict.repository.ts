@@ -3,26 +3,26 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { BaseRepository } from '../../../shared/repositories/base.repository';
 import { EntityValue } from '../../../shared/types/entity-value.type';
-import { ConflictEntity } from './entities/conflict.entity';
+import { ValueConflictEntity } from './entities/value-conflict.entity';
 
 @Injectable()
-export class ConflictRepository extends BaseRepository<ConflictEntity, number> {
-  public constructor(@InjectRepository(ConflictEntity) repository: Repository<ConflictEntity>) {
+export class ValueConflictRepository extends BaseRepository<ValueConflictEntity, number> {
+  public constructor(@InjectRepository(ValueConflictEntity) repository: Repository<ValueConflictEntity>) {
     super(repository);
   }
 
-  public findByGroup(tableName: string, entityId: string, columnName: string): Promise<ConflictEntity[]> {
+  public findByGroup(tableName: string, entityId: string, columnName: string): Promise<ValueConflictEntity[]> {
     return this._repository.find({ where: { tableName, entityId, columnName, isSolved: false } });
   }
 
-  public findAllByGroup(tableName: string, entityId: string, columnName: string): Promise<ConflictEntity[]> {
+  public findAllByGroup(tableName: string, entityId: string, columnName: string): Promise<ValueConflictEntity[]> {
     return this._repository.find({
       where: { tableName, entityId, columnName, isSolved: true },
       order: { createdAt: 'ASC' },
     });
   }
 
-  public findMostRecentResolved(tableName: string, entityId: string, columnName: string): Promise<ConflictEntity | null> {
+  public findMostRecentResolved(tableName: string, entityId: string, columnName: string): Promise<ValueConflictEntity | null> {
     return this._repository.findOne({
       where: { tableName, entityId, columnName, isSolved: true },
       order: { id: 'DESC' },
@@ -30,7 +30,7 @@ export class ConflictRepository extends BaseRepository<ConflictEntity, number> {
   }
 
   /** Finds the most recent solved conflict in the group where newValue or oldValue matches. */
-  public findResolvedByGroupValue(tableName: string, entityId: string, columnName: string, value: string): Promise<ConflictEntity | null> {
+  public findResolvedByGroupValue(tableName: string, entityId: string, columnName: string, value: string): Promise<ValueConflictEntity | null> {
     const base = { tableName, entityId, columnName, isSolved: true };
     return this._repository.findOne({
       where: [{ ...base, newValue: value }, { ...base, oldValue: value }],
@@ -79,7 +79,7 @@ export class ConflictRepository extends BaseRepository<ConflictEntity, number> {
     return rows.length;
   }
 
-  public findOpenByEntity(tableName: string, entityId: string): Promise<ConflictEntity[]> {
+  public findOpenByEntity(tableName: string, entityId: string): Promise<ValueConflictEntity[]> {
     return this._repository.find({ where: { tableName, entityId, isSolved: false } });
   }
 
@@ -101,13 +101,13 @@ export class ConflictRepository extends BaseRepository<ConflictEntity, number> {
     return rows.map((r) => r.id);
   }
 
-  public async insertRevertConflict(data: Partial<ConflictEntity>): Promise<void> {
+  public async insertRevertConflict(data: Partial<ValueConflictEntity>): Promise<void> {
     await this.insert(data as Record<string, EntityValue>);
   }
 
   public async resolveMany(tableName: string, entityId: string, columnName: string, conflictResolver: string | null, notes: string | null): Promise<void> {
     await this._repository.update(
-      { tableName, entityId, columnName, isSolved: false } as FindOptionsWhere<ConflictEntity>,
+      { tableName, entityId, columnName, isSolved: false } as FindOptionsWhere<ValueConflictEntity>,
       { isSolved: true, conflictResolver, resolutionNotes: notes },
     );
   }

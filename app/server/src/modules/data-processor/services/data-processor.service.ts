@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { QueryFailedError } from 'typeorm';
 import { PG_UNIQUE_VIOLATION } from '../../../shared/consts/pg-error-codes.const';
+import { FK_FIELD_TO_TABLE, ONE_TO_ONE_FK_FIELDS } from '../../../shared/consts/entity-relation-map.const';
 import { BaseEntity } from '../../../shared/entities/base.entity';
 import { EntityValue } from '../../../shared/types/entity-value.type';
 import { EntityServiceRegistry } from '../../../shared/services/entity-service-registry.service';
-import { ConflictRepository } from '../../entities/conflict/conflict.repository';
-import { ConflictService } from '../../entities/conflict/services/conflict.service';
+import { ValueConflictRepository } from '../../entities/conflict/value-conflict.repository';
+import { ValueConflictService } from '../../entities/conflict/services/value-conflict.service';
+import { RelationalConflictDetectionService } from '../../entities/conflict/services/relational-conflict-detection.service';
 import { ParserRowMapper } from '../mappers/parser-row.mapper';
 import { ParsedRowEnricher } from './parsed-row-enricher.service';
 import { EntityService } from '../types/entity-service.type';
@@ -24,8 +26,9 @@ export class DataProcessorService {
   public constructor(
     private readonly _mapper: ParserRowMapper,
     private readonly _enricher: ParsedRowEnricher,
-    private readonly _conflictService: ConflictService,
-    private readonly _conflictRepository: ConflictRepository,
+    private readonly _conflictService: ValueConflictService,
+    private readonly _valueConflictRepository: ValueConflictRepository,
+    private readonly _relationalConflictDetectionService: RelationalConflictDetectionService,
     private readonly _registry: EntityServiceRegistry,
   ) {}
 
@@ -113,14 +116,6 @@ export class DataProcessorService {
   }
 
   /**
-   * Inserts or conflict-checks a single mapped entity.
-   * - No mapped data → skip.
-   * - Missing id → flying field (data exists but no UUID to anchor it).
-   * - Not found + priorId → rename the prior record to the new id.
-   * - Not found → insert.
-   * - Found → detect conflicts, gap-fill nulls.
-   */
-  /**
    * Orchestrates a single mapped entity: skips nulls, flags flying fields,
    * then delegates to insert or conflict-check depending on whether the record exists.
    */
@@ -139,7 +134,6 @@ export class DataProcessorService {
     }
 
     const { source: incomingSource, notes: incomingNotes, id, ...incomingFields } = mappedRecord;
-    // Non-null data fields only (excludes id/source/notes) — used as the upload percentage denominator
     const nonNullFieldCount = Object.keys(incomingFields).filter((k) => incomingFields[k] !== null).length;
 
     let storedRecord = await service.findById(id);
@@ -148,7 +142,7 @@ export class DataProcessorService {
     }
 
     if (!storedRecord) {
-      return this._insertEntity(service, id, incomingFields, incomingSource, incomingNotes, nonNullFieldCount);
+      return this._insertEntity(service, id, incomingFields, incomingSource, incomingNotes, username, nonNullFieldCount);
     }
 
     return this._updateExistingEntity(service, id, storedRecord, incomingFields, incomingSource, incomingNotes, username, nonNullFieldCount);
@@ -170,25 +164,60 @@ export class DataProcessorService {
   }
 
   /**
-   * Inserts a new entity record, ignoring unique-constraint violations
-   * (race condition guard for concurrent uploads of the same row).
+   * Inserts a new entity record.
+   * For OneToOne FK fields, checks for TWO_FATHERS before inserting:
+   * if another entity already owns the same child, a relational conflict is created
+   * and that FK field is nulled out from the insert to avoid a DB unique violation.
    */
   private async _insertEntity(
     service: EntityService<{ id: string }>,
     id: string, incomingFields: Record<string, EntityValue>,
-    incomingSource: string, incomingNotes: string | null, nonNullFieldCount: number,
+    incomingSource: string, incomingNotes: string | null,
+    username: string, nonNullFieldCount: number,
   ): Promise<EntityResult> {
+    const cleanedFields = { ...incomingFields };
+
+    await Promise.all(
+      Object.keys(incomingFields)
+        .filter((field) => field.endsWith('Id') && ONE_TO_ONE_FK_FIELDS.has(field) && incomingFields[field] != null)
+        .map(async (fkField) => {
+          const childId = String(incomingFields[fkField]);
+          const existingOwner = await service.findByFkValue(fkField, childId, id);
+
+          if (existingOwner) {
+            cleanedFields[fkField] = null;
+            const childTable = FK_FIELD_TO_TABLE[fkField];
+            const childEntity = await this._registry.get(childTable).findById(childId);
+
+            await this._relationalConflictDetectionService.detectTwoFathers(
+              childId, childTable,
+              childEntity?.source?.[fkField] ?? null,
+              childEntity?.notes?.[fkField] ?? null,
+              existingOwner.id as string, id,
+              service.tableName,
+              (existingOwner.source as Record<string, string | null> | null)?.[fkField] ?? null,
+              (existingOwner.notes as Record<string, string | null> | null)?.[fkField] ?? null,
+              incomingSource, incomingNotes,
+              username,
+            );
+          }
+        }),
+    );
+
     try {
-      await service.insert({ id, ...incomingFields }, incomingSource, incomingNotes);
+      await service.insert({ id, ...cleanedFields }, incomingSource, incomingNotes);
     } catch (error) {
       if (!(error instanceof QueryFailedError) || (error as any).code !== PG_UNIQUE_VIOLATION) { throw error; }
     }
+
     return { count: 0, conflictIds: [], flyingField: null, totalFields: nonNullFieldCount };
   }
 
   /**
-   * Runs conflict detection against the stored record, bulk-inserts any new ConflictEntities,
-   * and gap-fills null fields with incoming values.
+   * Runs conflict detection against the stored record.
+   * Value conflicts are created for non-FK fields that differ.
+   * TWO_CHILDS relational conflicts are created for FK fields that differ.
+   * Gap-fills (stored null → incoming value) are applied for all fields.
    */
   private async _updateExistingEntity(
     service: EntityService<{ id: string }>,
@@ -206,8 +235,8 @@ export class DataProcessorService {
 
     let conflictIds: number[] = [];
     if (result.conflictsToCreate.length > 0) {
-      await this._conflictRepository.insertMany(result.conflictsToCreate, true);
-      conflictIds = await this._conflictRepository.findOpenIdsByData(
+      await this._valueConflictRepository.insertMany(result.conflictsToCreate, true);
+      conflictIds = await this._valueConflictRepository.findOpenIdsByData(
         result.conflictsToCreate.map((c) => ({
           tableName: c.tableName as string,
           entityId: c.entityId as string,
@@ -217,10 +246,54 @@ export class DataProcessorService {
       );
     }
 
+    await this._detectTwoChildsConflicts(service, id, storedRecord, incomingFields, incomingSource, incomingNotes, username);
+
     if (Object.keys(result.fieldsToUpdate).length > 0) {
       await service.update(id, result.fieldsToUpdate, result.sourceUpdates, storedRecord.source, result.notesUpdates, storedRecord.notes);
     }
 
     return { count: result.conflictsToCreate.length, conflictIds, flyingField: null, totalFields: nonNullFieldCount };
+  }
+
+  /**
+   * Checks all FK fields on the stored entity against incoming values.
+   * When both stored and incoming values are non-null and differ, creates a TWO_CHILDS relational conflict.
+   */
+  private async _detectTwoChildsConflicts(
+    service: EntityService<{ id: string }>,
+    id: string, storedRecord: BaseEntity,
+    incomingFields: Record<string, EntityValue>,
+    incomingSource: string, incomingNotes: string | null,
+    username: string,
+  ): Promise<void> {
+    const storedRecord_ = storedRecord as unknown as Record<string, EntityValue>;
+
+    await Promise.all(
+      Object.keys(incomingFields)
+        .filter((field) => {
+          if (!field.endsWith('Id')) { return false; }
+          const storedValue = storedRecord_[field];
+          const incomingValue = incomingFields[field];
+          return storedValue != null && incomingValue != null && storedValue !== incomingValue;
+        })
+        .map(async (fkField) => {
+          const oldRelatedId = String(storedRecord_[fkField]);
+          const newRelatedId = String(incomingFields[fkField]);
+          const relatedTable = FK_FIELD_TO_TABLE[fkField];
+
+          if (!relatedTable) { return; }
+
+          await this._relationalConflictDetectionService.detectTwoChilds(
+            id, service.tableName,
+            storedRecord.source?.[fkField] ?? null,
+            storedRecord.notes?.[fkField] ?? null,
+            oldRelatedId, newRelatedId, relatedTable,
+            storedRecord.source?.[fkField] ?? null,
+            storedRecord.notes?.[fkField] ?? null,
+            incomingSource, incomingNotes,
+            username,
+          );
+        }),
+    );
   }
 }
