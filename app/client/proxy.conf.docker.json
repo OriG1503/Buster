@@ -1,0 +1,12 @@
+{
+  "/api": {
+    "target": "http://server:3000",
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/files": {
+    "target": "http://server:3000",
+    "secure": false,
+    "changeOrigin": true
+  }
+}

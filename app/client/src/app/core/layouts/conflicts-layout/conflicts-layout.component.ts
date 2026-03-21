@@ -27,10 +27,14 @@ export class ConflictsLayoutComponent implements AfterViewInit, OnDestroy {
   private readonly _$queryParams = toSignal(this._route.queryParams, { initialValue: {} as Params });
   protected readonly _$filterTableName = computed(() => this._$queryParams()['tableName'] ?? '');
   protected readonly _$filterEntityId = computed(() => this._$queryParams()['entityId'] ?? '');
-  protected readonly _$filterConflictIds = computed<number[]>(() => {
-    const raw: string = this._$queryParams()['conflictIds'] ?? '';
-    return raw ? raw.split(',').map(Number).filter((n) => !isNaN(n)) : [];
-  });
+  protected readonly _$filterConflictIds = computed<number[]>(
+    () => {
+      const raw: string = this._$queryParams()['conflictIds'] ?? '';
+      return raw ? raw.split(',').map(Number).filter((n) => !isNaN(n)) : [];
+    },
+    { equal: (a, b) => a.length === b.length && a.every((v, i) => v === b[i]) },
+  );
+  protected readonly _$openEntityId = computed(() => this._$queryParams()['open'] ?? '');
 
   protected readonly _$filterTitle = computed(() => {
     const parts: string[] = [];
@@ -81,6 +85,13 @@ export class ConflictsLayoutComponent implements AfterViewInit, OnDestroy {
   protected onTableNameChange(tableName: string): void {
     this._router.navigate([], {
       queryParams: { tableName: tableName || null, entityId: null },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  protected onConflictToggled(entityId: string | null): void {
+    this._router.navigate([], {
+      queryParams: { open: entityId || null },
       queryParamsHandling: 'merge',
     });
   }

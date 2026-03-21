@@ -36,7 +36,11 @@
 
   <div class="conflicts-layout__list">
     @for (group of _store.openConflicts(); track group.tableName + group.entityId) {
-      <app-conflict-item [$group]="group" />
+      <app-conflict-item
+        [$group]="group"
+        [$isOpen]="group.entityId === _$openEntityId()"
+        (toggled)="onConflictToggled($event)"
+      />
     }
     <div #sentinel class="conflicts-layout__sentinel">
       @if (_store.isLoadingMore()) {

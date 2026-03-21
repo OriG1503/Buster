@@ -1,4 +1,10 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"onConflictToggled\\\\|_$openEntityId\" /c/Users/Admin/projects/buster/app/client/src/app/core/layouts/conflicts-layout/conflicts-layout.component.ts)",
+      "Bash(grep -E \"\\\\.\\(ts|html|scss\\)$\")"
+    ]
+  },
   "enabledPlugins": {
     "typescript-lsp@claude-plugins-official": true,
     "commit-commands@claude-plugins-official": true,
