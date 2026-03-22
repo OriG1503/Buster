@@ -9,4 +9,8 @@ export type TableCell = {
   uploadedAt: string | null;
   /** Present when status = 'open'; the ConflictEntity id for navigation to the conflicts page. */
   conflictId: number | null;
+  /** For relational conflicts: the anchor table to navigate to on the conflicts page. Null for value conflicts. */
+  anchorTable: string | null;
+  /** For relational conflicts: the anchor entity ID to open on the conflicts page. Null for value conflicts. */
+  anchorId: string | null;
 };
