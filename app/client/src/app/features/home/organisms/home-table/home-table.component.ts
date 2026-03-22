@@ -148,6 +148,9 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
   }
 
   public cellValue(cell: TableCell | undefined): string {
+    if (cell?.value === null && cell.status !== 'raw') {
+      return 'null';
+    }
     return cell?.value ?? '';
   }
 
