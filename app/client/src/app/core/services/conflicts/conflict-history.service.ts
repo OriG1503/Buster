@@ -16,9 +16,9 @@ export class ConflictHistoryService {
     });
   }
 
-  public getRelationalHistory(anchorTable: string, anchorId: string): Observable<RelationalHistoryResponse> {
+  public getRelationalHistory(anchorTable: string, anchorId: string, relatedTable: string): Observable<RelationalHistoryResponse> {
     return this._http.get<RelationalHistoryResponse>('/api/conflicts/relational-history', {
-      params: { anchorTable, anchorId },
+      params: { anchorTable, anchorId, relatedTable },
     });
   }
 

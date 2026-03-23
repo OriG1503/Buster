@@ -68,7 +68,7 @@
           </table>
         }
 
-        @for (group of _$filteredGroups(); track group.relatedTable) {
+        @for (group of history.groups; track group.relatedTable) {
           <div class="history-popup__group-label">{{ getGroupLabel(group) }}</div>
           <table class="history-popup__table">
             <thead>

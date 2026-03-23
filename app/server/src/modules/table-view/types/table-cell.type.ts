@@ -13,4 +13,6 @@ export type TableCell = {
   anchorTable: string | null;
   /** For relational conflicts: the anchor entity ID to open on the conflicts page. Null for value conflicts. */
   anchorId: string | null;
+  /** For relational conflicts: the related table (the competing options' table). Null for value conflicts. */
+  relatedTable: string | null;
 };

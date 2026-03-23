@@ -28,7 +28,7 @@ type RelationalConflictRow = {
   id: number;
 };
 
-type ConflictEntry = { status: 'open' | 'resolved'; conflictId: number | null; anchorTable: string | null; anchorId: string | null };
+type ConflictEntry = { status: 'open' | 'resolved'; conflictId: number | null; anchorTable: string | null; anchorId: string | null; relatedTable: string | null };
 
 /** conflictMap[tableName][entityId][columnName] */
 type ConflictMap = Record<string, Record<string, Record<string, ConflictEntry>>>;
@@ -299,13 +299,21 @@ export class TableViewService {
       conflictId: isSolved === false ? id : null,
       anchorTable: null,
       anchorId: null,
+      relatedTable: null,
     });
 
-    const toRelationalEntry = (isSolved: boolean | null, id: number, anchorTable: string, anchorId: string): ConflictEntry => ({
+    const toRelationalEntry = (
+      isSolved: boolean | null,
+      id: number,
+      anchorTable: string,
+      anchorId: string,
+      relatedTable: string,
+    ): ConflictEntry => ({
       status: isSolved === false ? 'open' : 'resolved',
       conflictId: isSolved === false ? id : null,
       anchorTable,
       anchorId,
+      relatedTable,
     });
 
     // Process value conflicts.
@@ -315,7 +323,7 @@ export class TableViewService {
 
     // Process relational conflicts from both queries (union via idempotent markCell).
     [...relByAnchor, ...relByRelated].forEach((rc) => {
-      const entry = toRelationalEntry(rc.isSolved, rc.id, rc.anchorTable, rc.anchorId);
+      const entry = toRelationalEntry(rc.isSolved, rc.id, rc.anchorTable, rc.anchorId, rc.relatedTable);
 
       if (rc.conflictType === 'TWO_CHILDS') {
         // 1. Anchor entity's FK column (e.g. communications/comm-test-001/ironId).
@@ -378,6 +386,7 @@ export class TableViewService {
           conflictId: null,
           anchorTable: null,
           anchorId: null,
+          relatedTable: null,
         };
       }
     });
@@ -406,6 +415,7 @@ export class TableViewService {
         conflictId: conflictEntry?.conflictId ?? null,
         anchorTable: conflictEntry?.anchorTable ?? null,
         anchorId: conflictEntry?.anchorId ?? null,
+        relatedTable: conflictEntry?.relatedTable ?? null,
       };
 
       result[colKey] = cell;

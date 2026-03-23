@@ -19,8 +19,8 @@ export class RelationalConflictHistoryService {
     private readonly _registry: EntityServiceRegistry,
   ) {}
 
-  public async getHistory(anchorTable: string, anchorId: string): Promise<RelationalHistoryResponse> {
-    const conflicts = await this._relationalConflictRepository.findSolvedByAnchor(anchorTable, anchorId);
+  public async getHistory(anchorTable: string, anchorId: string, relatedTable: string): Promise<RelationalHistoryResponse> {
+    const conflicts = await this._relationalConflictRepository.findSolvedByAnchor(anchorTable, anchorId, relatedTable);
 
     if (conflicts.length === 0) {
       throw new NotFoundException(`No resolved relational conflict history for ${anchorTable}/${anchorId}`);

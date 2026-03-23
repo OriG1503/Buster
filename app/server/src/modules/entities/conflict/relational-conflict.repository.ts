@@ -31,8 +31,8 @@ export class RelationalConflictRepository extends BaseRepository<RelationalConfl
     });
   }
 
-  public findSolvedByAnchor(anchorTable: string, anchorId: string): Promise<RelationalConflictEntity[]> {
-    return this._repository.find({ where: { anchorTable, anchorId, isSolved: true } });
+  public findSolvedByAnchor(anchorTable: string, anchorId: string, relatedTable: string): Promise<RelationalConflictEntity[]> {
+    return this._repository.find({ where: { anchorTable, anchorId, relatedTable, isSolved: true } });
   }
 
   /** Inserts a new conflict. Returns the new conflict's ID, or null if it already existed (unique violation ignored). */

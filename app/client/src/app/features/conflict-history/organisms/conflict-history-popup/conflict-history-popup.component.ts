@@ -35,14 +35,6 @@ export class ConflictHistoryPopupComponent {
 
   protected readonly _$isRelational = computed(() => this.$target().isRelational);
 
-  protected readonly _$filteredGroups = computed(() => {
-    const history = this._$relationalHistory();
-    const target = this.$target();
-    if (!history || !target.isRelational) {
-      return [];
-    }
-    return history.groups.filter((g) => g.relatedTable === target.relatedTable);
-  });
 
   protected readonly _$panelStyle = computed(() => {
     const { anchorBottom, anchorCenterX } = this.$target();
@@ -65,7 +57,7 @@ export class ConflictHistoryPopupComponent {
       this._$relationalHistory.set(null);
 
       if (target.isRelational) {
-        this._historyService.getRelationalHistory(target.anchorTable, target.anchorId).subscribe({
+        this._historyService.getRelationalHistory(target.anchorTable, target.anchorId, target.relatedTable).subscribe({
           next: (response) => {
             this._$relationalHistory.set(response);
             this._$isLoading.set(false);

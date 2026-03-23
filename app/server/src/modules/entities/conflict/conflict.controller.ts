@@ -93,7 +93,8 @@ export class ConflictController {
   public async relationalHistory(
     @Query('anchorTable') anchorTable: string,
     @Query('anchorId') anchorId: string,
+    @Query('relatedTable') relatedTable: string,
   ): Promise<RelationalHistoryResponse> {
-    return this._relationalConflictHistoryService.getHistory(anchorTable, anchorId);
+    return this._relationalConflictHistoryService.getHistory(anchorTable, anchorId, relatedTable);
   }
 }
