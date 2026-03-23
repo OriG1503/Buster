@@ -84,8 +84,9 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
       return;
     }
     if (cell.status === 'open' && cell.conflictId !== null) {
-      const [tableName] = col.split('.');
-      const entityId = row[`${tableName}.id`]?.value ?? '';
+      const [colTable] = col.split('.');
+      const tableName = cell.anchorTable ?? colTable;
+      const entityId = cell.anchorId ?? row[`${colTable}.id`]?.value ?? '';
       this._router.navigate(['/conflicts'], { queryParams: { tableName, open: entityId } });
       return;
     }
@@ -148,6 +149,9 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
   }
 
   public cellValue(cell: TableCell | undefined): string {
+    if (cell?.value === null && cell.status !== 'raw') {
+      return 'null';
+    }
     return cell?.value ?? '';
   }
 
@@ -160,8 +164,9 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
     if (!cell || cell.status !== 'open' || cell.conflictId === null) {
       return null;
     }
-    const [tableName] = col.split('.');
-    const entityId = row[`${tableName}.id`]?.value ?? '';
+    const [colTable] = col.split('.');
+    const tableName = cell.anchorTable ?? colTable;
+    const entityId = cell.anchorId ?? row[`${colTable}.id`]?.value ?? '';
     return this._router.serializeUrl(
       this._router.createUrlTree(['/conflicts'], { queryParams: { tableName, open: entityId } }),
     );

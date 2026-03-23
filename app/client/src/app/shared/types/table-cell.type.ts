@@ -7,4 +7,6 @@ export type TableCell = {
   notes: string | null;
   uploadedAt: string | null;
   conflictId: number | null;
+  anchorTable: string | null;
+  anchorId: string | null;
 };

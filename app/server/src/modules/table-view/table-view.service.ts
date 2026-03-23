@@ -28,7 +28,7 @@ type RelationalConflictRow = {
   id: number;
 };
 
-type ConflictEntry = { status: 'open' | 'resolved'; conflictId: number | null };
+type ConflictEntry = { status: 'open' | 'resolved'; conflictId: number | null; anchorTable: string | null; anchorId: string | null };
 
 /** conflictMap[tableName][entityId][columnName] */
 type ConflictMap = Record<string, Record<string, Record<string, ConflictEntry>>>;
@@ -294,19 +294,28 @@ export class TableViewService {
       }
     };
 
-    const toEntry = (isSolved: boolean | null, id: number): ConflictEntry => ({
+    const toValueEntry = (isSolved: boolean | null, id: number): ConflictEntry => ({
       status: isSolved === false ? 'open' : 'resolved',
       conflictId: isSolved === false ? id : null,
+      anchorTable: null,
+      anchorId: null,
+    });
+
+    const toRelationalEntry = (isSolved: boolean | null, id: number, anchorTable: string, anchorId: string): ConflictEntry => ({
+      status: isSolved === false ? 'open' : 'resolved',
+      conflictId: isSolved === false ? id : null,
+      anchorTable,
+      anchorId,
     });
 
     // Process value conflicts.
     valueConflicts.forEach(({ tableName, entityId, columnName, isSolved, id }) => {
-      markCell(conflictMap, tableName, entityId, columnName, toEntry(isSolved, id));
+      markCell(conflictMap, tableName, entityId, columnName, toValueEntry(isSolved, id));
     });
 
     // Process relational conflicts from both queries (union via idempotent markCell).
     [...relByAnchor, ...relByRelated].forEach((rc) => {
-      const entry = toEntry(rc.isSolved, rc.id);
+      const entry = toRelationalEntry(rc.isSolved, rc.id, rc.anchorTable, rc.anchorId);
 
       if (rc.conflictType === 'TWO_CHILDS') {
         // 1. Anchor entity's FK column (e.g. robots/robot123/communicationId).
@@ -361,6 +370,8 @@ export class TableViewService {
           notes: null,
           uploadedAt: createdAt instanceof Date ? createdAt.toISOString() : (createdAt as string | null) ?? null,
           conflictId: null,
+          anchorTable: null,
+          anchorId: null,
         };
       }
     });
@@ -387,6 +398,8 @@ export class TableViewService {
         notes: notesMap?.[column] ?? null,
         uploadedAt: createdAt instanceof Date ? createdAt.toISOString() : (createdAt as string | null) ?? null,
         conflictId: conflictEntry?.conflictId ?? null,
+        anchorTable: conflictEntry?.anchorTable ?? null,
+        anchorId: conflictEntry?.anchorId ?? null,
       };
 
       result[colKey] = cell;
