@@ -16,7 +16,7 @@ type ResolveValueConflictParams = {
 };
 
 type ResolveRelationalConflictParams = {
-  conflictId: number;
+  conflictIds: number[];
   winnerRelatedId: string;
   winnerChildId?: string | null;
   winnerChildFkField?: string | null;
@@ -52,5 +52,9 @@ export class ConflictsService {
 
   public resolveRelationalConflict(params: ResolveRelationalConflictParams): Observable<unknown> {
     return this._http.patch('/api/conflicts/relational/resolve', params);
+  }
+
+  public checkOpenIds(ids: string[]): Observable<string[]> {
+    return this._http.post<string[]>('/api/conflicts/open-ids', { ids });
   }
 }

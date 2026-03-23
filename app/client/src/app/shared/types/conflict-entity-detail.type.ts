@@ -1,20 +1,22 @@
 export type RelationalConflictType = 'TWO_CHILDS' | 'TWO_FATHERS';
 
-export type RelationalConflictSnapshot = {
-  anchor: Record<string, unknown>;
-  oldRelated: Record<string, unknown>;
-  newRelated: Record<string, unknown>;
+export type RelationalConflictOption = {
+  id: string;
+  source: string | null;
+  childData: Record<string, string | null>;
 };
 
 export type RelationalConflictDetail = {
-  conflictId: number;
+  conflictIds: number[];
   conflictType: RelationalConflictType;
-  oldRelatedId: string;
-  newRelatedId: string;
   relatedTable: string;
-  oldRelatedSource: string | null;
-  newRelatedSource: string | null;
-  snapshot: RelationalConflictSnapshot | null;
+  options: RelationalConflictOption[];
+};
+
+export type TwoFathersConflictDetail = {
+  conflictIds: number[];
+  relatedTable: string;
+  options: RelationalConflictOption[];
 };
 
 export type ConflictValueEntry = {
@@ -35,4 +37,7 @@ export type ConflictColumnDetail = {
   relationalConflict?: RelationalConflictDetail;
 };
 
-export type ConflictEntityDetail = ConflictColumnDetail[];
+export type ConflictEntityDetail = {
+  columns: ConflictColumnDetail[];
+  twoFathersConflict: TwoFathersConflictDetail | null;
+};

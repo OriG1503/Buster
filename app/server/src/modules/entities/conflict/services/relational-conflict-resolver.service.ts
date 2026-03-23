@@ -14,31 +14,40 @@ export class RelationalConflictResolverService {
   ) {}
 
   public async resolve(dto: ResolveRelationalConflictDto): Promise<RelationalConflictEntity> {
-    const { conflictId, winnerRelatedId, winnerChildId, winnerChildFkField, conflictResolver, resolutionNotes } = dto;
+    const { conflictIds, winnerRelatedId, winnerChildId, winnerChildFkField, conflictResolver, resolutionNotes } = dto;
 
-    const conflict = await this._relationalConflictRepository.findById(conflictId);
+    const conflicts = await Promise.all(conflictIds.map((id) => this._relationalConflictRepository.findById(id)));
+    const primaryConflict = conflicts[0];
 
-    if (!conflict) {
-      throw new NotFoundException(`Relational conflict not found: ${conflictId}`);
+    if (!primaryConflict) {
+      throw new NotFoundException(`Relational conflict not found: ${conflictIds[0]}`);
     }
 
-    if (conflict.isSolved) {
-      throw new BadRequestException(`Conflict ${conflictId} is already resolved`);
+    const allCompetingIds = new Set(
+      conflicts.flatMap((c) => (c ? [c.oldRelatedId, c.newRelatedId] : [])),
+    );
+    if (!allCompetingIds.has(winnerRelatedId)) {
+      throw new BadRequestException('winnerRelatedId must be one of the competing related IDs');
     }
 
-    if (winnerRelatedId !== conflict.oldRelatedId && winnerRelatedId !== conflict.newRelatedId) {
-      throw new BadRequestException('winnerRelatedId must be either oldRelatedId or newRelatedId');
+    const primaryForWinner = conflicts.find(
+      (c) => c && (c.oldRelatedId === winnerRelatedId || c.newRelatedId === winnerRelatedId),
+    );
+    if (!primaryForWinner) {
+      throw new NotFoundException('Could not find conflict for winner');
     }
 
-    if (conflict.conflictType === RELATIONAL_CONFLICT_TYPE.TWO_CHILDS) {
-      await this._resolveTwoChilds(conflict, winnerRelatedId, winnerChildId ?? null, winnerChildFkField ?? null);
+    if (primaryConflict.conflictType === RELATIONAL_CONFLICT_TYPE.TWO_CHILDS) {
+      await this._resolveTwoChilds(primaryForWinner, winnerRelatedId, winnerChildId ?? null, winnerChildFkField ?? null);
     } else {
-      await this._resolveTwoFathers(conflict, winnerRelatedId);
+      await this._resolveTwoFathers(primaryForWinner, winnerRelatedId);
     }
 
-    await this._relationalConflictRepository.resolve(conflictId, conflictResolver, resolutionNotes ?? null);
+    await Promise.all(
+      conflictIds.map((id) => this._relationalConflictRepository.resolve(id, conflictResolver, resolutionNotes ?? null)),
+    );
 
-    return this._relationalConflictRepository.findById(conflictId) as Promise<RelationalConflictEntity>;
+    return this._relationalConflictRepository.findById(conflictIds[0]) as Promise<RelationalConflictEntity>;
   }
 
   /**

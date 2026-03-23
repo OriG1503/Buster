@@ -71,6 +71,23 @@ export class ConflictListService {
     return clauses.join(' ');
   }
 
+  public async findOpenByEntityIds(ids: string[]): Promise<string[]> {
+    if (!ids.length) { return []; }
+    const result = await this._dataSource.query<Array<{ entityId: string }>>(
+      `
+      SELECT DISTINCT "entityId" FROM (
+        SELECT "entityId" FROM value_conflicts
+        WHERE "entityId" = ANY($1) AND "isSolved" = false AND "deletedAt" IS NULL
+        UNION
+        SELECT "anchorId" AS "entityId" FROM relational_conflicts
+        WHERE "anchorId" = ANY($1) AND "isSolved" = false AND "deletedAt" IS NULL
+      ) combined
+      `,
+      [ids],
+    );
+    return result.map((row) => row.entityId);
+  }
+
   private _buildRelationalFilter(
     tableName: string | undefined,
     entityId: string | undefined,

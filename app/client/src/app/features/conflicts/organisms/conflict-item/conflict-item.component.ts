@@ -1,27 +1,35 @@
 import { animate, style, transition, trigger } from '@angular/animations';
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
-import { forkJoin } from 'rxjs';
 
+import {
+  ConflictColumnDetail,
+  ConflictEntityDetail,
+  RelationalConflictDetail,
+  TwoFathersConflictDetail,
+} from '../../../../shared/types/conflict-entity-detail.type';
 import { ConflictGroup } from '../../../../shared/types/conflict-group.type';
-import { ConflictEntityDetail, ConflictColumnDetail, RelationalConflictDetail } from '../../../../shared/types/conflict-entity-detail.type';
 import { ConflictsService } from '../../../../core/services/conflicts/conflicts.service';
 import { ConflictsStore } from '../../../../core/store/conflicts.store';
 import { ENTITY_COLUMN_LABEL_MAP } from '../../../../shared/mapping/entity-column.label-map';
+import { ENTITY_HEBREW_NAME } from '../../../../shared/consts/entity-hebrew-name.const';
 import { PermissionsService } from '../../../../core/services/permissions/permissions.service';
-import { FK_TO_ENTITY_ID } from '../../../../shared/consts/fk-to-entity-id.consts';
 import { DEFAULT_USER_NAME } from '../../../../shared/consts/default-user.consts';
 
-type RelationalWinner = {
-  winnerRelatedId: string;
-  winnerChildId?: string | null;
-  winnerChildFkField?: string | null;
+type PendingValueResolution = {
+  type: 'value';
+  columnName: string;
+  winnerValue: string;
 };
 
-type ChildEntry = {
-  field: string;
-  oldId: string | null;
-  newId: string | null;
+type PendingRelationalResolution = {
+  type: 'twoFathers' | 'twoChilds';
+  columnName: string;
+  conflictIds: number[];
+  winnerRelatedId: string;
+  subtreeLevels: Map<string, string>;
 };
+
+type PendingResolution = PendingValueResolution | PendingRelationalResolution;
 
 @Component({
   selector: 'app-conflict-item',
@@ -59,15 +67,15 @@ export class ConflictItemComponent {
   protected readonly _isExpanded = signal(false);
   protected readonly _$detail = signal<ConflictEntityDetail | null>(null);
   protected readonly _$notes = signal('');
-  protected readonly _$selectedWinners = signal<Map<string, string>>(new Map());
-  protected readonly _$selectedRelationalWinners = signal<Map<string, RelationalWinner>>(new Map());
+  protected readonly _$pendingResolution = signal<PendingResolution | null>(null);
+  protected readonly _$openConflictIds = signal<Set<string>>(new Set());
+  protected readonly _$showFloatingWarning = signal(false);
+  protected readonly _$confirmedRelational = signal<PendingRelationalResolution | null>(null);
 
-  protected readonly _$columns = computed<ConflictColumnDetail[]>(() => {
+  protected readonly _$allColumns = computed<ConflictColumnDetail[]>(() => {
     const detail = this._$detail();
-    if (!detail) {
-      return [];
-    }
-    const detailMap = new Map(detail.map((col) => [col.columnName, col]));
+    if (!detail) { return []; }
+    const detailMap = new Map(detail.columns.map((col) => [col.columnName, col]));
     const prefix = `${this.$group().tableName}.`;
     return Object.keys(ENTITY_COLUMN_LABEL_MAP)
       .filter((key) => key.startsWith(prefix))
@@ -76,9 +84,34 @@ export class ConflictItemComponent {
       .filter((col): col is ConflictColumnDetail => col !== undefined);
   });
 
-  protected readonly _$canResolve = computed(
-    () => this._$selectedWinners().size > 0 || this._$selectedRelationalWinners().size > 0,
+  protected readonly _$pkColumn = computed(() =>
+    this._$allColumns().find((col) => col.columnName === 'id') ?? null,
   );
+
+  protected readonly _$twoFathersConflict = computed(() => this._$detail()?.twoFathersConflict ?? null);
+
+  protected readonly _$twoChildsConflicts = computed(() =>
+    this._$allColumns().filter((col) => col.relationalConflict?.conflictType === 'TWO_CHILDS'),
+  );
+
+  protected readonly _$valueConflictColumns = computed(() =>
+    this._$allColumns().filter((col) => col.isConflicted),
+  );
+
+  protected readonly _$regularColumns = computed(() =>
+    this._$allColumns().filter(
+      (col) => !col.isConflicted && !col.relationalConflict && col.columnName !== 'id',
+    ),
+  );
+
+  protected readonly _$canResolve = computed(() => {
+    const resolution = this._$pendingResolution();
+    const notes = this._$notes().trim();
+    if (!resolution || !notes) { return false; }
+    if (resolution.type === 'value' || resolution.type === 'twoFathers') { return true; }
+    return [...resolution.subtreeLevels.values()].every((v) => !!v);
+  });
+
   protected readonly _$canEdit = computed(() => this._permissionsService.canEdit());
 
   public constructor() {
@@ -86,9 +119,7 @@ export class ConflictItemComponent {
       if (this.$isOpen() && !this._isExpanded()) {
         this._isExpanded.set(true);
         if (!this._$detail()) {
-          this._conflictsService
-            .getEntityDetail(this.$group().tableName, this.$group().entityId)
-            .subscribe({ next: (detail) => this._$detail.set(detail) });
+          this._loadDetail();
         }
       }
     });
@@ -98,9 +129,7 @@ export class ConflictItemComponent {
     this._isExpanded.update((v) => !v);
     if (this._isExpanded()) {
       if (!this._$detail()) {
-        this._conflictsService
-          .getEntityDetail(this.$group().tableName, this.$group().entityId)
-          .subscribe({ next: (detail) => this._$detail.set(detail) });
+        this._loadDetail();
       }
       this.toggled.emit(this.$group().entityId);
     } else {
@@ -108,128 +137,43 @@ export class ConflictItemComponent {
     }
   }
 
-  protected selectWinner(columnName: string, value: string): void {
-    this._$selectedWinners.update((map) => {
-      const next = new Map(map);
-      if (next.get(columnName) === value) {
-        next.delete(columnName);
-      } else {
-        next.set(columnName, value);
-      }
-      return next;
-    });
-  }
-
-  protected isWinnerSelected(columnName: string, value: string | null): boolean {
-    return this._$selectedWinners().get(columnName) === value;
-  }
-
-  protected selectRelationalWinner(columnName: string, winnerRelatedId: string): void {
-    this._$selectedRelationalWinners.update((map) => {
-      const next = new Map(map);
-      const existing = next.get(columnName);
-      if (existing?.winnerRelatedId === winnerRelatedId) {
-        next.delete(columnName);
-      } else {
-        next.set(columnName, { winnerRelatedId, winnerChildId: null, winnerChildFkField: null });
-      }
-      return next;
-    });
-  }
-
-  protected isRelationalWinnerSelected(columnName: string, relatedId: string): boolean {
-    return this._$selectedRelationalWinners().get(columnName)?.winnerRelatedId === relatedId;
-  }
-
-  protected getRelationalWinner(columnName: string): RelationalWinner | undefined {
-    return this._$selectedRelationalWinners().get(columnName);
-  }
-
-  protected selectRelationalChild(columnName: string, field: string, childId: string): void {
-    this._$selectedRelationalWinners.update((map) => {
-      const next = new Map(map);
-      const existing = next.get(columnName);
-      if (!existing) { return next; }
-      if (existing.winnerChildId === childId && existing.winnerChildFkField === field) {
-        next.set(columnName, { ...existing, winnerChildId: null, winnerChildFkField: null });
-      } else {
-        next.set(columnName, { ...existing, winnerChildId: childId, winnerChildFkField: field });
-      }
-      return next;
-    });
-  }
-
-  protected isChildWinnerSelected(columnName: string, field: string, childId: string): boolean {
-    const winner = this._$selectedRelationalWinners().get(columnName);
-    return winner?.winnerChildFkField === field && winner?.winnerChildId === childId;
-  }
-
-  protected getRelatedChildEntries(rc: RelationalConflictDetail): ChildEntry[] {
-    if (!rc.snapshot) { return []; }
-    const prefix = `${rc.relatedTable}.`;
-    return Object.keys(FK_TO_ENTITY_ID)
-      .filter((key) => key.startsWith(prefix))
-      .map((key) => {
-        const field = key.slice(prefix.length);
-        const oldId = (rc.snapshot!.oldRelated[field] as string | null | undefined) ?? null;
-        const newId = (rc.snapshot!.newRelated[field] as string | null | undefined) ?? null;
-        return { field, oldId, newId };
-      })
-      .filter((entry) => entry.oldId !== entry.newId);
-  }
-
-  public resolve(): void {
-    if (!this._$canResolve()) {
-      return;
-    }
-    const { tableName, entityId } = this.$group();
-    const notes = this._$notes();
-    const winners = this._$selectedWinners();
-    const relationalWinners = this._$selectedRelationalWinners();
-
-    const valueCalls = this._$columns()
-      .filter((c) => c.isConflicted && winners.has(c.columnName))
-      .map((c) =>
-        this._conflictsService.resolveConflict({
-          tableName,
-          entityId,
-          columnName: c.columnName,
-          winnerValue: winners.get(c.columnName)!,
-          conflictResolver: DEFAULT_USER_NAME,
-          resolutionNotes: notes,
-        }),
-      );
-
-    const relationalCalls = this._$columns()
-      .filter((c) => c.relationalConflict && relationalWinners.has(c.columnName))
-      .map((c) => {
-        const rc = c.relationalConflict!;
-        const winner = relationalWinners.get(c.columnName)!;
-        return this._conflictsService.resolveRelationalConflict({
-          conflictId: rc.conflictId,
-          winnerRelatedId: winner.winnerRelatedId,
-          winnerChildId: winner.winnerChildId,
-          winnerChildFkField: winner.winnerChildFkField,
-          conflictResolver: DEFAULT_USER_NAME,
-          resolutionNotes: notes,
-        });
+  private _loadDetail(): void {
+    this._conflictsService
+      .getEntityDetail(this.$group().tableName, this.$group().entityId)
+      .subscribe({
+        next: (detail) => {
+          this._$detail.set(detail);
+          this._fetchOpenConflictIds(detail);
+        },
       });
+  }
 
-    forkJoin([...valueCalls, ...relationalCalls]).subscribe({
-      next: () => {
-        this._$selectedWinners.set(new Map());
-        this._$selectedRelationalWinners.set(new Map());
-        this._$detail.set(null);
-        this._conflictsService.getEntityDetail(tableName, entityId).subscribe({
-          next: (detail) => {
-            this._$detail.set(detail);
-            if (!detail.some((col) => col.isConflicted || col.relationalConflict)) {
-              this._conflictsStore.removeConflict(tableName, entityId);
-            }
-          },
+  private _fetchOpenConflictIds(detail: ConflictEntityDetail): void {
+    const ids = new Set<string>();
+    detail.columns.forEach((col) => {
+      if (col.relationalConflict) {
+        col.relationalConflict.options.forEach((opt) => {
+          ids.add(opt.id);
+          Object.values(opt.childData).forEach((childId) => {
+            if (childId) { ids.add(childId); }
+          });
         });
-      },
+      }
+      if (col.columnName.endsWith('Id') && col.currentValue) {
+        ids.add(col.currentValue);
+      }
     });
+    if (detail.twoFathersConflict) {
+      detail.twoFathersConflict.options.forEach((opt) => { ids.add(opt.id); });
+    }
+    if (ids.size === 0) { return; }
+    this._conflictsService.checkOpenIds([...ids]).subscribe({
+      next: (openIds) => this._$openConflictIds.set(new Set(openIds)),
+    });
+  }
+
+  protected isIdOpen(id: string): boolean {
+    return this._$openConflictIds().has(id);
   }
 
   protected getLabel(columnName: string): string {
@@ -240,7 +184,194 @@ export class ConflictItemComponent {
     return ENTITY_COLUMN_LABEL_MAP[key] ?? key;
   }
 
+  protected getEntityLabel(): string {
+    return ENTITY_HEBREW_NAME[this.$group().tableName] ?? this.$group().tableName;
+  }
+
+  protected getFathersColumnLabel(rc: TwoFathersConflictDetail): string {
+    return `מזהה ${ENTITY_HEBREW_NAME[rc.relatedTable] ?? rc.relatedTable}`;
+  }
+
   protected formatDate(isoDate: string): string {
     return new Date(isoDate).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit' });
+  }
+
+  protected getSubtreeFkFields(rc: RelationalConflictDetail): string[] {
+    const allFkFields = new Set<string>();
+    rc.options.forEach((opt) => { Object.keys(opt.childData).forEach((f) => allFkFields.add(f)); });
+    return [...allFkFields].filter((field) => {
+      const uniqueVals = new Set(rc.options.map((opt) => opt.childData[field]));
+      return uniqueVals.size > 1;
+    });
+  }
+
+  protected getSubtreeOptions(rc: RelationalConflictDetail, fkField: string): string[] {
+    return [
+      ...new Set(
+        rc.options.map((opt) => opt.childData[fkField]).filter((id): id is string => !!id),
+      ),
+    ];
+  }
+
+  protected getSubtreeFkLabel(rc: RelationalConflictDetail, fkField: string): string {
+    return ENTITY_COLUMN_LABEL_MAP[`${rc.relatedTable}.${fkField}`] ?? fkField;
+  }
+
+  // --- Value conflict selection ---
+
+  protected selectValueWinner(columnName: string, value: string | null): void {
+    if (!value) { return; }
+    this._$pendingResolution.update((prev) => {
+      if (prev?.type === 'value' && prev.columnName === columnName && prev.winnerValue === value) {
+        return null;
+      }
+      return { type: 'value', columnName, winnerValue: value };
+    });
+  }
+
+  protected isValueWinnerSelected(columnName: string, value: string | null): boolean {
+    const res = this._$pendingResolution();
+    return res?.type === 'value' && res.columnName === columnName && res.winnerValue === value;
+  }
+
+  // --- TWO_CHILDS selection ---
+
+  protected selectTwoChildsWinner(columnName: string, rc: RelationalConflictDetail, winnerId: string): void {
+    this._$pendingResolution.update((prev) => {
+      const relPrev = prev as PendingRelationalResolution | null;
+      if (relPrev?.type === 'twoChilds' && relPrev.columnName === columnName && relPrev.winnerRelatedId === winnerId) {
+        return null;
+      }
+      const subtreeFields = this.getSubtreeFkFields(rc);
+      return {
+        type: 'twoChilds',
+        columnName,
+        conflictIds: rc.conflictIds,
+        winnerRelatedId: winnerId,
+        subtreeLevels: new Map(subtreeFields.map((f) => [f, ''] as [string, string])),
+      };
+    });
+  }
+
+  protected isTwoChildsWinnerSelected(columnName: string, id: string): boolean {
+    const res = this._$pendingResolution();
+    return res?.type === 'twoChilds' && (res as PendingRelationalResolution).columnName === columnName &&
+      (res as PendingRelationalResolution).winnerRelatedId === id;
+  }
+
+  protected selectSubtreeLevel(columnName: string, fkField: string, childId: string): void {
+    this._$pendingResolution.update((prev) => {
+      const relPrev = prev as PendingRelationalResolution | null;
+      if (!relPrev || relPrev.type !== 'twoChilds' || relPrev.columnName !== columnName) { return prev; }
+      const newLevels = new Map(relPrev.subtreeLevels);
+      newLevels.set(fkField, newLevels.get(fkField) === childId ? '' : childId);
+      return { ...relPrev, subtreeLevels: newLevels };
+    });
+  }
+
+  protected isSubtreeLevelSelected(columnName: string, fkField: string, childId: string): boolean {
+    const res = this._$pendingResolution();
+    if (!res || res.type !== 'twoChilds' || (res as PendingRelationalResolution).columnName !== columnName) {
+      return false;
+    }
+    return (res as PendingRelationalResolution).subtreeLevels.get(fkField) === childId;
+  }
+
+  // --- TWO_FATHERS selection ---
+
+  protected selectTwoFathersWinner(rc: TwoFathersConflictDetail, winnerId: string): void {
+    this._$pendingResolution.update((prev) => {
+      const relPrev = prev as PendingRelationalResolution | null;
+      if (relPrev?.type === 'twoFathers' && relPrev.winnerRelatedId === winnerId) { return null; }
+      return {
+        type: 'twoFathers',
+        columnName: '__twoFathers__',
+        conflictIds: rc.conflictIds,
+        winnerRelatedId: winnerId,
+        subtreeLevels: new Map(),
+      };
+    });
+  }
+
+  protected isTwoFathersWinnerSelected(id: string): boolean {
+    const res = this._$pendingResolution();
+    return res?.type === 'twoFathers' && (res as PendingRelationalResolution).winnerRelatedId === id;
+  }
+
+  // --- Resolution ---
+
+  public resolve(): void {
+    if (!this._$canResolve()) { return; }
+    const resolution = this._$pendingResolution()!;
+    if (resolution.type === 'value') {
+      this._submitValueResolution(resolution);
+    } else {
+      this._$confirmedRelational.set(resolution as PendingRelationalResolution);
+      this._$showFloatingWarning.set(true);
+    }
+  }
+
+  protected confirmResolution(): void {
+    this._$showFloatingWarning.set(false);
+    const relational = this._$confirmedRelational();
+    if (relational) {
+      this._submitRelationalResolution(relational);
+      this._$confirmedRelational.set(null);
+    }
+  }
+
+  protected cancelResolution(): void {
+    this._$showFloatingWarning.set(false);
+    this._$confirmedRelational.set(null);
+  }
+
+  private _submitValueResolution(resolution: PendingValueResolution): void {
+    const { tableName, entityId } = this.$group();
+    this._conflictsService
+      .resolveConflict({
+        tableName,
+        entityId,
+        columnName: resolution.columnName,
+        winnerValue: resolution.winnerValue,
+        conflictResolver: DEFAULT_USER_NAME,
+        resolutionNotes: this._$notes(),
+      })
+      .subscribe({ next: () => this._afterResolve() });
+  }
+
+  private _submitRelationalResolution(resolution: PendingRelationalResolution): void {
+    const subtreeEntries = [...resolution.subtreeLevels.entries()];
+    const winnerChildFkField = subtreeEntries.length > 0 ? subtreeEntries[0][0] : null;
+    const winnerChildId = subtreeEntries.length > 0 ? (subtreeEntries[0][1] || null) : null;
+    this._conflictsService
+      .resolveRelationalConflict({
+        conflictIds: resolution.conflictIds,
+        winnerRelatedId: resolution.winnerRelatedId,
+        winnerChildId,
+        winnerChildFkField,
+        conflictResolver: DEFAULT_USER_NAME,
+        resolutionNotes: this._$notes(),
+      })
+      .subscribe({ next: () => this._afterResolve() });
+  }
+
+  private _afterResolve(): void {
+    this._$pendingResolution.set(null);
+    this._$notes.set('');
+    this._$detail.set(null);
+    const { tableName, entityId } = this.$group();
+    this._conflictsService.getEntityDetail(tableName, entityId).subscribe({
+      next: (detail) => {
+        this._$detail.set(detail);
+        const hasConflicts =
+          detail.columns.some((col) => col.isConflicted || col.relationalConflict) ||
+          !!detail.twoFathersConflict;
+        if (!hasConflicts) {
+          this._conflictsStore.removeConflict(tableName, entityId);
+        } else {
+          this._fetchOpenConflictIds(detail);
+        }
+      },
+    });
   }
 }

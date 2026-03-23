@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ValueConflictRepository } from '../value-conflict.repository';
 import { EntityServiceRegistry } from '../../../../shared/services/entity-service-registry.service';
-import { ConflictColumnDetail, ConflictEntityDetailResponse } from '../types/conflict-entity-detail-response.type';
+import { ConflictColumnDetail } from '../types/conflict-entity-detail-response.type';
 
 const EXCLUDED_COLUMNS = new Set(['source', 'notes', 'createdAt', 'updatedAt', 'deletedAt']);
 
@@ -12,7 +12,7 @@ export class ValueConflictEntityDetailService {
     private readonly _entityServiceRegistry: EntityServiceRegistry,
   ) {}
 
-  public async getEntityDetail(tableName: string, entityId: string): Promise<ConflictEntityDetailResponse> {
+  public async getEntityDetail(tableName: string, entityId: string): Promise<ConflictColumnDetail[]> {
     const entityService = this._entityServiceRegistry.get(tableName);
     const entity = await entityService.findById(entityId);
 
