@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input, output, signal } from '@ang
 
 import { ConflictHistoryService } from '../../../../core/services/conflicts/conflict-history.service';
 import { ConflictHistoryResponse } from '../../../../shared/types/conflict-history-response.type';
-import { RelationalHistoryGroup, RelationalHistoryResponse } from '../../../../shared/types/relational-history-response.type';
+import { RelationalHistoryAnchor, RelationalHistoryGroup, RelationalHistoryResponse } from '../../../../shared/types/relational-history-response.type';
 import { HistoryTarget } from '../../../../shared/types/history-target.type';
 import { ToastService } from '../../../../shared/services/toast.service';
 import { ENTITY_COLUMN_LABEL_MAP } from '../../../../shared/mapping/entity-column.label-map';
@@ -145,6 +145,18 @@ export class ConflictHistoryPopupComponent {
           this._toastService.show('שגיאה בעדכון הערך', 'error');
         },
       });
+  }
+
+  protected getEntityName(tableName: string): string {
+    return ENTITY_HEBREW_NAME[tableName] ?? tableName;
+  }
+
+  protected getAnchorFieldKeys(anchor: RelationalHistoryAnchor): string[] {
+    return Object.keys(anchor.fields);
+  }
+
+  protected getAnchorFieldLabel(tableName: string, field: string): string {
+    return ENTITY_COLUMN_LABEL_MAP[`${tableName}.${field}`] ?? field;
   }
 
   protected getGroupLabel(group: RelationalHistoryGroup): string {

@@ -1,3 +1,9 @@
+export type RelationalHistoryAnchor = {
+  id: string;
+  tableName: string;
+  fields: Record<string, string | null>;
+};
+
 export type RelationalHistoryOption = {
   id: string;
   source: string | null;
@@ -13,6 +19,7 @@ export type RelationalHistoryGroup = {
 };
 
 export type RelationalHistoryResponse = {
+  anchor: RelationalHistoryAnchor;
   groups: RelationalHistoryGroup[];
   resolverName: string | null;
   resolutionDate: string | null;

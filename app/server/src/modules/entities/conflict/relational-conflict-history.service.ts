@@ -4,10 +4,13 @@ import { EntityServiceRegistry } from '../../../shared/services/entity-service-r
 import { FK_FIELD_TO_TABLE } from '../../../shared/consts/entity-relation-map.const';
 import { RelationalConflictEntity } from './entities/relational-conflict.entity';
 import {
+  RelationalHistoryAnchor,
   RelationalHistoryGroup,
   RelationalHistoryOption,
   RelationalHistoryResponse,
 } from './types/relational-history-response.type';
+
+const EXCLUDED_ANCHOR_FIELDS = new Set(['source', 'notes', 'createdAt', 'updatedAt', 'deletedAt', 'id']);
 
 @Injectable()
 export class RelationalConflictHistoryService {
@@ -45,7 +48,15 @@ export class RelationalConflictHistoryService {
       (rc.updatedAt as Date) > (latest.updatedAt as Date) ? rc : latest,
     );
 
+    const anchorSnapshot = conflicts[0].snapshot?.anchor ?? {};
+    const anchor: RelationalHistoryAnchor = {
+      id: anchorId,
+      tableName: anchorTable,
+      fields: this._extractAnchorFields(anchorSnapshot),
+    };
+
     return {
+      anchor,
       groups,
       resolverName: lastResolved.conflictResolver,
       resolutionDate: lastResolved.updatedAt instanceof Date ? lastResolved.updatedAt.toISOString() : null,
@@ -101,6 +112,15 @@ export class RelationalConflictHistoryService {
       }
     });
     return [...idToOption.values()];
+  }
+
+  private _extractAnchorFields(data: Record<string, unknown>): Record<string, string | null> {
+    return Object.entries(data)
+      .filter(([key]) => !EXCLUDED_ANCHOR_FIELDS.has(key))
+      .reduce<Record<string, string | null>>((acc, [key, val]) => {
+        acc[key] = val !== null && val !== undefined ? String(val) : null;
+        return acc;
+      }, {});
   }
 
   private _extractSubtreeIds(entityData: Record<string, unknown> | null): Record<string, string | null> {

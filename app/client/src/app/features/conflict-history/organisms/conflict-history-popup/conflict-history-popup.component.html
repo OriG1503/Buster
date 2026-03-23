@@ -44,6 +44,29 @@
   } @else if (_$isRelational()) {
     <!-- Relational history -->
     @if (_$relationalHistory(); as history) {
+      <!-- Anchor entity section -->
+      <div class="history-popup__group-label history-popup__group-label--anchor">
+        ישות עוגן: {{ getEntityName(history.anchor.tableName) }} — {{ history.anchor.id }}
+      </div>
+      @if (getAnchorFieldKeys(history.anchor).length > 0) {
+        <table class="history-popup__table">
+          <thead>
+            <tr>
+              @for (field of getAnchorFieldKeys(history.anchor); track field) {
+                <th class="history-popup__th">{{ getAnchorFieldLabel(history.anchor.tableName, field) }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="history-popup__tr history-popup__tr--anchor">
+              @for (field of getAnchorFieldKeys(history.anchor); track field) {
+                <td class="history-popup__td history-popup__td--id">{{ history.anchor.fields[field] ?? '—' }}</td>
+              }
+            </tr>
+          </tbody>
+        </table>
+      }
+
       @for (group of history.groups; track group.relatedTable) {
         <div class="history-popup__group-label">{{ getGroupLabel(group) }}</div>
         <table class="history-popup__table">
