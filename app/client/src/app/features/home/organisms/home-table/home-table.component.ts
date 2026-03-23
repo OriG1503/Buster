@@ -97,10 +97,12 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
     if (cell.status === 'resolved') {
       const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
       if (cell.anchorTable && cell.anchorId) {
+        const relatedTable = FK_TO_ENTITY_ID[col]?.split('.')[0] ?? '';
         this._$historyTarget.set({
           isRelational: true,
           anchorTable: cell.anchorTable,
           anchorId: cell.anchorId,
+          relatedTable,
           anchorBottom: rect.bottom,
           anchorCenterX: rect.left + rect.width / 2,
         });

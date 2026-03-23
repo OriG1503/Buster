@@ -11,6 +11,7 @@ type RelationalHistoryTarget = {
   isRelational: true;
   anchorTable: string;
   anchorId: string;
+  relatedTable: string;
   anchorBottom: number;
   anchorCenterX: number;
 };

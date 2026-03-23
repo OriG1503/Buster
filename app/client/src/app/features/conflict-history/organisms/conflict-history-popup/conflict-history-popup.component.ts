@@ -35,6 +35,15 @@ export class ConflictHistoryPopupComponent {
 
   protected readonly _$isRelational = computed(() => this.$target().isRelational);
 
+  protected readonly _$filteredGroups = computed(() => {
+    const history = this._$relationalHistory();
+    const target = this.$target();
+    if (!history || !target.isRelational) {
+      return [];
+    }
+    return history.groups.filter((g) => g.relatedTable === target.relatedTable);
+  });
+
   protected readonly _$panelStyle = computed(() => {
     const { anchorBottom, anchorCenterX } = this.$target();
     const popupWidth = this._$isRelational() ? 700 : 480;

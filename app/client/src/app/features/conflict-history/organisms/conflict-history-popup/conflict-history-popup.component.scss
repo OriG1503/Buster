@@ -72,6 +72,10 @@
     }
   }
 
+  &__scroll-area {
+    overflow-x: auto;
+  }
+
   &__table {
     width: 100%;
     border-collapse: collapse;
