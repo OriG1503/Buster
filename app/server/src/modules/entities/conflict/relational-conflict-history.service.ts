@@ -116,7 +116,7 @@ export class RelationalConflictHistoryService {
 
   private _extractAnchorFields(data: Record<string, unknown>): Record<string, string | null> {
     return Object.entries(data)
-      .filter(([key]) => !EXCLUDED_ANCHOR_FIELDS.has(key))
+      .filter(([key, val]) => !EXCLUDED_ANCHOR_FIELDS.has(key) && (val === null || typeof val !== 'object'))
       .reduce<Record<string, string | null>>((acc, [key, val]) => {
         acc[key] = val !== null && val !== undefined ? String(val) : null;
         return acc;

@@ -37,7 +37,7 @@ export class ConflictHistoryPopupComponent {
 
   protected readonly _$panelStyle = computed(() => {
     const { anchorBottom, anchorCenterX } = this.$target();
-    const popupWidth = this._$isRelational() ? 560 : 480;
+    const popupWidth = this._$isRelational() ? 700 : 480;
     const gap = 8;
     const top = anchorBottom + gap;
     const left = Math.max(8, Math.min(anchorCenterX - popupWidth / 2, window.innerWidth - popupWidth - 8));
@@ -176,7 +176,7 @@ export class ConflictHistoryPopupComponent {
 
   protected formatDate(iso: string | null): string {
     if (!iso) {
-      return 'N/A';
+      return '—';
     }
     const d = new Date(iso);
     return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
