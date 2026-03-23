@@ -31,9 +31,13 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
 
   protected readonly _$displayColumns = computed(() => {
     const cols = this._store.selectedColumns();
+    const rootTable = this._store.selectedTable();
     return cols.filter((col) => {
       if (!col.endsWith('.id')) {
         return true;
+      }
+      if (col === `${rootTable}.id`) {
+        return true; // always show the root entity's own ID
       }
       const fkKey = FK_TO_ENTITY_ID[col];
       return !(fkKey && cols.includes(fkKey));

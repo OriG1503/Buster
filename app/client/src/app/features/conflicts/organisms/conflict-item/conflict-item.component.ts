@@ -10,6 +10,7 @@ import {
 import { ConflictGroup } from '../../../../shared/types/conflict-group.type';
 import { ConflictsService } from '../../../../core/services/conflicts/conflicts.service';
 import { ConflictsStore } from '../../../../core/store/conflicts.store';
+import { HomeStore } from '../../../../core/store/home.store';
 import { ENTITY_COLUMN_LABEL_MAP } from '../../../../shared/mapping/entity-column.label-map';
 import { ENTITY_HEBREW_NAME } from '../../../../shared/consts/entity-hebrew-name.const';
 import { PermissionsService } from '../../../../core/services/permissions/permissions.service';
@@ -62,6 +63,7 @@ export class ConflictItemComponent {
 
   private readonly _conflictsService = inject(ConflictsService);
   private readonly _conflictsStore = inject(ConflictsStore);
+  private readonly _homeStore = inject(HomeStore);
   private readonly _permissionsService = inject(PermissionsService);
 
   protected readonly _isExpanded = signal(false);
@@ -359,6 +361,7 @@ export class ConflictItemComponent {
     this._$pendingResolution.set(null);
     this._$notes.set('');
     this._$detail.set(null);
+    this._homeStore.refresh();
     const { tableName, entityId } = this.$group();
     this._conflictsService.getEntityDetail(tableName, entityId).subscribe({
       next: (detail) => {

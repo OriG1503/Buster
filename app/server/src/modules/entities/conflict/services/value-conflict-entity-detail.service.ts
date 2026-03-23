@@ -33,7 +33,8 @@ export class ValueConflictEntityDetailService {
     const notes = (entityRecord['notes'] as Record<string, string | null>) ?? {};
     const currentDate = (entity.updatedAt as Date).toISOString();
 
-    return Object.keys(entityRecord)
+    return entityService
+      .getColumnNames()
       .filter((key) => !EXCLUDED_COLUMNS.has(key))
       .map<ConflictColumnDetail>((columnName) => {
         const conflicts = conflictsByColumn[columnName] ?? [];
