@@ -95,16 +95,27 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
       return;
     }
     if (cell.status === 'resolved') {
-      const [tableName, columnName] = col.split('.');
-      const entityId = row[`${tableName}.id`]?.value ?? '';
       const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-      this._$historyTarget.set({
-        tableName,
-        entityId,
-        columnName,
-        anchorBottom: rect.bottom,
-        anchorCenterX: rect.left + rect.width / 2,
-      });
+      if (cell.anchorTable && cell.anchorId) {
+        this._$historyTarget.set({
+          isRelational: true,
+          anchorTable: cell.anchorTable,
+          anchorId: cell.anchorId,
+          anchorBottom: rect.bottom,
+          anchorCenterX: rect.left + rect.width / 2,
+        });
+      } else {
+        const [tableName, columnName] = col.split('.');
+        const entityId = row[`${tableName}.id`]?.value ?? '';
+        this._$historyTarget.set({
+          isRelational: false,
+          tableName,
+          entityId,
+          columnName,
+          anchorBottom: rect.bottom,
+          anchorCenterX: rect.left + rect.width / 2,
+        });
+      }
     }
   }
 

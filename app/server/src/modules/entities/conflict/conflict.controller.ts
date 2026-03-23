@@ -16,6 +16,8 @@ import { ConflictEntityDetailService } from './services/conflict-entity-detail.s
 import { ConflictEntityDetailResponse } from './types/conflict-entity-detail-response.type';
 import { CheckOpenIdsDto } from './dto/check-open-ids.dto';
 import { RelationalConflictEntity } from './entities/relational-conflict.entity';
+import { RelationalConflictHistoryService } from './relational-conflict-history.service';
+import { RelationalHistoryResponse } from './types/relational-history-response.type';
 
 @RequireRole(Role.VIEWER)
 @Controller('conflicts')
@@ -27,6 +29,7 @@ export class ConflictController {
     private readonly _valueConflictHistoryService: ValueConflictHistoryService,
     private readonly _conflictListService: ConflictListService,
     private readonly _conflictEntityDetailService: ConflictEntityDetailService,
+    private readonly _relationalConflictHistoryService: RelationalConflictHistoryService,
   ) {}
 
   @Get()
@@ -84,5 +87,13 @@ export class ConflictController {
     @Query('columnName') columnName: string,
   ): Promise<ConflictHistoryResponse> {
     return this._valueConflictHistoryService.getHistory(tableName, entityId, columnName);
+  }
+
+  @Get('relational-history')
+  public async relationalHistory(
+    @Query('anchorTable') anchorTable: string,
+    @Query('anchorId') anchorId: string,
+  ): Promise<RelationalHistoryResponse> {
+    return this._relationalConflictHistoryService.getHistory(anchorTable, anchorId);
   }
 }

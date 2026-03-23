@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 import { ConflictHistoryResponse } from '../../../shared/types/conflict-history-response.type';
 import { RevertConflictParams } from '../../../shared/types/revert-conflict-params.type';
+import { RelationalHistoryResponse } from '../../../shared/types/relational-history-response.type';
 
 @Injectable({ providedIn: 'root' })
 export class ConflictHistoryService {
@@ -12,6 +13,12 @@ export class ConflictHistoryService {
   public getHistory(tableName: string, entityId: string, columnName: string): Observable<ConflictHistoryResponse> {
     return this._http.get<ConflictHistoryResponse>('/api/conflicts/history', {
       params: { tableName, entityId, columnName },
+    });
+  }
+
+  public getRelationalHistory(anchorTable: string, anchorId: string): Observable<RelationalHistoryResponse> {
+    return this._http.get<RelationalHistoryResponse>('/api/conflicts/relational-history', {
+      params: { anchorTable, anchorId },
     });
   }
 

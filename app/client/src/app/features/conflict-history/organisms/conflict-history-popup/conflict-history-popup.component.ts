@@ -2,8 +2,11 @@ import { Component, computed, effect, inject, input, output, signal } from '@ang
 
 import { ConflictHistoryService } from '../../../../core/services/conflicts/conflict-history.service';
 import { ConflictHistoryResponse } from '../../../../shared/types/conflict-history-response.type';
+import { RelationalHistoryGroup, RelationalHistoryResponse } from '../../../../shared/types/relational-history-response.type';
 import { HistoryTarget } from '../../../../shared/types/history-target.type';
 import { ToastService } from '../../../../shared/services/toast.service';
+import { ENTITY_COLUMN_LABEL_MAP } from '../../../../shared/mapping/entity-column.label-map';
+import { ENTITY_HEBREW_NAME } from '../../../../shared/consts/entity-hebrew-name.const';
 import { DEFAULT_USER_NAME } from '../../../../shared/consts/default-user.consts';
 
 @Component({
@@ -20,7 +23,8 @@ export class ConflictHistoryPopupComponent {
   private readonly _historyService = inject(ConflictHistoryService);
   private readonly _toastService = inject(ToastService);
 
-  protected readonly _$history = signal<ConflictHistoryResponse | null>(null);
+  protected readonly _$valueHistory = signal<ConflictHistoryResponse | null>(null);
+  protected readonly _$relationalHistory = signal<RelationalHistoryResponse | null>(null);
   protected readonly _$isLoading = signal(true);
   protected readonly _$isError = signal(false);
   protected readonly _$isEditMode = signal(false);
@@ -29,13 +33,15 @@ export class ConflictHistoryPopupComponent {
   protected readonly _$isSaving = signal(false);
   protected readonly _defaultUserName = DEFAULT_USER_NAME;
 
+  protected readonly _$isRelational = computed(() => this.$target().isRelational);
+
   protected readonly _$panelStyle = computed(() => {
     const { anchorBottom, anchorCenterX } = this.$target();
-    const popupWidth = 480;
+    const popupWidth = this._$isRelational() ? 560 : 480;
     const gap = 8;
     const top = anchorBottom + gap;
     const left = Math.max(8, Math.min(anchorCenterX - popupWidth / 2, window.innerWidth - popupWidth - 8));
-    return { top: `${top}px`, left: `${left}px` };
+    return { top: `${top}px`, left: `${left}px`, width: `${popupWidth}px` };
   });
 
   public constructor() {
@@ -46,17 +52,32 @@ export class ConflictHistoryPopupComponent {
       this._$isEditMode.set(false);
       this._$pendingWinnerValue.set(null);
       this._$editNotes.set('');
-      this._$history.set(null);
-      this._historyService.getHistory(target.tableName, target.entityId, target.columnName).subscribe({
-        next: (response) => {
-          this._$history.set(response);
-          this._$isLoading.set(false);
-        },
-        error: () => {
-          this._$isError.set(true);
-          this._$isLoading.set(false);
-        },
-      });
+      this._$valueHistory.set(null);
+      this._$relationalHistory.set(null);
+
+      if (target.isRelational) {
+        this._historyService.getRelationalHistory(target.anchorTable, target.anchorId).subscribe({
+          next: (response) => {
+            this._$relationalHistory.set(response);
+            this._$isLoading.set(false);
+          },
+          error: () => {
+            this._$isError.set(true);
+            this._$isLoading.set(false);
+          },
+        });
+      } else {
+        this._historyService.getHistory(target.tableName, target.entityId, target.columnName).subscribe({
+          next: (response) => {
+            this._$valueHistory.set(response);
+            this._$isLoading.set(false);
+          },
+          error: () => {
+            this._$isError.set(true);
+            this._$isLoading.set(false);
+          },
+        });
+      }
     });
   }
 
@@ -66,7 +87,7 @@ export class ConflictHistoryPopupComponent {
       this._$editNotes.set('');
       return;
     }
-    const currentWinner = this._$history()?.entries.find((e) => e.isWinner)?.value ?? null;
+    const currentWinner = this._$valueHistory()?.entries.find((entry) => entry.isWinner)?.value ?? null;
     this._$pendingWinnerValue.set(currentWinner);
     this._$editNotes.set('');
     this._$isEditMode.set(true);
@@ -85,7 +106,7 @@ export class ConflictHistoryPopupComponent {
       return;
     }
 
-    const currentWinner = this._$history()?.entries.find((e) => e.isWinner)?.value ?? null;
+    const currentWinner = this._$valueHistory()?.entries.find((entry) => entry.isWinner)?.value ?? null;
     const pendingValue = this._$pendingWinnerValue();
 
     if (pendingValue === null || pendingValue === currentWinner) {
@@ -95,10 +116,22 @@ export class ConflictHistoryPopupComponent {
       return;
     }
 
-    const { tableName, entityId, columnName } = this.$target();
+    const target = this.$target();
+    if (target.isRelational) {
+      return;
+    }
+
+    const { tableName, entityId, columnName } = target;
     this._$isSaving.set(true);
     this._historyService
-      .revert({ tableName, entityId, columnName, revertValue: pendingValue, revertedBy: DEFAULT_USER_NAME, resolutionNotes: this._$editNotes() })
+      .revert({
+        tableName,
+        entityId,
+        columnName,
+        revertValue: pendingValue,
+        revertedBy: DEFAULT_USER_NAME,
+        resolutionNotes: this._$editNotes(),
+      })
       .subscribe({
         next: () => {
           this._$isSaving.set(false);
@@ -112,6 +145,21 @@ export class ConflictHistoryPopupComponent {
           this._toastService.show('שגיאה בעדכון הערך', 'error');
         },
       });
+  }
+
+  protected getGroupLabel(group: RelationalHistoryGroup): string {
+    const entityName = ENTITY_HEBREW_NAME[group.relatedTable] ?? group.relatedTable;
+    return `אופציות ${entityName}`;
+  }
+
+  protected getGroupSubtreeFields(group: RelationalHistoryGroup): string[] {
+    const fields = new Set<string>();
+    group.options.forEach((opt) => Object.keys(opt.subtreeIds).forEach((field) => fields.add(field)));
+    return [...fields];
+  }
+
+  protected getSubtreeFieldLabel(relatedTable: string, fkField: string): string {
+    return ENTITY_COLUMN_LABEL_MAP[`${relatedTable}.${fkField}`] ?? fkField;
   }
 
   protected formatDate(iso: string | null): string {
