@@ -103,7 +103,9 @@
                     <td class="conflict-item__cell conflict-item__cell--pk">
                       <div class="conflict-item__cell-content">
                         <span class="conflict-item__pk-value">{{ $group().entityId }}</span>
-                        <span class="conflict-item__meta">{{ formatDate(_$pkColumn()!.currentDate) }} | {{ _$pkColumn()!.currentSource ?? 'אין מקור' }}</span>
+                        @if (_$pkColumn()!.currentValue) {
+                          <span class="conflict-item__meta">{{ formatDate(_$pkColumn()!.currentDate) }} | {{ _$pkColumn()!.currentSource ?? 'אין מקור' }}</span>
+                        }
                         @if (_$pkColumn()!.currentNotes) {
                           <span class="conflict-item__comment">{{ _$pkColumn()!.currentNotes }}</span>
                         }
@@ -202,7 +204,9 @@
                           [class.conflict-item__id--yellow]="col.columnName.endsWith('Id') && col.currentValue && isIdOpen(col.currentValue)"
                           >{{ col.currentValue ?? '—' }}</span
                         >
-                        <span class="conflict-item__meta">{{ formatDate(col.currentDate) }} | {{ col.currentSource ?? 'אין מקור' }}</span>
+                        @if (col.currentValue) {
+                          <span class="conflict-item__meta">{{ formatDate(col.currentDate) }} | {{ col.currentSource ?? 'אין מקור' }}</span>
+                        }
                         @if (col.currentNotes) {
                           <span class="conflict-item__comment">{{ col.currentNotes }}</span>
                         }
