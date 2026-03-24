@@ -8,6 +8,7 @@ import { ToastService } from '../../../../shared/services/toast.service';
 import { ENTITY_COLUMN_LABEL_MAP } from '../../../../shared/mapping/entity-column.label-map';
 import { ENTITY_HEBREW_NAME } from '../../../../shared/consts/entity-hebrew-name.const';
 import { DEFAULT_USER_NAME } from '../../../../shared/consts/default-user.consts';
+import { PermissionsService } from '../../../../core/services/permissions/permissions.service';
 
 @Component({
   selector: 'app-conflict-history-popup',
@@ -22,6 +23,7 @@ export class ConflictHistoryPopupComponent {
 
   private readonly _historyService = inject(ConflictHistoryService);
   private readonly _toastService = inject(ToastService);
+  private readonly _permissionsService = inject(PermissionsService);
 
   protected readonly _$valueHistory = signal<ConflictHistoryResponse | null>(null);
   protected readonly _$relationalHistory = signal<RelationalHistoryResponse | null>(null);
@@ -34,6 +36,7 @@ export class ConflictHistoryPopupComponent {
   protected readonly _defaultUserName = DEFAULT_USER_NAME;
 
   protected readonly _$isRelational = computed(() => this.$target().isRelational);
+  protected readonly _$canEdit = computed(() => this._permissionsService.canEdit());
 
 
   protected readonly _$panelStyle = computed(() => {

@@ -50,7 +50,7 @@ export class FileService {
         conflictIds: result.conflictIds,
         conflictCount: result.conflictCount,
         uploadPercentage: result.uploadPercentage,
-        flyingFieldCount: result.flyingFields.reduce((sum, f) => sum + f.fields.length, 0),
+        flyingFieldCount: result.flyingFields.reduce((sum, f) => sum + f.redFields.length, 0),
         reportFileName: reportName,
       };
       this._logger.log(`Upload complete — ${summary.uploadPercentage}% uploaded, ${summary.conflictCount} conflicts, ${summary.flyingFieldCount} flying fields`);

@@ -78,6 +78,7 @@
                           <button
                             class="conflict-item__option conflict-item__option--red"
                             [class.conflict-item__option--selected]="isTwoFathersWinnerSelected(opt.id)"
+                            [disabled]="!_$canEdit()"
                             (click)="selectTwoFathersWinner(_$twoFathersConflict()!, opt.id)"
                           >
                             <span
@@ -122,6 +123,7 @@
                           <button
                             class="conflict-item__option conflict-item__option--red"
                             [class.conflict-item__option--selected]="isTwoChildsWinnerSelected(col.columnName, opt.id)"
+                            [disabled]="!_$canEdit()"
                             (click)="selectTwoChildsWinner(col.columnName, col.relationalConflict!, opt.id)"
                           >
                             <span
@@ -149,6 +151,7 @@
                             <button
                               class="conflict-item__option conflict-item__option--white"
                               [class.conflict-item__option--selected]="isSubtreeLevelSelected(col.columnName, fkField, childId)"
+                              [disabled]="!_$canEdit()"
                               (click)="selectSubtreeLevel(col.columnName, fkField, childId)"
                             >
                               <span
@@ -175,6 +178,7 @@
                           <button
                             class="conflict-item__option conflict-item__option--red"
                             [class.conflict-item__option--selected]="isValueWinnerSelected(col.columnName, entry.value)"
+                            [disabled]="!_$canEdit()"
                             (click)="selectValueWinner(col.columnName, entry.value)"
                           >
                             <span
