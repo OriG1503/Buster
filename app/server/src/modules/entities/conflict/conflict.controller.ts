@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Query } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Query } from '@nestjs/common';
 import { BaseEntity } from '../../../shared/entities/base.entity';
 import { RequireRole } from '../../auth/decorators/require-role.decorator';
 import { Role } from '../../auth/types/role.type';
@@ -14,7 +14,10 @@ import { ConflictListService } from './services/conflict-list.service';
 import { ConflictListResponse } from './types/conflict-list-response.type';
 import { ConflictEntityDetailService } from './services/conflict-entity-detail.service';
 import { ConflictEntityDetailResponse } from './types/conflict-entity-detail-response.type';
+import { CheckOpenIdsDto } from './dto/check-open-ids.dto';
 import { RelationalConflictEntity } from './entities/relational-conflict.entity';
+import { RelationalConflictHistoryService } from './relational-conflict-history.service';
+import { RelationalHistoryResponse } from './types/relational-history-response.type';
 
 @RequireRole(Role.VIEWER)
 @Controller('conflicts')
@@ -26,6 +29,7 @@ export class ConflictController {
     private readonly _valueConflictHistoryService: ValueConflictHistoryService,
     private readonly _conflictListService: ConflictListService,
     private readonly _conflictEntityDetailService: ConflictEntityDetailService,
+    private readonly _relationalConflictHistoryService: RelationalConflictHistoryService,
   ) {}
 
   @Get()
@@ -43,6 +47,11 @@ export class ConflictController {
   @Get('count')
   public async count(): Promise<{ count: number }> {
     return { count: await this._conflictListService.countOpen() };
+  }
+
+  @Post('open-ids')
+  public async checkOpenIds(@Body() dto: CheckOpenIdsDto): Promise<string[]> {
+    return this._conflictListService.findOpenByEntityIds(dto.ids);
   }
 
   @RequireRole(Role.EDITOR)
@@ -78,5 +87,14 @@ export class ConflictController {
     @Query('columnName') columnName: string,
   ): Promise<ConflictHistoryResponse> {
     return this._valueConflictHistoryService.getHistory(tableName, entityId, columnName);
+  }
+
+  @Get('relational-history')
+  public async relationalHistory(
+    @Query('anchorTable') anchorTable: string,
+    @Query('anchorId') anchorId: string,
+    @Query('relatedTable') relatedTable: string,
+  ): Promise<RelationalHistoryResponse> {
+    return this._relationalConflictHistoryService.getHistory(anchorTable, anchorId, relatedTable);
   }
 }

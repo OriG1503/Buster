@@ -31,9 +31,13 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
 
   protected readonly _$displayColumns = computed(() => {
     const cols = this._store.selectedColumns();
+    const rootTable = this._store.selectedTable();
     return cols.filter((col) => {
       if (!col.endsWith('.id')) {
         return true;
+      }
+      if (col === `${rootTable}.id`) {
+        return true; // always show the root entity's own ID
       }
       const fkKey = FK_TO_ENTITY_ID[col];
       return !(fkKey && cols.includes(fkKey));
@@ -91,16 +95,28 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
       return;
     }
     if (cell.status === 'resolved') {
-      const [tableName, columnName] = col.split('.');
-      const entityId = row[`${tableName}.id`]?.value ?? '';
       const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-      this._$historyTarget.set({
-        tableName,
-        entityId,
-        columnName,
-        anchorBottom: rect.bottom,
-        anchorCenterX: rect.left + rect.width / 2,
-      });
+      if (cell.anchorTable && cell.anchorId) {
+        this._$historyTarget.set({
+          isRelational: true,
+          anchorTable: cell.anchorTable,
+          anchorId: cell.anchorId,
+          relatedTable: cell.relatedTable ?? '',
+          anchorBottom: rect.bottom,
+          anchorCenterX: rect.left + rect.width / 2,
+        });
+      } else {
+        const [tableName, columnName] = col.split('.');
+        const entityId = row[`${tableName}.id`]?.value ?? '';
+        this._$historyTarget.set({
+          isRelational: false,
+          tableName,
+          entityId,
+          columnName,
+          anchorBottom: rect.bottom,
+          anchorCenterX: rect.left + rect.width / 2,
+        });
+      }
     }
   }
 

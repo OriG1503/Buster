@@ -56,6 +56,13 @@ export abstract class BaseRepository<T extends { id: TId }, TId extends string |
     await this._repository.softDelete(id);
   }
 
+  public getColumnNames(): string[] {
+    return [
+      ...this._repository.metadata.columns.map((col) => col.propertyName),
+      ...this._repository.metadata.relationIds.map((rid) => rid.propertyName),
+    ];
+  }
+
   /** Finds an entity where the given column equals the given value, optionally excluding one id. */
   public findByFkValue(column: string, value: string, excludeId?: string): Promise<T | null> {
     return this._repository

@@ -17,6 +17,7 @@ import { ValueConflictListService } from './services/value-conflict-list.service
 import { ValueConflictEntityDetailService } from './services/value-conflict-entity-detail.service';
 import { ConflictListService } from './services/conflict-list.service';
 import { ConflictEntityDetailService } from './services/conflict-entity-detail.service';
+import { RelationalConflictHistoryService } from './relational-conflict-history.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([ValueConflictEntity, RelationalConflictEntity]), EntityServiceRegistryModule],
@@ -35,6 +36,7 @@ import { ConflictEntityDetailService } from './services/conflict-entity-detail.s
     ValueConflictEntityDetailService,
     ConflictListService,
     ConflictEntityDetailService,
+    RelationalConflictHistoryService,
   ],
   exports: [ValueConflictRepository, ValueConflictService, RelationalConflictDetectionService],
 })

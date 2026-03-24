@@ -1,5 +1,4 @@
 import { RelationalConflictType } from '../consts/relational-conflict-type.const';
-import { RelationalConflictSnapshot } from './relational-conflict-snapshot.type';
 
 type ConflictValueEntry = {
   value: string | null;
@@ -8,15 +7,23 @@ type ConflictValueEntry = {
   createdAt: string;
 };
 
+export type RelationalConflictOption = {
+  id: string;
+  source: string | null;
+  childData: Record<string, string | null>;
+};
+
 export type RelationalConflictDetail = {
-  conflictId: number;
+  conflictIds: number[];
   conflictType: RelationalConflictType;
-  oldRelatedId: string;
-  newRelatedId: string;
   relatedTable: string;
-  oldRelatedSource: string | null;
-  newRelatedSource: string | null;
-  snapshot: RelationalConflictSnapshot | null;
+  options: RelationalConflictOption[];
+};
+
+export type TwoFathersConflictDetail = {
+  conflictIds: number[];
+  relatedTable: string;
+  options: RelationalConflictOption[];
 };
 
 export type ConflictColumnDetail = {
@@ -30,4 +37,7 @@ export type ConflictColumnDetail = {
   relationalConflict?: RelationalConflictDetail;
 };
 
-export type ConflictEntityDetailResponse = ConflictColumnDetail[];
+export type ConflictEntityDetailResponse = {
+  columns: ConflictColumnDetail[];
+  twoFathersConflict: TwoFathersConflictDetail | null;
+};

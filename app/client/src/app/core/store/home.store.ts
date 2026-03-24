@@ -17,7 +17,12 @@ const DEFAULT_TABLE = 'robots';
 
 function defaultColumns(tableName: string): string[] {
   const keys = ENTITY_COLUMN_TREE[tableName][0].columns.map((col) => col.key);
-  const linked = keys.map((key) => FK_TO_ENTITY_ID[key]).filter((id): id is string => !!id && !keys.includes(id));
+  // Only follow FK → child.id direction (keys that are FK columns, not id columns).
+  // This prevents adding parent FK columns when the root entity is a child table.
+  const linked = keys
+    .filter((key) => !key.endsWith('.id'))
+    .map((key) => FK_TO_ENTITY_ID[key])
+    .filter((id): id is string => !!id && !keys.includes(id));
   return [...keys, ...linked];
 }
 
@@ -64,7 +69,8 @@ export const HomeStore = signalStore(
 
     toggleColumn({ key, checked }: ColumnToggleEvent): void {
       const cols = store.selectedColumns();
-      const linkedId = FK_TO_ENTITY_ID[key];
+      // Only follow FK → child.id direction to avoid adding parent FK columns unintentionally.
+      const linkedId = key.endsWith('.id') ? null : FK_TO_ENTITY_ID[key];
       if (checked) {
         const toAdd = [key, ...(linkedId && !cols.includes(linkedId) ? [linkedId] : [])];
         patchState(store, { selectedColumns: [...cols, ...toAdd], page: 1, rows: [], isLoadingMore: false });

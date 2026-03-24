@@ -1,8 +1,8 @@
 export type ResolveRelationalConflictDto = {
-  /** The id of the relational_conflict row to resolve. */
-  conflictId: number;
+  /** The IDs of all relational_conflict rows in this FK-field group. */
+  conflictIds: number[];
 
-  /** Which competing related entity wins (must be either oldRelatedId or newRelatedId). */
+  /** Which competing related entity wins. */
   winnerRelatedId: string;
 
   /**

@@ -9,4 +9,5 @@ export type TableCell = {
   conflictId: number | null;
   anchorTable: string | null;
   anchorId: string | null;
+  relatedTable: string | null;
 };

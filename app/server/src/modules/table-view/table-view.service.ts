@@ -28,7 +28,7 @@ type RelationalConflictRow = {
   id: number;
 };
 
-type ConflictEntry = { status: 'open' | 'resolved'; conflictId: number | null; anchorTable: string | null; anchorId: string | null };
+type ConflictEntry = { status: 'open' | 'resolved'; conflictId: number | null; anchorTable: string | null; anchorId: string | null; relatedTable: string | null };
 
 /** conflictMap[tableName][entityId][columnName] */
 type ConflictMap = Record<string, Record<string, Record<string, ConflictEntry>>>;
@@ -299,13 +299,21 @@ export class TableViewService {
       conflictId: isSolved === false ? id : null,
       anchorTable: null,
       anchorId: null,
+      relatedTable: null,
     });
 
-    const toRelationalEntry = (isSolved: boolean | null, id: number, anchorTable: string, anchorId: string): ConflictEntry => ({
+    const toRelationalEntry = (
+      isSolved: boolean | null,
+      id: number,
+      anchorTable: string,
+      anchorId: string,
+      relatedTable: string,
+    ): ConflictEntry => ({
       status: isSolved === false ? 'open' : 'resolved',
       conflictId: isSolved === false ? id : null,
       anchorTable,
       anchorId,
+      relatedTable,
     });
 
     // Process value conflicts.
@@ -315,26 +323,32 @@ export class TableViewService {
 
     // Process relational conflicts from both queries (union via idempotent markCell).
     [...relByAnchor, ...relByRelated].forEach((rc) => {
-      const entry = toRelationalEntry(rc.isSolved, rc.id, rc.anchorTable, rc.anchorId);
+      const entry = toRelationalEntry(rc.isSolved, rc.id, rc.anchorTable, rc.anchorId, rc.relatedTable);
 
       if (rc.conflictType === 'TWO_CHILDS') {
-        // 1. Anchor entity's FK column (e.g. robots/robot123/communicationId).
+        // 1. Anchor entity's FK column (e.g. communications/comm-test-001/ironId).
         const fkColumn = `${rc.relatedTable.slice(0, -1)}Id`;
         markCell(conflictMap, rc.anchorTable, rc.anchorId, fkColumn, entry);
 
-        // 2. Old related entity's id cell (e.g. communications/comm555/id).
+        // 2. Both competing related entities' id cells — both turn red when open, green when resolved.
         markCell(conflictMap, rc.relatedTable, rc.oldRelatedId, 'id', entry);
+        markCell(conflictMap, rc.relatedTable, rc.newRelatedId, 'id', entry);
 
-        // 3. New related entity's joined-anchor cell will be null → mark in nullConflictMap
-        //    so that when viewing the relatedTable with anchorTable.id joined, the null cell turns red.
+        // 3. Both competing entities' null joined-anchor cells.
+        //    When either entity loses and becomes disconnected, its joined-anchor column will be null.
+        //    Marking both ensures the null cell shows as green (resolved) instead of disappearing.
+        markNull(rc.relatedTable, rc.oldRelatedId, `${rc.anchorTable}.id`, entry);
         markNull(rc.relatedTable, rc.newRelatedId, `${rc.anchorTable}.id`, entry);
       }
 
       if (rc.conflictType === 'TWO_FATHERS') {
-        // 1. Old related entity (first owner) id cell (e.g. robots/robot123/id).
+        // 1. Anchor entity id cell (e.g. communications/comm-test-001/id).
+        markCell(conflictMap, rc.anchorTable, rc.anchorId, 'id', entry);
+
+        // 2. Old related entity (first owner) id cell (e.g. robots/robot-test-001/id).
         markCell(conflictMap, rc.relatedTable, rc.oldRelatedId, 'id', entry);
 
-        // 2. New related entity's FK field that was nulled out (e.g. robots/robot777/communicationId).
+        // 3. New related entity's FK field that was nulled out (e.g. robots/robot-test-002/communicationId).
         const fkField = Object.keys(FK_FIELD_TO_TABLE).find((k) => FK_FIELD_TO_TABLE[k] === rc.anchorTable);
         if (fkField) {
           markCell(conflictMap, rc.relatedTable, rc.newRelatedId, fkField, entry);
@@ -372,6 +386,7 @@ export class TableViewService {
           conflictId: null,
           anchorTable: null,
           anchorId: null,
+          relatedTable: null,
         };
       }
     });
@@ -400,6 +415,7 @@ export class TableViewService {
         conflictId: conflictEntry?.conflictId ?? null,
         anchorTable: conflictEntry?.anchorTable ?? null,
         anchorId: conflictEntry?.anchorId ?? null,
+        relatedTable: conflictEntry?.relatedTable ?? null,
       };
 
       result[colKey] = cell;
