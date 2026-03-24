@@ -12,6 +12,8 @@ import { S3Service } from './s3.service';
 import { UploadSummary } from './types/upload-summary.type';
 
 const ACCEPTED_EXTENSIONS = ['.csv', '.xlsx', '.xls'] as const;
+const S3_UPLOADS_PREFIX = 'uploads/';
+const S3_REPORTS_PREFIX = 'reports/';
 
 @Injectable()
 export class FileService {
@@ -32,7 +34,7 @@ export class FileService {
 
     const tmpCsvPath = join(tmpdir(), csvFile.originalname);
     await fs.writeFile(tmpCsvPath, csvFile.buffer);
-    void this._s3Service.upload(csvFile.originalname, csvFile.buffer);
+    void this._s3Service.upload(`${S3_UPLOADS_PREFIX}${csvFile.originalname}`, csvFile.buffer);
 
     try {
       const parsedRows = await this._sendToParser(tmpCsvPath);
@@ -42,7 +44,7 @@ export class FileService {
       const reportName = `${basename(csvFile.originalname, '.csv')}_report.xlsx`;
       const reportBuffer = await this._reportService.generate(tmpCsvPath, result);
       await fs.writeFile(join(tmpdir(), reportName), reportBuffer);
-      void this._s3Service.upload(reportName, reportBuffer);
+      void this._s3Service.upload(`${S3_REPORTS_PREFIX}${reportName}`, reportBuffer);
 
       const summary: UploadSummary = {
         conflictIds: result.conflictIds,
@@ -64,7 +66,7 @@ export class FileService {
    * To fully switch to S3: remove the tmpdir write in handleFile and the local fallback below.
    */
   public async getReport(filename: string): Promise<Buffer> {
-    const s3Buffer = await this._s3Service.download(filename);
+    const s3Buffer = await this._s3Service.download(`${S3_REPORTS_PREFIX}${filename}`);
     if (s3Buffer) { return s3Buffer; }
 
     const localPath = join(tmpdir(), filename);
