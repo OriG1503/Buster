@@ -40,7 +40,15 @@ export class DataProcessorService {
   public async process(rows: ParsedRow[], username: string): Promise<ProcessResult> {
     this._logger.log(`Processing ${rows.length} rows sequentially — user: ${username}`);
     const results = await rows.reduce<Promise<RowResult[]>>(
-      async (acc, row, i) => [...(await acc), await this._processRow(row, username, i)],
+      async (acc, row, i) => {
+        const prev = await acc;
+        try {
+          return [...prev, await this._processRow(row, username, i)];
+        } catch (error) {
+          this._logger.error(`Row ${i} failed unexpectedly — skipped: ${(error as Error).message}`);
+          return [...prev, { conflictCount: 0, conflictIds: [], flyingFields: [], totalFields: 0 }];
+        }
+      },
       Promise.resolve([]),
     );
 
@@ -264,11 +272,72 @@ export class DataProcessorService {
 
     const relationalCount = await this._detectTwoChildsConflicts(service, id, storedRecord, incomingFields, incomingSource, incomingNotes, username);
 
-    if (Object.keys(result.fieldsToUpdate).length > 0) {
-      await service.update(id, result.fieldsToUpdate, result.sourceUpdates, storedRecord.source, result.notesUpdates, storedRecord.notes);
+    // Check FK gap-fills for TWO_FATHERS before applying the update.
+    // detectConflicts puts FK fields with stored=null into fieldsToUpdate, but doesn't check
+    // whether the incoming child is already owned by another parent — this would violate the
+    // OneToOne unique constraint. Detect such cases here, remove them from the pending update,
+    // and create a relational conflict record instead.
+    const gapFillRelationalCount = await this._checkFkGapFillTwoFathers(
+      service, id, result.fieldsToUpdate, result.sourceUpdates, result.notesUpdates,
+      incomingSource, incomingNotes, username,
+    );
+
+    try {
+      if (Object.keys(result.fieldsToUpdate).length > 0) {
+        await service.update(id, result.fieldsToUpdate, result.sourceUpdates, storedRecord.source, result.notesUpdates, storedRecord.notes);
+      }
+    } catch (error) {
+      if (!(error instanceof QueryFailedError) || (error as any).code !== PG_UNIQUE_VIOLATION) { throw error; }
+      this._logger.warn(`Gap-fill update skipped for ${service.tableName}/${id} — unique constraint violation`);
     }
 
-    return { count: result.conflictsToCreate.length + relationalCount, conflictIds, flyingField: null, totalFields: nonNullFieldCount, wasSkipped: false };
+    return { count: result.conflictsToCreate.length + relationalCount + gapFillRelationalCount, conflictIds, flyingField: null, totalFields: nonNullFieldCount, wasSkipped: false };
+  }
+
+  /**
+   * For FK fields being gap-filled (stored null → incoming value), checks whether the target
+   * child entity is already owned by another parent entity (TWO_FATHERS situation).
+   * Mutates fieldsToUpdate / sourceUpdates / notesUpdates in-place — removes the conflicting
+   * FK field so the caller's update does not attempt to set an already-claimed FK.
+   * Creates a TWO_FATHERS relational conflict record for each case found.
+   */
+  private async _checkFkGapFillTwoFathers(
+    service: EntityService<{ id: string }>,
+    id: string,
+    fieldsToUpdate: Record<string, EntityValue>,
+    sourceUpdates: Record<string, string>,
+    notesUpdates: Record<string, string | null>,
+    incomingSource: string, incomingNotes: string | null,
+    username: string,
+  ): Promise<number> {
+    const fkFields = Object.keys(fieldsToUpdate).filter((k) => k.endsWith('Id'));
+    const counts = await Promise.all(
+      fkFields.map(async (fkField) => {
+        const incomingChildId = String(fieldsToUpdate[fkField]);
+        const relatedTable = FK_FIELD_TO_TABLE[fkField];
+        if (!relatedTable) { return 0; }
+        const existingOwner = await service.findByFkValue(fkField, incomingChildId, id);
+        if (!existingOwner) { return 0; }
+        // Child is already claimed — remove from gap-fill and create a TWO_FATHERS conflict.
+        delete fieldsToUpdate[fkField];
+        delete sourceUpdates[fkField];
+        delete notesUpdates[fkField];
+        const childEntity = await this._registry.get(relatedTable).findById(incomingChildId);
+        const conflictId = await this._relationalConflictDetectionService.detectTwoFathers(
+          incomingChildId, relatedTable,
+          childEntity?.source?.[fkField] ?? null,
+          childEntity?.notes?.[fkField] ?? null,
+          existingOwner.id as string, id,
+          service.tableName,
+          (existingOwner.source as Record<string, string | null> | null)?.[fkField] ?? null,
+          (existingOwner.notes as Record<string, string | null> | null)?.[fkField] ?? null,
+          incomingSource, incomingNotes,
+          username,
+        );
+        return conflictId !== null ? 1 : 0;
+      }),
+    );
+    return counts.reduce((sum, c) => sum + c, 0);
   }
 
   /**
