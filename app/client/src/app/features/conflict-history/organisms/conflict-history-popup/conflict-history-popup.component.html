@@ -10,7 +10,7 @@
   <div class="history-popup__header">
     <span class="history-popup__title">היסטוריית קונפליקט מוכרע</span>
     <div class="history-popup__header-actions">
-      @if (!_$isRelational()) {
+      @if (!_$isRelational() && _$canEdit()) {
         <button
           class="history-popup__btn-icon"
           [class.history-popup__btn-icon--active]="_$isEditMode()"

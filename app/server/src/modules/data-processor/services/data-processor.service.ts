@@ -114,7 +114,7 @@ export class DataProcessorService {
    */
   private _nullifySkippedFKs(mapped: MappedEntityBase | null, skippedByTable: Map<string, Set<string>>): MappedEntityBase | null {
     if (!mapped || skippedByTable.size === 0) { return mapped; }
-    const record = mapped as Record<string, EntityValue>;
+    const record = mapped as unknown as Record<string, EntityValue>;
     const cleaned = { ...record };
     Object.keys(cleaned)
       .filter((k) => k.endsWith('Id') && cleaned[k] !== null)
@@ -124,7 +124,7 @@ export class DataProcessorService {
           cleaned[fkField] = null;
         }
       });
-    return cleaned as MappedEntityBase;
+    return cleaned as unknown as MappedEntityBase;
   }
 
   /**
