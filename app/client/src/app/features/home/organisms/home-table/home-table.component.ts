@@ -4,8 +4,8 @@ import { Router } from '@angular/router';
 import { ConflictHistoryPopupComponent } from '../../../conflict-history/organisms/conflict-history-popup/conflict-history-popup.component';
 import { CellInfoPopupComponent } from '../cell-info-popup/cell-info-popup.component';
 import { HomeStore } from '../../../../core/store/home.store';
+import { DisplayNamesService } from '../../../../core/services/display-names/display-names.service';
 import { FK_TO_ENTITY_ID } from '../../../../shared/consts/fk-to-entity-id.consts';
-import { ENTITY_COLUMN_LABEL_MAP } from '../../../../shared/mapping/entity-column.label-map';
 import { TableCell } from '../../../../shared/types/table-cell.type';
 import { TableRow } from '../../../../shared/types/table-view-response.type';
 import { HistoryTarget } from '../../../../shared/types/history-target.type';
@@ -44,7 +44,7 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
     });
   });
 
-  protected readonly _columnLabelMap = ENTITY_COLUMN_LABEL_MAP;
+  protected readonly _displayNames = inject(DisplayNamesService);
 
   constructor() {
     effect(() => {

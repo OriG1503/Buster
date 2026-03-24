@@ -9,4 +9,5 @@ export type UploadedFile = {
   status: UploadStatus;
   reportFileName?: string;
   errorMessage?: string;
+  unknownColumns?: string[];
 };

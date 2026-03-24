@@ -4,4 +4,5 @@ export type UploadSummary = {
   uploadPercentage: number;
   flyingFieldCount: number;
   reportFileName: string;
+  unknownColumns: string[];
 };

@@ -1,4 +1,4 @@
-import { Component, inject, signal, ViewChild, ElementRef, ViewEncapsulation } from '@angular/core';
+import { Component, computed, inject, signal, ViewChild, ElementRef, ViewEncapsulation } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ButtonModule } from 'primeng/button';
@@ -8,10 +8,11 @@ import { APP_ROUTES } from '../../../shared/consts/app-routes.consts';
 import { DEFAULT_USER_NAME } from '../../../shared/consts/default-user.consts';
 
 import { UPLOAD_DIALOG_LABEL_MAP } from '../mapping/upload-dialog.label-map';
-import { ENTITY_FORMAT_OPTIONS, EntityFormatOption } from '../consts/entity-format-options.consts';
+import { EntityFormatOption } from '../consts/entity-format-options.consts';
 import { UploadedFile } from '../types/uploaded-file.type';
 import { FileService } from '../../../core/services/file/file.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
+import { DisplayNamesService } from '../../../core/services/display-names/display-names.service';
 
 @Component({
   selector: 'app-upload-dialog',
@@ -26,9 +27,10 @@ export class UploadDialogComponent {
   private readonly _dialogRef = inject(DynamicDialogRef);
   private readonly _fileService = inject(FileService);
   private readonly _authService = inject(AuthService);
+  private readonly _displayNames = inject(DisplayNamesService);
 
   protected readonly _labelMap = UPLOAD_DIALOG_LABEL_MAP;
-  protected readonly _formatOptions = ENTITY_FORMAT_OPTIONS;
+  protected readonly _$formatOptions = computed<EntityFormatOption[]>(() => this._displayNames.$formatOptions());
 
   protected _$isDragging = signal(false);
   protected _$uploadedFiles = signal<UploadedFile[]>([]);
@@ -129,6 +131,7 @@ export class UploadDialogComponent {
                     conflictIds: summary.conflictIds,
                     status: (summary.conflictCount > 0 || summary.uploadPercentage < 100) ? 'warning' : 'success',
                     reportFileName: summary.uploadPercentage < 100 ? summary.reportFileName : undefined,
+                    unknownColumns: summary.unknownColumns.length > 0 ? summary.unknownColumns : undefined,
                   }
                 : f,
             ),

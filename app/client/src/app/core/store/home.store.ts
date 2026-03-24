@@ -5,6 +5,7 @@ import { patchState, signalStore, withComputed, withHooks, withMethods, withStat
 import { combineLatest, debounceTime, filter, map, switchMap, take } from 'rxjs';
 
 import { TableViewService } from '../services/table-view.service';
+import { DisplayNamesService } from '../services/display-names/display-names.service';
 import { ENTITY_COLUMN_TREE } from '../../shared/consts/entity-column-tree.consts';
 import { FK_TO_ENTITY_ID } from '../../shared/consts/fk-to-entity-id.consts';
 import { ColumnGroup } from '../../shared/types/column-group.type';
@@ -16,7 +17,7 @@ const VALID_TABLES = new Set(Object.keys(ENTITY_COLUMN_TREE));
 const DEFAULT_TABLE = 'robots';
 
 function defaultColumns(tableName: string): string[] {
-  const keys = ENTITY_COLUMN_TREE[tableName][0].columns.map((col) => col.key);
+  const keys = ENTITY_COLUMN_TREE[tableName][0].columns;
   // Only follow FK → child.id direction (keys that are FK columns, not id columns).
   // This prevents adding parent FK columns when the root entity is a child table.
   const linked = keys
@@ -51,10 +52,13 @@ export const HomeStore = signalStore(
     isLoadingMore: false,
     refreshTick: 0,
   }),
-  withComputed((store) => ({
-    columnGroups: computed<ColumnGroup[]>(() => ENTITY_COLUMN_TREE[store.selectedTable()]),
-    hasMore: computed(() => store.rows().length < store.total()),
-  })),
+  withComputed((store) => {
+    const displayNames = inject(DisplayNamesService);
+    return {
+      columnGroups: computed<ColumnGroup[]>(() => displayNames.$columnTree()[store.selectedTable()] ?? []),
+      hasMore: computed(() => store.rows().length < store.total()),
+    };
+  }),
   withMethods((store) => ({
     selectTable(tableName: string): void {
       patchState(store, {

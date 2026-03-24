@@ -11,8 +11,8 @@ import { ConflictGroup } from '../../../../shared/types/conflict-group.type';
 import { ConflictsService } from '../../../../core/services/conflicts/conflicts.service';
 import { ConflictsStore } from '../../../../core/store/conflicts.store';
 import { HomeStore } from '../../../../core/store/home.store';
-import { ENTITY_COLUMN_LABEL_MAP } from '../../../../shared/mapping/entity-column.label-map';
-import { ENTITY_HEBREW_NAME } from '../../../../shared/consts/entity-hebrew-name.const';
+import { DisplayNamesService } from '../../../../core/services/display-names/display-names.service';
+import { ENTITY_COLUMN_TREE } from '../../../../shared/consts/entity-column-tree.consts';
 import { PermissionsService } from '../../../../core/services/permissions/permissions.service';
 import { DEFAULT_USER_NAME } from '../../../../shared/consts/default-user.consts';
 
@@ -65,6 +65,7 @@ export class ConflictItemComponent {
   private readonly _conflictsStore = inject(ConflictsStore);
   private readonly _homeStore = inject(HomeStore);
   private readonly _permissionsService = inject(PermissionsService);
+  private readonly _displayNames = inject(DisplayNamesService);
 
   protected readonly _isExpanded = signal(false);
   protected readonly _$detail = signal<ConflictEntityDetail | null>(null);
@@ -78,10 +79,10 @@ export class ConflictItemComponent {
     const detail = this._$detail();
     if (!detail) { return []; }
     const detailMap = new Map(detail.columns.map((col) => [col.columnName, col]));
-    const prefix = `${this.$group().tableName}.`;
-    return Object.keys(ENTITY_COLUMN_LABEL_MAP)
-      .filter((key) => key.startsWith(prefix))
-      .map((key) => key.slice(prefix.length))
+    const tableName = this.$group().tableName;
+    const columnKeys = ENTITY_COLUMN_TREE[tableName]?.[0]?.columns ?? [];
+    return columnKeys
+      .map((key) => key.split('.')[1])
       .map((columnName) => detailMap.get(columnName))
       .filter((col): col is ConflictColumnDetail => col !== undefined);
   });
@@ -179,19 +180,19 @@ export class ConflictItemComponent {
   }
 
   protected getLabel(columnName: string): string {
-    return ENTITY_COLUMN_LABEL_MAP[`${this.$group().tableName}.${columnName}`] ?? columnName;
+    return this._displayNames.getColumnLabel(this.$group().tableName, columnName);
   }
 
   protected getLabelForKey(key: string): string {
-    return ENTITY_COLUMN_LABEL_MAP[key] ?? key;
+    return this._displayNames.getColumnLabelByKey(key);
   }
 
   protected getEntityLabel(): string {
-    return ENTITY_HEBREW_NAME[this.$group().tableName] ?? this.$group().tableName;
+    return this._displayNames.getEntityName(this.$group().tableName);
   }
 
   protected getFathersColumnLabel(rc: TwoFathersConflictDetail): string {
-    return `מזהה ${ENTITY_HEBREW_NAME[rc.relatedTable] ?? rc.relatedTable}`;
+    return `מזהה ${this._displayNames.getEntityName(rc.relatedTable)}`;
   }
 
   protected formatDate(isoDate: string): string {
@@ -216,7 +217,7 @@ export class ConflictItemComponent {
   }
 
   protected getSubtreeFkLabel(rc: RelationalConflictDetail, fkField: string): string {
-    return ENTITY_COLUMN_LABEL_MAP[`${rc.relatedTable}.${fkField}`] ?? fkField;
+    return this._displayNames.getColumnLabel(rc.relatedTable, fkField);
   }
 
   // --- Value conflict selection ---

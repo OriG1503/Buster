@@ -5,8 +5,7 @@ import { ConflictHistoryResponse } from '../../../../shared/types/conflict-histo
 import { RelationalHistoryAnchor, RelationalHistoryGroup, RelationalHistoryResponse } from '../../../../shared/types/relational-history-response.type';
 import { HistoryTarget } from '../../../../shared/types/history-target.type';
 import { ToastService } from '../../../../shared/services/toast.service';
-import { ENTITY_COLUMN_LABEL_MAP } from '../../../../shared/mapping/entity-column.label-map';
-import { ENTITY_HEBREW_NAME } from '../../../../shared/consts/entity-hebrew-name.const';
+import { DisplayNamesService } from '../../../../core/services/display-names/display-names.service';
 import { DEFAULT_USER_NAME } from '../../../../shared/consts/default-user.consts';
 import { PermissionsService } from '../../../../core/services/permissions/permissions.service';
 
@@ -24,6 +23,7 @@ export class ConflictHistoryPopupComponent {
   private readonly _historyService = inject(ConflictHistoryService);
   private readonly _toastService = inject(ToastService);
   private readonly _permissionsService = inject(PermissionsService);
+  private readonly _displayNames = inject(DisplayNamesService);
 
   protected readonly _$valueHistory = signal<ConflictHistoryResponse | null>(null);
   protected readonly _$relationalHistory = signal<RelationalHistoryResponse | null>(null);
@@ -152,7 +152,7 @@ export class ConflictHistoryPopupComponent {
   }
 
   protected getEntityName(tableName: string): string {
-    return ENTITY_HEBREW_NAME[tableName] ?? tableName;
+    return this._displayNames.getEntityName(tableName);
   }
 
   protected getAnchorFieldKeys(anchor: RelationalHistoryAnchor): string[] {
@@ -160,12 +160,11 @@ export class ConflictHistoryPopupComponent {
   }
 
   protected getAnchorFieldLabel(tableName: string, field: string): string {
-    return ENTITY_COLUMN_LABEL_MAP[`${tableName}.${field}`] ?? field;
+    return this._displayNames.getColumnLabel(tableName, field);
   }
 
   protected getGroupLabel(group: RelationalHistoryGroup): string {
-    const entityName = ENTITY_HEBREW_NAME[group.relatedTable] ?? group.relatedTable;
-    return `אופציות ${entityName}`;
+    return `אופציות ${this._displayNames.getEntityName(group.relatedTable)}`;
   }
 
   protected getGroupSubtreeFields(group: RelationalHistoryGroup): string[] {
@@ -175,7 +174,7 @@ export class ConflictHistoryPopupComponent {
   }
 
   protected getSubtreeFieldLabel(relatedTable: string, fkField: string): string {
-    return ENTITY_COLUMN_LABEL_MAP[`${relatedTable}.${fkField}`] ?? fkField;
+    return this._displayNames.getColumnLabel(relatedTable, fkField);
   }
 
   protected formatDate(iso: string | null): string {

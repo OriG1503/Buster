@@ -47,7 +47,7 @@
 
 <p-overlayPanel #entityPanel (onShow)="onEntityPanelShow()">
   <div #entityPanelContent class="entity-panel" (keydown)="onEntityPanelKeydown($event)">
-    @for (option of ENTITY_OPTIONS; track option.tableName) {
+    @for (option of _$entityOptions(); track option.tableName) {
       <button
         class="entity-panel__item"
         [class.entity-panel__item--active]="option.tableName === $selectedTable()"
@@ -91,7 +91,7 @@
             class="pi pi-bars column-panel__handle"
             [class.column-panel__handle--inactive]="!$selectedColumns().includes(col.key)"
           ></i>
-          <span class="column-panel__label">{{ _columnLabelMap[col.key] ?? col.label }}</span>
+          <span class="column-panel__label">{{ col.label }}</span>
           <input
             class="column-panel__checkbox"
             type="checkbox"

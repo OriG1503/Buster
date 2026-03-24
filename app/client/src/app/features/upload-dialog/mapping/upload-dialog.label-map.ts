@@ -10,4 +10,5 @@ export const UPLOAD_DIALOG_LABEL_MAP = {
   newConflictsSuffix: 'קונפליקטים חדשים שזוהו',
   viewConflicts: 'לצפייה בקונפליקטים',
   downloadReport: 'הורדת דוח',
+  unknownColumnsSuffix: 'עמודות לא מזוהות:',
 } as const;
