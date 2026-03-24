@@ -1,4 +1,4 @@
-export const ENTITY_COLUMN_LABEL_MAP: Record<string, string> = {
+export const ENTITY_COLUMN_LABEL_MAP: Record<string, string | undefined> = {
   'robots.id': 'מזהה רובוט',
   'robots.cardboardId': 'מזהה קרטון',
   'robots.sensorId': 'מזהה חיישן',
