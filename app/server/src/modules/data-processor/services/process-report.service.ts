@@ -16,18 +16,22 @@ const ENTITY_UUID_COLUMN: Record<string, string> = {
   cardboards: 'cardboard_UUID', sensors: 'sensor_UUID', sales: 'sale_UUID', robots: 'robot_UUID',
 };
 
-type FlyingCellMap = Map<number, { dataCols: Set<string>; uuidCols: Set<string> }>;
+type FlyingCellMap = Map<number, { redCols: Set<string>; yellowCols: Set<string> }>;
 
 /** Builds a map of Excel row number → columns to highlight. rowIndex is 0-based; Excel data starts at row 2. */
 const toFlyingCellMap = (flyingFields: FlyingField[]): FlyingCellMap => {
   const map: FlyingCellMap = new Map();
-  flyingFields.forEach(({ fields, entity, rowIndex }) => {
+  flyingFields.forEach(({ redFields, yellowFields, entity, rowIndex, isUuidRed }) => {
     const excelRow = rowIndex + 2;
-    if (!map.has(excelRow)) { map.set(excelRow, { dataCols: new Set(), uuidCols: new Set() }); }
+    if (!map.has(excelRow)) { map.set(excelRow, { redCols: new Set(), yellowCols: new Set() }); }
     const entry = map.get(excelRow)!;
-    fields.map(camelToSnake).forEach((col) => entry.dataCols.add(col));
+    redFields.map(camelToSnake).forEach((col) => entry.redCols.add(col));
+    yellowFields.map(camelToSnake).forEach((col) => entry.yellowCols.add(col));
     const uuidCol = ENTITY_UUID_COLUMN[entity];
-    if (uuidCol) { entry.uuidCols.add(uuidCol); }
+    if (uuidCol) {
+      if (isUuidRed) { entry.redCols.add(uuidCol); }
+      else { entry.yellowCols.add(uuidCol); }
+    }
   });
   return map;
 };
@@ -47,17 +51,17 @@ export class ProcessReportService {
     const headerColMap = new Map<string, number>();
     sheet.getRow(1).eachCell((cell, colIndex) => {
       cell.font = { bold: true };
-      headerColMap.set(String(cell.value), colIndex);
+      headerColMap.set(String(cell.value).trim(), colIndex);
     });
 
-    flyingCellMap.forEach(({ dataCols, uuidCols }, excelRowNumber) => {
+    flyingCellMap.forEach(({ redCols, yellowCols }, excelRowNumber) => {
       const row = sheet.getRow(excelRowNumber);
-      dataCols.forEach((col) => {
+      redCols.forEach((col) => {
         const colIndex = headerColMap.get(col);
         if (colIndex !== undefined) { row.getCell(colIndex).fill = LIGHT_RED_FILL; }
       });
-      uuidCols.forEach((uuidCol) => {
-        const colIndex = headerColMap.get(uuidCol);
+      yellowCols.forEach((col) => {
+        const colIndex = headerColMap.get(col);
         if (colIndex !== undefined) { row.getCell(colIndex).fill = YELLOW_FILL; }
       });
     });

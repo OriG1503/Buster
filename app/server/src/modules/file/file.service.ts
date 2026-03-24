@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { promises as fs } from 'fs';
 import { tmpdir } from 'os';
 import { basename, extname, join } from 'path';
@@ -12,6 +12,8 @@ import { S3Service } from './s3.service';
 import { UploadSummary } from './types/upload-summary.type';
 
 const ACCEPTED_EXTENSIONS = ['.csv', '.xlsx', '.xls'] as const;
+const S3_UPLOADS_PREFIX = 'uploads/';
+const S3_REPORTS_PREFIX = 'reports/';
 
 @Injectable()
 export class FileService {
@@ -32,7 +34,7 @@ export class FileService {
 
     const tmpCsvPath = join(tmpdir(), csvFile.originalname);
     await fs.writeFile(tmpCsvPath, csvFile.buffer);
-    void this._s3Service.upload(csvFile.originalname, csvFile.buffer);
+    void this._s3Service.upload(`${S3_UPLOADS_PREFIX}${csvFile.originalname}`, csvFile.buffer);
 
     try {
       const parsedRows = await this._sendToParser(tmpCsvPath);
@@ -41,7 +43,8 @@ export class FileService {
 
       const reportName = `${basename(csvFile.originalname, '.csv')}_report.xlsx`;
       const reportBuffer = await this._reportService.generate(tmpCsvPath, result);
-      void this._s3Service.upload(reportName, reportBuffer);
+      await fs.writeFile(join(tmpdir(), reportName), reportBuffer);
+      void this._s3Service.upload(`${S3_REPORTS_PREFIX}${reportName}`, reportBuffer);
 
       const summary: UploadSummary = {
         conflictIds: result.conflictIds,
@@ -54,6 +57,23 @@ export class FileService {
       return summary;
     } finally {
       await fs.unlink(tmpCsvPath).catch(() => {});
+    }
+  }
+
+  /**
+   * Returns the report buffer for the given filename.
+   * Tries S3 first (when configured); falls back to the local tmpdir copy.
+   * To fully switch to S3: remove the tmpdir write in handleFile and the local fallback below.
+   */
+  public async getReport(filename: string): Promise<Buffer> {
+    const s3Buffer = await this._s3Service.download(`${S3_REPORTS_PREFIX}${filename}`);
+    if (s3Buffer) { return s3Buffer; }
+
+    const localPath = join(tmpdir(), filename);
+    try {
+      return await fs.readFile(localPath);
+    } catch {
+      throw new NotFoundException(`Report "${filename}" not found`);
     }
   }
 

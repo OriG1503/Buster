@@ -92,7 +92,7 @@ export class UploadDialogComponent {
   }
 
   public onDownloadReport(reportFileName: string): void {
-    fetch(`/files/${reportFileName}`)
+    fetch(`/api/file/report/${reportFileName}`)
       .then((res) => res.blob())
       .then((blob) => {
         const url = URL.createObjectURL(blob);
