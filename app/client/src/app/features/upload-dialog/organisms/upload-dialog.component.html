@@ -20,7 +20,7 @@
 
     <p-overlayPanel #formatsPanel>
       <div class="upload-dialog__formats-list">
-        @for (option of _formatOptions; track option.assetPath) {
+        @for (option of _$formatOptions(); track option.assetPath) {
           <button
           class="upload-dialog__format-item"
           (click)="onDownloadTemplate(option, formatsPanel)"
@@ -90,6 +90,13 @@
                   </a>
                 }
               </div>
+              @if (file.unknownColumns && file.unknownColumns.length > 0) {
+                <div class="upload-dialog__unknown-cols">
+                  <i class="pi pi-exclamation-triangle upload-dialog__unknown-icon"></i>
+                  <span class="upload-dialog__unknown-label">{{ _labelMap.unknownColumnsSuffix }}</span>
+                  <span class="upload-dialog__unknown-list">{{ file.unknownColumns.join(', ') }}</span>
+                </div>
+              }
             }
           </div>
 

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 
 const S3_BUCKET = process.env.S3_BUCKET;
 const S3_REGION = process.env.S3_REGION ?? 'us-east-1';
@@ -33,6 +33,19 @@ export class S3Service {
     } catch (error) {
       this._logger.error(`Failed to download "${key}" from S3: ${(error as Error).message}`);
       return null;
+    }
+  }
+
+  /** Deletes an object from S3. Logs an error on failure but never throws. */
+  public async delete(key: string): Promise<void> {
+    if (!S3_BUCKET) {
+      this._logger.warn('S3_BUCKET is not configured — skipping S3 delete');
+      return;
+    }
+    try {
+      await this._client.send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: key }));
+    } catch (error) {
+      this._logger.error(`Failed to delete "${key}" from S3: ${(error as Error).message}`);
     }
   }
 

@@ -19,6 +19,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './modules/auth/auth.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
+import { DisplayNamesModule } from './modules/display-names/display-names.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { RolesGuard } from './modules/auth/guards/roles.guard';
     DataProcessorModule,
     TableViewModule,
     AuthModule,
+    DisplayNamesModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

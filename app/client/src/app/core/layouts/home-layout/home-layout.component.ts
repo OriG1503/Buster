@@ -4,8 +4,8 @@ import * as XLSX from 'xlsx';
 
 import { HomeTableComponent } from '../../../features/home/organisms/home-table/home-table.component';
 import { TableActionBarComponent } from '../../../features/home/organisms/table-action-bar/table-action-bar.component';
+import { DisplayNamesService } from '../../services/display-names/display-names.service';
 import { FK_TO_ENTITY_ID } from '../../../shared/consts/fk-to-entity-id.consts';
-import { ENTITY_COLUMN_LABEL_MAP } from '../../../shared/mapping/entity-column.label-map';
 import { ColumnToggleEvent } from '../../../shared/types/column-toggle-event.type';
 import { HomeStore } from '../../store/home.store';
 import { UploadDialogService } from '../../services/upload-dialog/upload-dialog.service';
@@ -20,6 +20,7 @@ export class HomeLayoutComponent {
   protected readonly _store = inject(HomeStore);
   private readonly _uploadDialogService = inject(UploadDialogService);
   private readonly _router = inject(Router);
+  private readonly _displayNames = inject(DisplayNamesService);
 
   public constructor() {
     effect(() => {
@@ -76,7 +77,7 @@ export class HomeLayoutComponent {
     });
 
     const rows = this._store.rows().filter((_, i) => selectedIndices.has(i));
-    const headers = displayCols.map((col) => ENTITY_COLUMN_LABEL_MAP[col] ?? col);
+    const headers = displayCols.map((col) => this._displayNames.getColumnLabelByKey(col));
     const dataRows = rows.map((row) => displayCols.map((col) => row[col]?.value ?? ''));
 
     const ws = XLSX.utils.aoa_to_sheet([headers, ...dataRows]);

@@ -8,7 +8,7 @@
           }
           @for (col of _$displayColumns(); track col) {
             <th class="home-table__th">
-              <span class="home-table__th-label">{{ _columnLabelMap[col] }}</span>
+              <span class="home-table__th-label">{{ _displayNames.getColumnLabelByKey(col) }}</span>
               <div class="home-table__th-search">
                 <i class="pi pi-search home-table__th-search-icon"></i>
                 <input

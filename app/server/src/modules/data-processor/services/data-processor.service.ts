@@ -165,14 +165,19 @@ export class DataProcessorService {
     const { source: incomingSource, notes: incomingNotes, id, ...incomingFields } = mappedRecord;
     const nonNullFieldCount = Object.keys(incomingFields).filter((k) => incomingFields[k] !== null).length;
 
-    // UUID-only row (no data, no FK connections) — skip it, color UUID red and all metadata columns
-    // yellow so the user knows which fields to fill in to make the row meaningful.
+    // UUID-only row (no data fields) — insert a stub record so the entity exists in the DB,
+    // and flag it in the report so the user knows which fields to fill in.
     if (nonNullFieldCount === 0) {
       const metaFields = Object.keys(incomingFields).filter((k) => !k.endsWith('Id'));
+      try {
+        await service.insert({ id, ...incomingFields }, incomingSource, incomingNotes);
+      } catch (error) {
+        if (!(error instanceof QueryFailedError) || (error as any).code !== PG_UNIQUE_VIOLATION) { throw error; }
+      }
       return {
         count: 0, conflictIds: [],
         flyingField: { entity: service.tableName, rowIndex, redFields: [], yellowFields: metaFields, isUuidRed: true },
-        totalFields: 0, wasSkipped: true,
+        totalFields: 0, wasSkipped: false,
       };
     }
 

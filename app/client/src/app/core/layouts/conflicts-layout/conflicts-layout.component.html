@@ -18,7 +18,7 @@
           (change)="onTableNameChange($any($event.target).value)"
         >
           <option value="">בחר סוג ישות</option>
-          @for (opt of _entityOptions; track opt.tableName) {
+          @for (opt of _$entityOptions(); track opt.tableName) {
             <option [value]="opt.tableName">{{ opt.label }}</option>
           }
         </select>

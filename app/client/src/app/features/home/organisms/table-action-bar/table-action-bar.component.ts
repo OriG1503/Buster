@@ -2,9 +2,8 @@ import { Component, ElementRef, ViewChild, ViewEncapsulation, computed, inject, 
 
 import { OverlayPanel, OverlayPanelModule } from 'primeng/overlaypanel';
 
-import { ENTITY_OPTIONS } from '../../../../shared/consts/entity-options.consts';
+import { DisplayNamesService } from '../../../../core/services/display-names/display-names.service';
 import { FK_TO_ENTITY_ID } from '../../../../shared/consts/fk-to-entity-id.consts';
-import { ENTITY_COLUMN_LABEL_MAP } from '../../../../shared/mapping/entity-column.label-map';
 import { HOME_LABEL_MAP } from '../../mapping/home.label-map';
 import { ColumnGroup } from '../../../../shared/types/column-group.type';
 import { ColumnToggleEvent } from '../../../../shared/types/column-toggle-event.type';
@@ -41,15 +40,14 @@ export class TableActionBarComponent {
   public readonly uploadClick = output<void>();
 
   private readonly _permissionsService = inject(PermissionsService);
+  private readonly _displayNames = inject(DisplayNamesService);
 
   protected readonly _labelMap = HOME_LABEL_MAP;
-  protected readonly _columnLabelMap = ENTITY_COLUMN_LABEL_MAP;
-  protected readonly ENTITY_OPTIONS = ENTITY_OPTIONS;
   protected readonly _$searchQuery = signal('');
   protected readonly _$canUpload = computed(() => this._permissionsService.canUpload());
 
-  protected readonly _$selectedTableLabel = computed(
-    () => ENTITY_OPTIONS.find((opt) => opt.tableName === this.$selectedTable())?.label ?? this.$selectedTable(),
+  protected readonly _$selectedTableLabel = computed(() =>
+    this._displayNames.getEntityPluralName(this.$selectedTable()),
   );
 
   /** All available columns across all groups, deduplicated by key and by resolved label. */
@@ -59,7 +57,7 @@ export class TableActionBarComponent {
     return this.$columnGroups()
       .flatMap((group) => group.columns)
       .filter((col) => {
-        const label = (this._columnLabelMap[col.key] ?? col.label).trim();
+        const label = col.label.trim();
         if (seenKeys.has(col.key) || seenLabels.has(label)) {
           return false;
         }
@@ -85,8 +83,10 @@ export class TableActionBarComponent {
     if (!query) {
       return ordered;
     }
-    return ordered.filter((c) => (this._columnLabelMap[c.key] ?? c.label).toLowerCase().includes(query));
+    return ordered.filter((c) => c.label.toLowerCase().includes(query));
   });
+
+  protected readonly _$entityOptions = computed(() => this._displayNames.$entityOptions());
 
   protected readonly _$selectedVisibleCount = computed(
     () => this._$allAvailableColumns().filter((c) => this.$selectedColumns().includes(c.key)).length,

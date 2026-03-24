@@ -4,7 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 
 import { ConflictsStore } from '../../store/conflicts.store';
 import { ConflictItemComponent } from '../../../features/conflicts/organisms/conflict-item/conflict-item.component';
-import { ENTITY_OPTIONS } from '../../../shared/consts/entity-options.consts';
+import { DisplayNamesService } from '../../services/display-names/display-names.service';
 
 @Component({
   selector: 'app-conflicts-layout',
@@ -16,8 +16,9 @@ export class ConflictsLayoutComponent implements AfterViewInit, OnDestroy {
   protected readonly _store = inject(ConflictsStore);
   private readonly _router = inject(Router);
   private readonly _route = inject(ActivatedRoute);
+  private readonly _displayNames = inject(DisplayNamesService);
 
-  protected readonly _entityOptions = ENTITY_OPTIONS;
+  protected readonly _$entityOptions = computed(() => this._displayNames.$entityOptions());
 
   private readonly _sentinel = viewChild.required<ElementRef<HTMLElement>>('sentinel');
   private readonly _$isSentinelVisible = signal(false);
@@ -43,8 +44,7 @@ export class ConflictsLayoutComponent implements AfterViewInit, OnDestroy {
     const entityId = this._$filterEntityId();
     if (conflictIds.length) { parts.push(`קונפליקטים מהעלאה אחרונה (${conflictIds.length})`); }
     if (tableName) {
-      const label = this._entityOptions.find((o) => o.tableName === tableName)?.label ?? tableName;
-      parts.push(`סוג ישות: ${label}`);
+      parts.push(`סוג ישות: ${this._displayNames.getEntityPluralName(tableName)}`);
     }
     if (entityId) { parts.push(`מזהה: ${entityId}`); }
     return parts.length ? `מסנן לפי — ${parts.join(' | ')}` : '';

@@ -1,123 +1,77 @@
-import { ColumnGroup } from '../types/column-group.type';
+/** Structural backbone of the column tree. Labels are provided at runtime by DisplayNamesService. */
+export type ColumnGroupStructure = {
+  entityTable: string;
+  columns: string[];
+};
 
-const SENSOR_GROUP: ColumnGroup = {
+const SENSOR_GROUP: ColumnGroupStructure = {
   entityTable: 'sensors',
-  label: 'חיישנים',
-  columns: [
-    { key: 'sensors.id', label: 'מזהה חיישן' },
-    { key: 'sensors.sensorType', label: 'סוג חיישן' },
-    { key: 'sensors.sensorVersion', label: 'גרסת חיישן' },
-  ],
+  columns: ['sensors.id', 'sensors.sensorType', 'sensors.sensorVersion'],
 };
 
-const STORAGE_GROUP: ColumnGroup = {
+const STORAGE_GROUP: ColumnGroupStructure = {
   entityTable: 'storages',
-  label: 'אחסון',
-  columns: [
-    { key: 'storages.id', label: 'מזהה אחסון' },
-    { key: 'storages.storageType', label: 'סוג אחסון' },
-    { key: 'storages.storageVersion', label: 'גרסת אחסון' },
-    { key: 'storages.isStockNetanya', label: 'מלאי נתניה' },
-    { key: 'storages.isStockAfula', label: 'מלאי עפולה' },
-  ],
+  columns: ['storages.id', 'storages.storageType', 'storages.storageVersion', 'storages.isStockNetanya', 'storages.isStockAfula'],
 };
 
-const BATTERY_GROUP: ColumnGroup = {
+const BATTERY_GROUP: ColumnGroupStructure = {
   entityTable: 'batteries',
-  label: 'סוללות',
-  columns: [
-    { key: 'batteries.id', label: 'מזהה סוללה' },
-    { key: 'batteries.sku', label: 'מק"ט' },
-    { key: 'batteries.batteryType', label: 'סוג סוללה' },
-    { key: 'batteries.batteryVersion', label: 'גרסת סוללה' },
-    { key: 'batteries.lithiumVersion', label: 'גרסת ליתיום' },
-  ],
+  columns: ['batteries.id', 'batteries.sku', 'batteries.batteryType', 'batteries.batteryVersion', 'batteries.lithiumVersion'],
 };
 
-const IRON_GROUP: ColumnGroup = {
+const IRON_GROUP: ColumnGroupStructure = {
   entityTable: 'irons',
-  label: 'ברזל',
-  columns: [
-    { key: 'irons.id', label: 'מזהה ברזל' },
-    { key: 'irons.ironType', label: 'סוג ברזל' },
-    { key: 'irons.ironVersion', label: 'גרסת ברזל' },
-    { key: 'irons.isHeatConductor', label: 'מוליך חום' },
-  ],
+  columns: ['irons.id', 'irons.ironType', 'irons.ironVersion', 'irons.isHeatConductor'],
 };
 
-const PLASTIC_GROUP: ColumnGroup = {
+const PLASTIC_GROUP: ColumnGroupStructure = {
   entityTable: 'plastics',
-  label: 'פלסטיק',
-  columns: [
-    { key: 'plastics.id', label: 'מזהה פלסטיק' },
-    { key: 'plastics.plasticType', label: 'סוג פלסטיק' },
-    { key: 'plastics.batteryId', label: 'מזהה סוללה' },
-  ],
+  columns: ['plastics.id', 'plastics.plasticType', 'plastics.batteryId'],
 };
 
-const CARDBOARD_GROUP: ColumnGroup = {
+const CARDBOARD_GROUP: ColumnGroupStructure = {
   entityTable: 'cardboards',
-  label: 'קרטון',
-  columns: [
-    { key: 'cardboards.id', label: 'מזהה קרטון' },
-    { key: 'cardboards.cardboardType', label: 'סוג קרטון' },
-    { key: 'cardboards.cardboardVersion', label: 'גרסת קרטון' },
-  ],
+  columns: ['cardboards.id', 'cardboards.cardboardType', 'cardboards.cardboardVersion'],
 };
 
-const SALE_GROUP: ColumnGroup = {
+const SALE_GROUP: ColumnGroupStructure = {
   entityTable: 'sales',
-  label: 'מכירות',
   columns: [
-    { key: 'sales.id', label: 'מזהה מכירה' },
-    { key: 'sales.carrier', label: 'ספק שילוח' },
-    { key: 'sales.onlineStoreName', label: 'שם חנות מקוונת' },
-    { key: 'sales.salesperson', label: 'איש מכירות' },
-    { key: 'sales.isPurchased', label: 'נרכש' },
-    { key: 'sales.isStockAshdod', label: 'מלאי אשדוד' },
-    { key: 'sales.isStockTelAviv', label: 'מלאי תל אביב' },
-    { key: 'sales.isStockRehovot', label: 'מלאי רחובות' },
-    { key: 'sales.dataSource', label: 'מקור נתונים' },
+    'sales.id',
+    'sales.carrier',
+    'sales.onlineStoreName',
+    'sales.salesperson',
+    'sales.isPurchased',
+    'sales.isStockAshdod',
+    'sales.isStockTelAviv',
+    'sales.isStockRehovot',
+    'sales.dataSource',
   ],
 };
 
-const COMMUNICATION_GROUP: ColumnGroup = {
+const COMMUNICATION_GROUP: ColumnGroupStructure = {
   entityTable: 'communications',
-  label: 'תקשורת',
-  columns: [
-    { key: 'communications.id', label: 'מזהה תקשורת' },
-    { key: 'communications.communicationType', label: 'סוג תקשורת' },
-    { key: 'communications.plasticId', label: 'מזהה פלסטיק' },
-    { key: 'communications.ironId', label: 'מזהה ברזל' },
-  ],
+  columns: ['communications.id', 'communications.communicationType', 'communications.plasticId', 'communications.ironId'],
 };
 
-const WIRING_GROUP: ColumnGroup = {
+const WIRING_GROUP: ColumnGroupStructure = {
   entityTable: 'wirings',
-  label: 'כבלים',
-  columns: [
-    { key: 'wirings.id', label: 'מזהה כבל' },
-    { key: 'wirings.wiringType', label: 'סוג כבל' },
-    { key: 'wirings.district', label: 'מחוז' },
-    { key: 'wirings.municipality', label: 'עיריה' },
-    { key: 'wirings.storageId', label: 'מזהה אחסון' },
-  ],
+  columns: ['wirings.id', 'wirings.wiringType', 'wirings.district', 'wirings.municipality', 'wirings.storageId'],
 };
 
-const ROBOT_GROUP: ColumnGroup = {
+const ROBOT_GROUP: ColumnGroupStructure = {
   entityTable: 'robots',
-  label: 'רובוטים',
   columns: [
-    { key: 'robots.id', label: 'מזהה רובוט' },
-    { key: 'robots.cardboardId', label: 'מזהה קרטון' },
-    { key: 'robots.sensorId', label: 'מזהה חיישן' },
-    { key: 'robots.communicationId', label: 'מזהה תקשורת' },
-    { key: 'robots.saleId', label: 'מזהה מכירה' },
-    { key: 'robots.wiringId', label: 'מזהה כבל' },
+    'robots.id',
+    'robots.cardboardId',
+    'robots.sensorId',
+    'robots.communicationId',
+    'robots.saleId',
+    'robots.wiringId',
   ],
 };
 
-export const ENTITY_COLUMN_TREE: Record<string, ColumnGroup[]> = {
+export const ENTITY_COLUMN_TREE: Record<string, ColumnGroupStructure[]> = {
   robots: [ROBOT_GROUP, CARDBOARD_GROUP, SENSOR_GROUP, COMMUNICATION_GROUP, PLASTIC_GROUP, BATTERY_GROUP, IRON_GROUP, SALE_GROUP, WIRING_GROUP, STORAGE_GROUP],
   sensors: [SENSOR_GROUP, ROBOT_GROUP],
   wirings: [WIRING_GROUP, STORAGE_GROUP, ROBOT_GROUP],
