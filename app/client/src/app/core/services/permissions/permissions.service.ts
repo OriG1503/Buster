@@ -15,10 +15,7 @@ export class PermissionsService {
   }
 
   private _getRoleLevel(): number {
-    const role = this._authService.getPayload()?.role;
-    if (!role) {
-      return 0;
-    }
-    return ROLE_LEVEL[role];
+    if (!this._authService.hasBusterAccess()) { return 0; }
+    return ROLE_LEVEL[this._authService.getRole()];
   }
 }

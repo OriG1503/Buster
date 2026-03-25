@@ -1,3 +1,5 @@
-<app-navbar />
+@if (_$showNavbar()) {
+  <app-navbar />
+}
 <router-outlet />
 <app-toast />
