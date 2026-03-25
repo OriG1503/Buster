@@ -16,7 +16,7 @@ export class NavbarComponent {
   private readonly _router = inject(Router);
   private readonly _authService = inject(AuthService);
 
-  protected readonly _$role = computed(() => this._authService.getPayload()?.role ?? '');
+  protected readonly _$role = computed(() => this._authService.hasBusterAccess() ? this._authService.getRole() : '');
 
   public onHomeClick(): void {
     if (this._router.url.split('?')[0] !== APP_ROUTES.home) {
