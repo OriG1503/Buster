@@ -48,10 +48,12 @@ export class ValueConflictEntityDetailService {
           currentDate,
           isConflicted,
           conflictValues: isConflicted
-            ? conflicts.flatMap((c) => [
-                { value: c.oldValue, source: c.oldSource, notes: c.oldNotes, createdAt: c.createdAt.toISOString() },
-                { value: c.newValue, source: c.newSource, notes: c.newNotes, createdAt: c.createdAt.toISOString() },
-              ])
+            ? conflicts
+                .flatMap((c) => [
+                  { value: c.oldValue, source: c.oldSource, notes: c.oldNotes, createdAt: c.createdAt.toISOString() },
+                  { value: c.newValue, source: c.newSource, notes: c.newNotes, createdAt: c.createdAt.toISOString() },
+                ])
+                .filter((entry, index, arr) => arr.findIndex((e) => e.value === entry.value) === index)
             : [],
         };
       });

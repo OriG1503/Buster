@@ -98,14 +98,7 @@ export class ConflictItemComponent {
   );
 
   protected readonly _$valueConflictColumns = computed(() =>
-    this._$allColumns()
-      .filter((col) => col.isConflicted)
-      .map((col) => ({
-        ...col,
-        conflictValues: col.conflictValues.filter(
-          (entry, index, arr) => arr.findIndex((e) => e.value === entry.value) === index,
-        ),
-      })),
+    this._$allColumns().filter((col) => col.isConflicted),
   );
 
   protected readonly _$regularColumns = computed(() =>
