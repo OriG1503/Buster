@@ -1,0 +1,53 @@
+version: "3.9"
+
+services:
+  parser:
+    build:
+      context: ./app/parser
+      dockerfile: .docker/Dockerfile
+    container_name: buster-parser
+    expose:
+      - "8000"
+    volumes:
+      - shared-tmp:/tmp
+    networks:
+      - buster-net
+    restart: unless-stopped
+
+  server:
+    build:
+      context: ./app/server
+      dockerfile: .docker/Dockerfile
+    container_name: buster-server
+    expose:
+      - "3000"
+    env_file:
+      - ./app/server/.env
+    volumes:
+      - shared-tmp:/tmp
+    networks:
+      - buster-net
+    depends_on:
+      - parser
+    restart: unless-stopped
+
+  client:
+    build:
+      context: ./app
+      dockerfile: client/.docker/Dockerfile
+    container_name: buster-client
+    ports:
+      - "4200:80"
+    networks:
+      - buster-net
+    depends_on:
+      - server
+    restart: unless-stopped
+
+volumes:
+  shared-tmp:
+    driver: local
+
+networks:
+  buster-net:
+    driver: bridge

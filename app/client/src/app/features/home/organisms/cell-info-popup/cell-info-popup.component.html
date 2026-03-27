@@ -1,0 +1,20 @@
+<div
+  class="cell-info-popup__panel"
+  dir="rtl"
+  [style.top]="_$panelStyle().top"
+  [style.bottom]="_$panelStyle().bottom"
+  [style.left]="_$panelStyle().left"
+>
+  <div class="cell-info-popup__row">
+    <span class="cell-info-popup__label">מקור</span>
+    <span class="cell-info-popup__value">{{ $target().source ?? 'N/A' }}</span>
+  </div>
+  <div class="cell-info-popup__row">
+    <span class="cell-info-popup__label">תאריך יצירה</span>
+    <span class="cell-info-popup__value">{{ _formatDate($target().uploadedAt) }}</span>
+  </div>
+  <div class="cell-info-popup__row">
+    <span class="cell-info-popup__label">הערות</span>
+    <span class="cell-info-popup__value">{{ $target().notes ?? 'N/A' }}</span>
+  </div>
+</div>

@@ -1,0 +1,125 @@
+<div class="home-table">
+  <div class="home-table__scroll" #scrollContainer>
+    <table class="home-table__table">
+      <thead>
+        <tr>
+          @if ($isExportMode()) {
+            <th class="home-table__th home-table__th--checkbox"></th>
+          }
+          @for (col of _$displayColumns(); track col) {
+            <th class="home-table__th">
+              <span class="home-table__th-label">{{ _displayNames.getColumnLabelByKey(col) }}</span>
+              <div class="home-table__th-search">
+                <i class="pi pi-search home-table__th-search-icon"></i>
+                <input
+                  class="home-table__th-search-input"
+                  type="text"
+                  [value]="_store.filters()[col] || ''"
+                  (input)="onFilterChange(col, $any($event.target).value)"
+                />
+                <button
+                  class="home-table__th-search-clear"
+                  [class.home-table__th-search-clear--hidden]="!_store.filters()[col]"
+                  type="button"
+                  (click)="onFilterChange(col, '')"
+                >
+                  <i class="pi pi-times"></i>
+                </button>
+              </div>
+            </th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @if (_store.isLoading() && _store.rows().length === 0) {
+          @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
+            <tr class="home-table__tr home-table__tr--skeleton">
+              @if ($isExportMode()) {
+                <td class="home-table__td home-table__td--checkbox"></td>
+              }
+              @for (col of _$displayColumns(); track col) {
+                <td class="home-table__td">
+                  <span class="home-table__skeleton"></span>
+                </td>
+              }
+            </tr>
+          }
+        } @else {
+          @for (row of _store.rows(); track trackByIndex($index)) {
+            <tr
+              class="home-table__tr"
+              [class.home-table__tr--selected]="$isExportMode() && $selectedExportIndices().has($index)"
+            >
+              @if ($isExportMode()) {
+                <td class="home-table__td home-table__td--checkbox" (click)="$event.stopPropagation()">
+                  <input
+                    type="checkbox"
+                    class="home-table__export-checkbox"
+                    [checked]="$selectedExportIndices().has($index)"
+                    (change)="onRowCheckboxChange($index)"
+                  />
+                </td>
+              }
+              @for (col of _$displayColumns(); track col) {
+                <td
+                  class="home-table__td home-table__td--{{ cellStatus(row[col]) }}"
+                  (click)="onCellClick(row, col, $event)"
+                >
+                  @if (getConflictHref(row, col); as href) {
+                    <a
+                      class="home-table__cell-text home-table__cell-link"
+                      [href]="href"
+                      (click)="$event.preventDefault()"
+                      (mouseenter)="onCellMouseEnter(row, col, $event)"
+                      (mouseleave)="onCellMouseLeave()"
+                    >{{ cellValue(row[col]) }}</a>
+                  } @else {
+                    <span
+                      class="home-table__cell-text"
+                      (mouseenter)="onCellMouseEnter(row, col, $event)"
+                      (mouseleave)="onCellMouseLeave()"
+                    >{{ cellValue(row[col]) }}</span>
+                  }
+                </td>
+              }
+            </tr>
+          }
+          @if (_store.isLoadingMore()) {
+            @for (i of [1, 2, 3]; track i) {
+              <tr class="home-table__tr home-table__tr--skeleton">
+                @if ($isExportMode()) {
+                  <td class="home-table__td home-table__td--checkbox"></td>
+                }
+                @for (col of _$displayColumns(); track col) {
+                  <td class="home-table__td">
+                    <span class="home-table__skeleton"></span>
+                  </td>
+                }
+              </tr>
+            }
+          }
+          @if (_store.rows().length === 0 && !_store.isLoading()) {
+            <tr>
+              <td class="home-table__empty" [attr.colspan]="_$displayColumns().length">אין נתונים</td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+@if (_$historyTarget(); as target) {
+  <app-conflict-history-popup
+    [$target]="target"
+    (closed)="onHistoryPopupClose()"
+    (reverted)="onHistoryPopupReverted()"
+  />
+}
+
+@if (_$cellInfoTarget(); as target) {
+  <app-cell-info-popup
+    [$target]="target"
+    (closed)="onCellInfoPopupClose()"
+  />
+}

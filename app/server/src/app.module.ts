@@ -1,0 +1,69 @@
+import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { BatteryModule } from './modules/entities/battery/battery.module';
+import { PlasticModule } from './modules/entities/plastic/plastic.module';
+import { IronModule } from './modules/entities/iron/iron.module';
+import { CommunicationModule } from './modules/entities/communication/communication.module';
+import { SensorModule } from './modules/entities/sensor/sensor.module';
+import { SaleModule } from './modules/entities/sale/sale.module';
+import { CardboardModule } from './modules/entities/cardboard/cardboard.module';
+import { RobotModule } from './modules/entities/robot/robot.module';
+import { StorageModule } from './modules/entities/storage/storage.module';
+import { WiringModule } from './modules/entities/wiring/wiring.module';
+import { ConflictModule } from './modules/entities/conflict/conflict.module';
+import { FileModule } from './modules/file/file.module';
+import { DataProcessorModule } from './modules/data-processor/data-processor.module';
+import { TableViewModule } from './modules/table-view/table-view.module';
+import { ConfigModule } from '@nestjs/config';
+import { AuthModule } from './modules/auth/auth.module';
+import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
+import { RolesGuard } from './modules/auth/guards/roles.guard';
+import { DisplayNamesModule } from './modules/display-names/display-names.module';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      url: process.env.DATABASE_URL,
+      autoLoadEntities: true,
+      synchronize: process.env.NODE_ENV !== 'production',
+      ssl: { rejectUnauthorized: false },
+      // Neon is serverless and pauses after inactivity — these keep the pool alive and auto-reconnect.
+      connectTimeoutMS: 10000,
+      retryAttempts: 10,
+      retryDelay: 3000,
+      extra: {
+        max: 20,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 10000,
+        keepAlive: true,
+        keepAliveInitialDelayMillis: 10000,
+      },
+    }),
+    BatteryModule,
+    PlasticModule,
+    IronModule,
+    CommunicationModule,
+    SensorModule,
+    SaleModule,
+    CardboardModule,
+    RobotModule,
+    StorageModule,
+    WiringModule,
+    ConflictModule,
+    FileModule,
+    DataProcessorModule,
+    TableViewModule,
+    AuthModule,
+    DisplayNamesModule,
+  ],
+  providers: [
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
+  ],
+})
+export class AppModule {}

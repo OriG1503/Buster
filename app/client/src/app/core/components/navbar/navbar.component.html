@@ -1,0 +1,24 @@
+<nav class="navbar">
+  <button class="navbar__logo" (click)="onHomeClick()">BUSTER</button>
+
+  <div class="navbar__links">
+    <button
+      class="navbar__link"
+      (click)="onHomeClick()"
+    >
+      {{ _labelMap.home }}
+    </button>
+
+    <button
+      class="navbar__link"
+      (click)="onConflictsClick()"
+    >
+      {{ _labelMap.conflicts }}
+    </button>
+
+  </div>
+
+  @if (_$role()) {
+    <span class="navbar__role-badge">{{ _$role() }}</span>
+  }
+</nav>

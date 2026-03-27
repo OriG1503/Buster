@@ -1,0 +1,127 @@
+<div class="upload-dialog">
+  <div class="upload-dialog__header">
+    <button class="upload-dialog__close" (click)="onClose()">
+      <i class="pi pi-times"></i>
+    </button>
+    <h2 class="upload-dialog__title">{{ _labelMap.title }}</h2>
+  </div>
+
+  <p class="upload-dialog__subtitle">
+    <i class="pi pi-angle-left"></i>
+    {{ _labelMap.subtitle }}
+  </p>
+
+  <div class="upload-dialog__format-row">
+    <button class="upload-dialog__formats-btn"
+      (click)="formatsPanel.toggle($event)">
+      {{ _labelMap.formatPlaceholder }}
+      <i class="pi pi-chevron-down"></i>
+    </button>
+
+    <p-overlayPanel #formatsPanel>
+      <div class="upload-dialog__formats-list">
+        @for (option of _$formatOptions(); track option.assetPath) {
+          <button
+          class="upload-dialog__format-item"
+          (click)="onDownloadTemplate(option, formatsPanel)"
+          >
+          <i class="pi pi-download"></i>
+          <span>{{ option.label }}</span>
+          </button>
+        }
+      </div>
+    </p-overlayPanel>
+  </div>
+
+  <div
+    class="upload-dialog__dropzone"
+    [class.upload-dialog__dropzone--dragging]="_$isDragging()"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave()"
+    (drop)="onDrop($event)"
+  >
+    <span class="upload-dialog__upload-icon-wrap">
+      <i class="pi pi-cloud-upload"></i>
+    </span>
+    <p class="upload-dialog__drag-text">{{ _labelMap.dragText }}</p>
+    <p class="upload-dialog__browse-text">
+      <a
+        class="upload-dialog__browse-link"
+        (click)="onBrowseClick()"
+      >{{ _labelMap.browseLink }}</a>
+      {{ _labelMap.browseSuffix }}
+    </p>
+    <input
+      #fileInput
+      type="file"
+      accept=".xlsx,.xls,.csv"
+      class="upload-dialog__file-input"
+      (change)="onFileSelected($event)"
+    >
+  </div>
+
+  @if (_$uploadedFiles().length > 0) {
+    <div class="upload-dialog__files">
+      @for (file of _$uploadedFiles(); track file.id) {
+        <div
+          class="upload-dialog__file"
+          [class.upload-dialog__file--warning]="file.status === 'warning'"
+          [class.upload-dialog__file--error]="file.status === 'error'"
+        >
+          <div class="upload-dialog__file-info">
+            <span class="upload-dialog__file-name">{{ file.name }}</span>
+
+            @if (file.status === 'error') {
+              <span class="upload-dialog__file-error">{{ file.errorMessage }}</span>
+            } @else if (file.status !== 'pending') {
+              <div class="upload-dialog__file-meta">
+                <span class="upload-dialog__meta-success">{{ file.successRate }}{{ _labelMap.successRateSuffix }}</span>
+                <span class="upload-dialog__meta-sep">|</span>
+                <span class="upload-dialog__meta-conflicts">
+                  {{ file.newConflictsCount }} {{ _labelMap.newConflictsSuffix }}
+                  @if (file.newConflictsCount > 0) {
+                    <a class="upload-dialog__conflicts-link" (click)="onViewConflicts(file.conflictIds)">{{ _labelMap.viewConflicts }}</a>
+                  }
+                </span>
+                @if (file.reportFileName) {
+                  <span class="upload-dialog__meta-sep">|</span>
+                  <a class="upload-dialog__report-link" (click)="onDownloadReport(file.reportFileName!)">
+                    {{ _labelMap.downloadReport }}
+                  </a>
+                }
+              </div>
+              @if (file.unknownColumns && file.unknownColumns.length > 0) {
+                <div class="upload-dialog__unknown-cols">
+                  <i class="pi pi-exclamation-triangle upload-dialog__unknown-icon"></i>
+                  <span class="upload-dialog__unknown-label">{{ _labelMap.unknownColumnsSuffix }}</span>
+                  <span class="upload-dialog__unknown-list">{{ file.unknownColumns.join(', ') }}</span>
+                </div>
+              }
+            }
+          </div>
+
+          <div class="upload-dialog__file-status">
+            @if (file.status === 'success') {
+              <i class="pi pi-check upload-dialog__file-icon upload-dialog__file-icon--success"></i>
+            } @else if (file.status === 'error') {
+              <i class="pi pi-times upload-dialog__file-icon upload-dialog__file-icon--error"></i>
+            } @else if (file.status === 'warning') {
+              <i class="pi pi-exclamation-triangle upload-dialog__file-icon upload-dialog__file-icon--warning"></i>
+            } @else {
+              <i class="pi pi-spin pi-spinner upload-dialog__file-icon upload-dialog__file-icon--pending"></i>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <div class="upload-dialog__footer">
+    <p-button
+      [label]="_labelMap.confirm"
+      severity="info"
+      styleClass="upload-dialog__confirm-btn"
+      (onClick)="onConfirm()"
+    ></p-button>
+  </div>
+</div>

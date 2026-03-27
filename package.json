@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
+    "@nestjs/common": "^11.1.16",
+    "@nestjs/platform-express": "^11.1.16",
+    "@nestjs/typeorm": "^11.0.0",
+    "typeorm": "^0.3.28"
+  }
+}

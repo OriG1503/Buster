@@ -1,0 +1,114 @@
+<div class="table-action-bar">
+  <div class="table-action-bar__actions">
+    <button class="table-action-bar__btn" (click)="onTableSelectClick($event)">
+      <i class="pi pi-table"></i>
+      {{ _labelMap.selectTable }}
+      <span class="table-action-bar__table-badge">{{ _$selectedTableLabel() }}</span>
+    </button>
+    <button class="table-action-bar__btn" (click)="onColumnManageClick($event)">
+      <i class="pi pi-sliders-h"></i>
+      {{ _labelMap.manageColumns }}
+    </button>
+    @if ($isExportMode()) {
+      <button class="table-action-bar__btn table-action-bar__btn--confirm-export" (click)="exportConfirm.emit()">
+        <i class="pi pi-check"></i>
+        {{ _labelMap.exportExcel }} ({{ $selectedExportCount() }})
+      </button>
+      <button class="table-action-bar__btn table-action-bar__btn--clear" (click)="exportCancel.emit()">
+        <i class="pi pi-times"></i>
+        ביטול
+      </button>
+    } @else {
+      <button class="table-action-bar__btn" (click)="exportExcel.emit()">
+        <i class="pi pi-download"></i>
+        {{ _labelMap.exportExcel }}
+      </button>
+    }
+    @if ($hasActiveFilters()) {
+      <button class="table-action-bar__btn table-action-bar__btn--clear" (click)="clearFilters.emit()">
+        <i class="pi pi-filter-slash"></i>
+        {{ _labelMap.clearFilters }}
+      </button>
+    }
+  </div>
+
+  <div class="table-action-bar__end">
+    @if (_$canUpload()) {
+      <button class="table-action-bar__btn table-action-bar__btn--upload" (click)="uploadClick.emit()">
+        <i class="pi pi-upload"></i>
+        {{ _labelMap.upload }}
+      </button>
+    }
+    <span class="table-action-bar__count">
+      {{ _labelMap.resultsFound }}: {{ $resultCount() }} {{ _labelMap.results }}
+    </span>
+  </div>
+</div>
+
+<p-overlayPanel #entityPanel (onShow)="onEntityPanelShow()">
+  <div #entityPanelContent class="entity-panel" (keydown)="onEntityPanelKeydown($event)">
+    @for (option of _$entityOptions(); track option.tableName) {
+      <button
+        class="entity-panel__item"
+        [class.entity-panel__item--active]="option.tableName === $selectedTable()"
+        (click)="onEntitySelected(option.tableName)"
+      >
+        {{ option.label }}
+      </button>
+    }
+  </div>
+</p-overlayPanel>
+
+<p-overlayPanel #columnPanel styleClass="column-panel-overlay" (onShow)="onColumnPanelShow()">
+  <div class="column-panel">
+    <div class="column-panel__search-row">
+      <i class="pi pi-search column-panel__search-icon"></i>
+      <input
+        class="column-panel__search-input"
+        type="text"
+        placeholder="חיפוש עמודה..."
+        [value]="_$searchQuery()"
+        (input)="onSearchInput($event)"
+      />
+    </div>
+    <span class="column-panel__count">
+      מוצגים בטבלה: {{ _$selectedVisibleCount() }}/{{ _$allAvailableColumns().length }} עמודות
+    </span>
+
+    <div class="column-panel__list">
+      @for (col of _$orderedColumns(); track col.key) {
+        <div
+          class="column-panel__item"
+          [class.column-panel__item--drag-over]="_dragOverKey === col.key"
+          [class.column-panel__item--dragging]="_draggedKey === col.key"
+          [attr.draggable]="$selectedColumns().includes(col.key) ? 'true' : 'false'"
+          (dragstart)="onDragStart(col.key)"
+          (dragover)="onDragOver($event, col.key)"
+          (drop)="onDrop($event, col.key)"
+          (dragend)="onDragEnd()"
+        >
+          <i
+            class="pi pi-bars column-panel__handle"
+            [class.column-panel__handle--inactive]="!$selectedColumns().includes(col.key)"
+          ></i>
+          <span class="column-panel__label">{{ col.label }}</span>
+          <input
+            class="column-panel__checkbox"
+            type="checkbox"
+            [checked]="$selectedColumns().includes(col.key)"
+            (change)="onColumnToggle(col.key, $any($event.target).checked)"
+          />
+        </div>
+      }
+      @if (_$orderedColumns().length === 0) {
+        <span class="column-panel__empty">לא נמצאו עמודות</span>
+      }
+    </div>
+
+    <div class="column-panel__footer">
+      <button class="column-panel__btn column-panel__btn--primary" type="button" (click)="onColumnPanelClose()">
+        סיימתי
+      </button>
+    </div>
+  </div>
+</p-overlayPanel>

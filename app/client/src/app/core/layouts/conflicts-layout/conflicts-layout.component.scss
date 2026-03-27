@@ -1,0 +1,143 @@
+.conflicts-layout {
+  height: 100%;
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  direction: rtl;
+  gap: 15px;
+
+  &__filter-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    direction: rtl;
+    padding: 0.4rem 0.75rem;
+    background-color: rgba(63, 112, 227, 0.1);
+    border: 1px solid rgba(63, 112, 227, 0.3);
+    border-radius: 6px;
+    font-size: var(--font-size-sm);
+    color: var(--color-blue);
+    flex-shrink: 0;
+
+    i.pi-filter {
+      font-size: 0.75rem;
+    }
+
+    span {
+      flex: 1;
+    }
+  }
+
+  &__filter-clear {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-navy-gray);
+    padding: 0;
+    display: flex;
+    align-items: center;
+    font-size: 0.7rem;
+
+    &:hover {
+      color: var(--color-white);
+    }
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.625rem 0;
+    flex-shrink: 0;
+  }
+
+  &__count {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-dark-navy);
+    border-right: 2px solid var(--color-blue);
+    padding-right: 0.625rem;
+    margin-right: auto;
+  }
+
+  &__filter {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    direction: rtl;
+  }
+
+  &__filter-select,
+  &__filter-search {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    padding: 0.4rem 0.75rem;
+    font-size: var(--font-size-sm);
+    outline: none;
+    direction: rtl;
+
+    &:focus {
+      border-color: var(--color-blue);
+    }
+  }
+
+  &__filter-select-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0.6rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 5px solid var(--color-navy-gray);
+      pointer-events: none;
+    }
+  }
+
+  &__filter-select {
+    cursor: pointer;
+    appearance: none;
+    padding-left: 1.75rem;
+
+    option {
+      background-color: #1a1f2e;
+    }
+  }
+
+  &__filter-search {
+    width: 14rem;
+
+    &::placeholder {
+      color: var(--color-navy-gray);
+    }
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 1rem;
+  }
+
+  &__sentinel {
+    display: flex;
+    justify-content: center;
+    padding: 0.5rem 0;
+    min-height: 1px;
+  }
+
+  &__spinner {
+    color: var(--color-navy-gray);
+    font-size: 1.25rem;
+  }
+}
