@@ -1,8 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
-import { promises as fs } from 'fs';
-import { tmpdir } from 'os';
-import { basename, extname, join } from 'path';
+import * as iconv from 'iconv-lite';
+import { basename, extname } from 'path';
 import { firstValueFrom } from 'rxjs';
 import * as XLSX from 'xlsx';
 import { DataProcessorService } from '../data-processor/services/data-processor.service';
@@ -14,9 +13,11 @@ import { UploadSummary } from './types/upload-summary.type';
 
 const ACCEPTED_EXTENSIONS = ['.csv', '.xlsx', '.xls'] as const;
 const S3_UPLOADS_PREFIX = 'uploads/';
+const S3_TMP_PREFIX = 'tmp/';
 const S3_REPORTS_PREFIX = 'reports/';
-// TODO: S3 — prefix for temporary translated CSV files used by the parser.
-// const S3_TEMP_PREFIX = 'temp/';
+
+// UTF-8 BOM is the byte sequence EF BB BF at the start of the file.
+const UTF8_BOM = Buffer.from([0xef, 0xbb, 0xbf]);
 
 @Injectable()
 export class FileService {
@@ -30,7 +31,7 @@ export class FileService {
     private readonly _displayNamesService: DisplayNamesService,
   ) {}
 
-  /** Full upload pipeline: validate → convert → parse → process → generate report. */
+  /** Full upload pipeline: validate → convert → upload to S3 → parse → process → generate report. */
   public async handleFile(file: Express.Multer.File, username: string): Promise<UploadSummary> {
     this._logger.log(`Upload started — file: ${file?.originalname}, size: ${file?.size ?? 0} bytes, user: ${username}`);
     this._validateUsername(username);
@@ -42,55 +43,37 @@ export class FileService {
     // Translate display-name column headers → parser snake_case names before sending to parser.
     const { buffer: translatedBuffer, unknownColumns } = this._translateCsvHeaders(csvFile.buffer);
 
-    // TODO: remove when S3 is fully implemented — write translated CSV locally for parser.
-    const tmpCsvPath = join(tmpdir(), csvFile.originalname);
-    await fs.writeFile(tmpCsvPath, translatedBuffer);
+    // Upload translated CSV to S3 tmp/ — the parser reads directly from there.
+    const tmpS3Key = `${S3_TMP_PREFIX}${csvFile.originalname}`;
+    await this._s3Service.upload(tmpS3Key, translatedBuffer);
 
-    // TODO: S3 — upload translatedBuffer to S3 as a temp file, pass S3 key to parser, delete after.
-    // const tmpS3Key = `${S3_TEMP_PREFIX}${csvFile.originalname}`;
-    // await this._s3Service.upload(tmpS3Key, translatedBuffer);
-    // (parser must support reading from S3 before enabling this path)
+    const parsedRows = await this._sendToParser(tmpS3Key);
+    this._logger.log(`Processing ${parsedRows.length} parsed rows — file: ${csvFile.originalname}`);
+    const result = await this._dataProcessorService.process(parsedRows, username);
 
-    try {
-      const parsedRows = await this._sendToParser(tmpCsvPath);
-      this._logger.log(`Processing ${parsedRows.length} parsed rows — file: ${csvFile.originalname}`);
-      const result = await this._dataProcessorService.process(parsedRows, username);
+    const reportName = `${basename(csvFile.originalname, '.csv')}_report.xlsx`;
+    const reportBuffer = await this._reportService.generate(translatedBuffer, result);
+    void this._s3Service.upload(`${S3_REPORTS_PREFIX}${reportName}`, reportBuffer);
 
-      const reportName = `${basename(csvFile.originalname, '.csv')}_report.xlsx`;
-      const reportBuffer = await this._reportService.generate(tmpCsvPath, result);
-      await fs.writeFile(join(tmpdir(), reportName), reportBuffer);
-      void this._s3Service.upload(`${S3_REPORTS_PREFIX}${reportName}`, reportBuffer);
-
-      const summary: UploadSummary = {
-        conflictIds: result.conflictIds,
-        conflictCount: result.conflictCount,
-        uploadPercentage: result.uploadPercentage,
-        flyingFieldCount: result.flyingFields.reduce((sum, f) => sum + f.redFields.length, 0),
-        reportFileName: reportName,
-        unknownColumns,
-      };
-      this._logger.log(`Upload complete — ${summary.uploadPercentage}% uploaded, ${summary.conflictCount} conflicts, ${summary.flyingFieldCount} flying fields`);
-      return summary;
-    } finally {
-      await fs.unlink(tmpCsvPath).catch(() => {});
-    }
+    const summary: UploadSummary = {
+      conflictIds: result.conflictIds,
+      conflictCount: result.conflictCount,
+      uploadPercentage: result.uploadPercentage,
+      flyingFieldCount: result.flyingFields.reduce((sum, f) => sum + f.redFields.length, 0),
+      reportFileName: reportName,
+      unknownColumns,
+    };
+    this._logger.log(`Upload complete — ${summary.uploadPercentage}% uploaded, ${summary.conflictCount} conflicts, ${summary.flyingFieldCount} flying fields`);
+    return summary;
   }
 
-  /**
-   * Returns the report buffer for the given filename.
-   * Tries S3 first (when configured); falls back to the local tmpdir copy.
-   * To fully switch to S3: remove the tmpdir write in handleFile and the local fallback below.
-   */
+  /** Returns the report buffer for the given filename from S3. */
   public async getReport(filename: string): Promise<Buffer> {
-    const s3Buffer = await this._s3Service.download(`${S3_REPORTS_PREFIX}${filename}`);
-    if (s3Buffer) { return s3Buffer; }
-
-    const localPath = join(tmpdir(), filename);
-    try {
-      return await fs.readFile(localPath);
-    } catch {
+    const buffer = await this._s3Service.download(`${S3_REPORTS_PREFIX}${filename}`);
+    if (!buffer) {
       throw new NotFoundException(`Report "${filename}" not found`);
     }
+    return buffer;
   }
 
   /** Throws if the file extension is not in the accepted list. */
@@ -122,17 +105,24 @@ export class FileService {
   }
 
   /**
+   * Decodes a CSV buffer to a string, handling both UTF-8 (with or without BOM)
+   * and Windows-1255 (the standard encoding for Hebrew Excel exports).
+   */
+  private _decodeCsvBuffer(buffer: Buffer): string {
+    if (buffer.slice(0, 3).equals(UTF8_BOM)) {
+      return buffer.slice(3).toString('utf8');
+    }
+    // Excel exports Hebrew CSVs as Windows-1255 when saved without explicit UTF-8 encoding.
+    return iconv.decode(buffer, 'windows-1255');
+  }
+
+  /**
    * Translates display-name column headers in a CSV buffer to the snake_case parser field names.
-   * Headers not found in the map are left unchanged (allows partially-translated or legacy files).
-   * Returns the translated buffer and the list of header labels that had no match in the config.
+   * Supports UTF-8 (with or without BOM) and Windows-1255 encoded files.
+   * Returns the translated buffer (always UTF-8) and the list of unrecognised column labels.
    */
   private _translateCsvHeaders(buffer: Buffer): { buffer: Buffer; unknownColumns: string[] } {
-    // Strip UTF-8 BOM — Excel-exported CSVs often start with \uFEFF which attaches
-    // to the first header and prevents it from matching the label map.
-    let csv = buffer.toString('utf8');
-    if (csv.startsWith('\uFEFF')) {
-      csv = csv.slice(1);
-    }
+    const csv = this._decodeCsvBuffer(buffer);
 
     const newlineIndex = csv.indexOf('\n');
     if (newlineIndex === -1) {
@@ -140,21 +130,20 @@ export class FileService {
     }
 
     const labelMap = this._displayNamesService.buildLabelToParserFieldMap();
-    // Strip trailing \r to handle Windows (CRLF) line endings.
     const headerLine = csv.slice(0, newlineIndex).replace(/\r$/, '');
     const rest = csv.slice(newlineIndex);
 
     const unknownColumns: string[] = [];
     const translatedHeaders = headerLine
       .split(',')
-      .map((header) => {
+      .map((header, index) => {
         const normalized = header
           .trim()
-          .replace(/^"|"$/g, '') // strip surrounding CSV quotes
-          .replace(/""/g, '"');  // unescape doubled quotes — Excel encodes מק"ט as "מק""ט"
+          .replace(/^"|"$/g, '')
+          .replace(/""/g, '"');
         const translated = labelMap.get(normalized);
         if (!translated) {
-          this._logger.warn(`CSV header "${normalized}" not found in display-names config — leaving as-is`);
+          this._logger.warn(`CSV column ${index + 1} not found in display-names config — received: "${normalized}"`);
           unknownColumns.push(normalized);
         }
         return translated ?? normalized;
@@ -164,12 +153,12 @@ export class FileService {
     return { buffer: Buffer.from(translatedHeaders + rest, 'utf8'), unknownColumns };
   }
 
-  /** Sends the CSV path to the parser service and returns the structured parsed rows. */
-  private async _sendToParser(csvPath: string): Promise<ParsedRow[]> {
-    this._logger.log(`Sending to parser: ${csvPath}`);
+  /** Sends the S3 key to the parser service and returns the structured parsed rows. */
+  private async _sendToParser(s3Key: string): Promise<ParsedRow[]> {
+    this._logger.log(`Sending to parser: ${s3Key}`);
     const start = Date.now();
     const { data } = await firstValueFrom(
-      this._httpService.post<ParsedRow[]>(process.env.PARSER_URL!, { path: csvPath }),
+      this._httpService.post<ParsedRow[]>(process.env.PARSER_URL!, { path: s3Key }),
     ).catch((err) => {
       this._logger.error(`Parser request failed: ${err?.message ?? err}`);
       throw new InternalServerErrorException('Parser service failed to process the file');
