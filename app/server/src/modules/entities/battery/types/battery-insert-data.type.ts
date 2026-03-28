@@ -1,11 +1,4 @@
-export type BatteryInsertData = {
-  id: string;
-  sku: string | null;
-  batteryType: string | null;
-  batteryVersion: string | null;
-  lithiumVersion: string | null;
-  batteryName: string | null;
-  salesPerson: string | null;
-  isStockTelAviv: boolean | null;
-  isStockRehovot: boolean | null;
-};
+import { EntityInsertData } from '../../../../shared/types/entity-config.type';
+import { BATTERY_CONFIG } from '../../../../shared/consts/entity-configs.const';
+
+export type BatteryInsertData = EntityInsertData<typeof BATTERY_CONFIG['columns']>;

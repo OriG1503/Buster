@@ -8,7 +8,7 @@ import * as XLSX from 'xlsx';
 import { DataProcessorService } from '../data-processor/services/data-processor.service';
 import { ProcessReportService } from '../data-processor/services/process-report.service';
 import { ParsedRow } from '../data-processor/types/parsed-row.type';
-import { DisplayNamesService } from '../display-names/display-names.service';
+import { EntityCatalogService } from '../entity-catalog/entity-catalog.service';
 import { ACCEPTED_EXTENSIONS, UTF8_BOM } from './consts/accepted-extensions.const';
 import { TMP_DIR, UPLOADS_DIR, REPORTS_DIR } from './consts/file-storage-paths.const';
 import { UploadSummary } from './types/upload-summary.type';
@@ -21,7 +21,7 @@ export class FileService {
     private readonly _httpService: HttpService,
     private readonly _dataProcessorService: DataProcessorService,
     private readonly _reportService: ProcessReportService,
-    private readonly _displayNamesService: DisplayNamesService,
+    private readonly _entityCatalogService: EntityCatalogService,
   ) {}
 
   /** Full upload pipeline: validate → convert → save locally → parse → process → generate report. */
@@ -120,7 +120,7 @@ export class FileService {
     const newlineIndex = csv.indexOf('\n');
     if (newlineIndex === -1) { return { buffer: Buffer.from(csv, 'utf8'), unknownColumns: [] }; }
 
-    const labelMap = this._displayNamesService.buildLabelToParserFieldMap();
+    const labelMap = this._entityCatalogService.buildCsvHeaderToParserFieldMap();
     const headerLine = csv.slice(0, newlineIndex).replace(/\r$/, '');
     const rest = csv.slice(newlineIndex);
     const unknownColumns: string[] = [];

@@ -14,7 +14,8 @@ import { UploadSummary } from './types/upload-summary.type';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { RequireRole } from '../auth/decorators/require-role.decorator';
 import { Public } from '../auth/decorators/public.decorator';
-import { JwtPayload, Role } from '../auth/types/role.type';
+import { JwtPayload } from '../auth/types/jwt-payload.type';
+import { Role } from '../auth/types/role.type';
 
 @Controller('file')
 export class FileController {

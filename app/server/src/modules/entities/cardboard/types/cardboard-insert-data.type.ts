@@ -1,5 +1,4 @@
-export type CardboardInsertData = {
-  id: string;
-  cardboardType: string | null;
-  cardboardVersion: string | null;
-};
+import { EntityInsertData } from '../../../../shared/types/entity-config.type';
+import { CARDBOARD_CONFIG } from '../../../../shared/consts/entity-configs.const';
+
+export type CardboardInsertData = EntityInsertData<typeof CARDBOARD_CONFIG['columns']>;

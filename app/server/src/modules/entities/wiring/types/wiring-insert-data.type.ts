@@ -1,7 +1,4 @@
-export type WiringInsertData = {
-  id: string;
-  wiringType: string | null;
-  district: string | null;
-  storeName: string | null;
-  storageId: string | null;
-};
+import { EntityInsertData } from '../../../../shared/types/entity-config.type';
+import { WIRING_CONFIG } from '../../../../shared/consts/entity-configs.const';
+
+export type WiringInsertData = EntityInsertData<typeof WIRING_CONFIG['columns']>;
