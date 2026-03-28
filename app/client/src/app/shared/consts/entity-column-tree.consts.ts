@@ -16,7 +16,7 @@ const STORAGE_GROUP: ColumnGroupStructure = {
 
 const BATTERY_GROUP: ColumnGroupStructure = {
   entityTable: 'batteries',
-  columns: ['batteries.id', 'batteries.sku', 'batteries.batteryType', 'batteries.batteryVersion', 'batteries.lithiumVersion', 'batteries.batteryName', 'batteries.salesperson'],
+  columns: ['batteries.id', 'batteries.sku', 'batteries.batteryType', 'batteries.batteryVersion', 'batteries.lithiumVersion', 'batteries.batteryName', 'batteries.salesPerson'],
 };
 
 const IRON_GROUP: ColumnGroupStructure = {

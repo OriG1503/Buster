@@ -85,7 +85,7 @@ export const DISPLAY_NAMES_CONFIG: DisplayNamesConfig = {
       batteryVersion: { label: 'גרסת סוללה', parserFieldName: 'battery_version' },
       lithiumVersion: { label: 'גרסת ליתיום', parserFieldName: 'lithium_version' },
       batteryName: { label: 'שם סוללה', parserFieldName: 'battery_name' },
-      salesperson: { label: 'איש מכירות', parserFieldName: 'salesperson' },
+      salesPerson: { label: 'איש מכירות', parserFieldName: 'sales_person' },
       notes: { label: 'הערות', parserFieldName: 'notes' },
       source: { label: 'מקור', parserFieldName: 'source' },
     },

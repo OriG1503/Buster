@@ -20,7 +20,7 @@ export class BatteryEntity extends BaseEntity {
   public batteryName: string | null;
 
   @Column({ type: 'varchar', nullable: true })
-  public salesperson: string | null;
+  public salesPerson: string | null;
 
   @OneToOne(() => PlasticEntity, (plastic) => plastic.battery, { nullable: true })
   public plastic: PlasticEntity | null;

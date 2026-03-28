@@ -6,5 +6,5 @@ export interface MappedBattery extends MappedEntityBase {
   batteryVersion: string | null;
   lithiumVersion: string | null;
   batteryName: string | null;
-  salesperson: string | null;
+  salesPerson: string | null;
 }
