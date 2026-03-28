@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { EntityServiceRegistry } from '../../../../shared/services/entity-service-registry.service';
-import { FK_FIELD_TO_TABLE } from '../../../../shared/consts/entity-relation-map.const';
+import { FK_FIELD_TO_TABLE } from '../../../../shared/consts/fk-field-to-table.const';
 import { RELATIONAL_CONFLICT_TYPE } from '../consts/relational-conflict-type.const';
 import { RelationalConflictRepository } from '../relational-conflict.repository';
 import { RelationalConflictEntity } from '../entities/relational-conflict.entity';

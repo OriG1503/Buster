@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { EntityServiceRegistry } from '../../../../shared/services/entity-service-registry.service';
-import { ENTITY_CHILDREN_FK_FIELDS, FK_FIELD_TO_TABLE } from '../../../../shared/consts/entity-relation-map.const';
+import { ENTITY_CHILDREN_FK_FIELDS } from '../../../../shared/consts/entity-children-fk-fields.const';
+import { FK_FIELD_TO_TABLE } from '../../../../shared/consts/fk-field-to-table.const';
 
 @Injectable()
 export class SnapshotBuilderService {

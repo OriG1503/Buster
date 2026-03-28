@@ -8,19 +8,26 @@ export class AllExceptionsFilter implements ExceptionFilter {
   public catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const res = ctx.getResponse<Response>();
-    const req = ctx.getRequest<Request>();
+    const { method, url } = ctx.getRequest<Request>();
 
     if (exception instanceof HttpException) {
-      const status = exception.getStatus();
-      const body = exception.getResponse();
-      const message = typeof body === 'string' ? body : (body as Record<string, unknown>)['message'] ?? exception.message;
-
-      this._logger.warn(`${req.method} ${req.url} → ${status}: ${message}`);
-      res.status(status).json(body);
+      this._handleHttpException(exception, res, method, url);
     } else {
-      const stack = exception instanceof Error ? exception.stack : String(exception);
-      this._logger.error(`${req.method} ${req.url} → 500: Unhandled exception`, stack);
-      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ statusCode: 500, message: 'Internal server error' });
+      this._handleUnexpectedException(exception, res, method, url);
     }
+  }
+
+  private _handleHttpException(exception: HttpException, res: Response, method: string, url: string): void {
+    const status = exception.getStatus();
+    const body = exception.getResponse();
+    const message = typeof body === 'string' ? body : (body as Record<string, unknown>)['message'] ?? exception.message;
+    this._logger.warn(`${method} ${url} → ${status}: ${message}`);
+    res.status(status).json(body);
+  }
+
+  private _handleUnexpectedException(exception: unknown, res: Response, method: string, url: string): void {
+    const stack = exception instanceof Error ? exception.stack : String(exception);
+    this._logger.error(`${method} ${url} → 500: Unhandled exception`, stack);
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ statusCode: 500, message: 'Internal server error' });
   }
 }

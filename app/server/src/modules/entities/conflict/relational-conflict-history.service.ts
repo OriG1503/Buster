@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { RelationalConflictRepository } from './relational-conflict.repository';
 import { EntityServiceRegistry } from '../../../shared/services/entity-service-registry.service';
-import { FK_FIELD_TO_TABLE } from '../../../shared/consts/entity-relation-map.const';
+import { FK_FIELD_TO_TABLE } from '../../../shared/consts/fk-field-to-table.const';
 import { RelationalConflictEntity } from './entities/relational-conflict.entity';
 import {
   RelationalHistoryAnchor,

@@ -1,6 +1,7 @@
-import { EntityValue } from '../../../shared/types/entity-value.type';
-import { BaseEntity } from '../../../shared/entities/base.entity';
+import { EntityValue } from './entity-value.type';
+import { BaseEntity } from '../entities/base.entity';
 
+/** Describes the public contract any entity service must satisfy — used by the registry and conflict resolver. */
 export type EntityService<TData extends { id: string }> = {
   tableName: string;
   findById(id: string): Promise<BaseEntity | null>;

@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 
-import { FK_FIELD_TO_TABLE } from '../../shared/consts/entity-relation-map.const';
+import { FK_FIELD_TO_TABLE } from '../../shared/consts/fk-field-to-table.const';
 import { ALLOWED_COLUMNS, ALLOWED_TABLES } from './consts/allowed-entities.consts';
 import { JOIN_ORDER, PARENT_JOIN } from './consts/join-chain.consts';
 import { TableViewQueryDto } from './dto/table-view-query.dto';

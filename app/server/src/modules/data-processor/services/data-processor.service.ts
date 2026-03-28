@@ -1,7 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { QueryFailedError } from 'typeorm';
 import { PG_UNIQUE_VIOLATION } from '../../../shared/consts/pg-error-codes.const';
-import { FK_FIELD_TO_TABLE, ONE_TO_ONE_FK_FIELDS } from '../../../shared/consts/entity-relation-map.const';
+import { FK_FIELD_TO_TABLE } from '../../../shared/consts/fk-field-to-table.const';
+import { ONE_TO_ONE_FK_FIELDS } from '../../../shared/consts/one-to-one-fk-fields.const';
 import { BaseEntity } from '../../../shared/entities/base.entity';
 import { EntityValue } from '../../../shared/types/entity-value.type';
 import { EntityServiceRegistry } from '../../../shared/services/entity-service-registry.service';
@@ -10,7 +11,7 @@ import { ValueConflictService } from '../../entities/conflict/services/value-con
 import { RelationalConflictDetectionService } from '../../entities/conflict/services/relational-conflict-detection.service';
 import { ParserRowMapper } from '../mappers/parser-row.mapper';
 import { ParsedRowEnricher } from './parsed-row-enricher.service';
-import { EntityService } from '../types/entity-service.type';
+import { EntityService } from '../../../shared/types/entity-service.type';
 import { FlyingField } from '../types/flying-field.type';
 import { ParsedRow } from '../types/parsed-row.type';
 import { ProcessResult } from '../types/process-result.type';

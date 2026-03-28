@@ -8,7 +8,7 @@ import { RobotService } from '../../modules/entities/robot/robot.service';
 import { SensorService } from '../../modules/entities/sensor/sensor.service';
 import { StorageService } from '../../modules/entities/storage/storage.service';
 import { WiringService } from '../../modules/entities/wiring/wiring.service';
-import { EntityService } from '../../modules/data-processor/types/entity-service.type';
+import { EntityService } from '../types/entity-service.type';
 
 /**
  * Service locator that maps each entity table name to its BaseService instance.

@@ -21,13 +21,12 @@ export abstract class BaseService<T extends BaseEntity, TInsertData extends { id
 
   public async insert(data: TInsertData, source: string, notes: string | null): Promise<void> {
     const { id, ...fields } = data;
-    const buildTracking = (value: string | null): Record<string, string | null> => ({
-      id: value,
-      ...Object.fromEntries(
-        Object.entries(fields).map(([key, val]) => [key, val !== null && val !== undefined ? value : null]),
-      ),
+    await this._repository.insert({
+      id,
+      ...fields,
+      source: this._buildFieldTracking(fields, source),
+      notes: this._buildFieldTracking(fields, notes),
     });
-    await this._repository.insert({ id, ...fields, source: buildTracking(source), notes: buildTracking(notes) });
   }
 
   public renameId(oldId: string, newId: string): Promise<void> {
@@ -51,5 +50,18 @@ export abstract class BaseService<T extends BaseEntity, TInsertData extends { id
       source: { ...(existingSource ?? {}), ...sourceUpdates },
       notes: { ...(existingNotes ?? {}), ...notesUpdates },
     });
+  }
+
+  /**
+   * Builds a per-field tracking map: each field gets the tracking value if it has data, otherwise null.
+   * This records which source/notes value applies to each specific field in the row.
+   */
+  private _buildFieldTracking(fields: Record<string, EntityValue>, trackingValue: string | null): Record<string, string | null> {
+    return {
+      id: trackingValue,
+      ...Object.fromEntries(
+        Object.entries(fields).map(([fieldName, fieldValue]) => [fieldName, fieldValue != null ? trackingValue : null]),
+      ),
+    };
   }
 }

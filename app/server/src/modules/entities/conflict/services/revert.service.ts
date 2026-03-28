@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { BaseEntity } from '../../../../shared/entities/base.entity';
-import { EntityService } from '../../../data-processor/types/entity-service.type';
+import { EntityService } from '../../../../shared/types/entity-service.type';
 import { EntityServiceRegistry } from '../../../../shared/services/entity-service-registry.service';
 import { ValueConflictRepository } from '../value-conflict.repository';
 import { RevertValueConflictDto } from '../dto/revert-value-conflict.dto';
