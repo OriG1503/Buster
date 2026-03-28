@@ -12,5 +12,7 @@ export const mapBatteryRow = (raw: ParsedBatteryRow | null): MappedBattery | nul
     batteryType: nullIfEmpty(raw.battery_type),
     batteryVersion: nullIfEmpty(raw.battery_version),
     lithiumVersion: nullIfEmpty(raw.lithium_version),
+    batteryName: nullIfEmpty(raw.battery_name),
+    salesperson: nullIfEmpty(raw.salesperson),
   };
 };

@@ -9,6 +9,8 @@ class Battery:
     battery_type: Optional[str] = None
     battery_version: Optional[str] = None
     lithium_version: Optional[str] = None
+    battery_name: Optional[str] = None
+    salesperson: Optional[str] = None
     notes: Optional[str] = None
     source: Optional[str] = None
 

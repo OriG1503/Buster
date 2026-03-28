@@ -16,7 +16,7 @@ export const ALLOWED_COLUMNS: Record<string, Set<string>> = {
   sensors: new Set(['id', 'sensorType', 'sensorVersion']),
   wirings: new Set(['id', 'wiringType', 'district', 'municipality', 'storageId']),
   communications: new Set(['id', 'communicationType', 'plasticId', 'ironId']),
-  batteries: new Set(['id', 'sku', 'batteryType', 'batteryVersion', 'lithiumVersion']),
+  batteries: new Set(['id', 'sku', 'batteryType', 'batteryVersion', 'lithiumVersion', 'batteryName', 'salesperson']),
   storages: new Set(['id', 'storageType', 'storageVersion', 'isStockNetanya', 'isStockAfula']),
   irons: new Set(['id', 'ironType', 'ironVersion', 'isHeatConductor']),
   plastics: new Set(['id', 'plasticType', 'batteryId']),
