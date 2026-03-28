@@ -52,7 +52,7 @@ export class FileService {
     const result = await this._dataProcessorService.process(parsedRows, username);
 
     const reportName = `${basename(csvFile.originalname, '.csv')}_report.xlsx`;
-    const reportBuffer = await this._reportService.generate(translatedBuffer, result);
+    const reportBuffer = await this._reportService.generate(tmpS3Key, result);
     void this._s3Service.upload(`${S3_REPORTS_PREFIX}${reportName}`, reportBuffer);
 
     const summary: UploadSummary = {
