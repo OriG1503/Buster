@@ -1,14 +1,11 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
-import * as XLSX from 'xlsx';
+import { Component, computed, inject, signal } from '@angular/core';
 
 import { HomeTableComponent } from '../../../features/home/organisms/home-table/home-table.component';
 import { TableActionBarComponent } from '../../../features/home/organisms/table-action-bar/table-action-bar.component';
-import { DisplayNamesService } from '../../services/display-names/display-names.service';
-import { FK_TO_ENTITY_ID } from '../../../shared/consts/fk-to-entity-id.consts';
-import { ColumnToggleEvent } from '../../../shared/types/column-toggle-event.type';
 import { HomeStore } from '../../store/home.store';
 import { UploadDialogService } from '../../services/upload-dialog/upload-dialog.service';
+import { ExportService } from '../../services/export/export.service';
+import { ColumnToggleEvent } from '../../../shared/types/column-toggle-event.type';
 
 @Component({
   selector: 'app-home-layout',
@@ -19,25 +16,9 @@ import { UploadDialogService } from '../../services/upload-dialog/upload-dialog.
 export class HomeLayoutComponent {
   protected readonly _store = inject(HomeStore);
   private readonly _uploadDialogService = inject(UploadDialogService);
-  private readonly _router = inject(Router);
-  private readonly _displayNames = inject(DisplayNamesService);
-
-  public constructor() {
-    effect(() => {
-      const filterParams = Object.fromEntries(
-        Object.entries(this._store.filters())
-          .filter(([, v]) => v.length > 0)
-          .map(([col, v]) => [`f_${col}`, v]),
-      );
-      this._router.navigate([], {
-        queryParams: { table: this._store.selectedTable(), cols: this._store.selectedColumns().join(','), ...filterParams },
-        replaceUrl: true,
-      });
-    });
-  }
+  private readonly _exportService = inject(ExportService);
 
   protected readonly _$hasActiveFilters = computed(() => Object.values(this._store.filters()).some((v) => v.length > 0));
-
   protected readonly _$isExportMode = signal(false);
   protected readonly _$selectedExportIndices = signal<Set<number>>(new Set());
   protected readonly _$selectedExportCount = computed(() => this._$selectedExportIndices().size);
@@ -68,41 +49,29 @@ export class HomeLayoutComponent {
   }
 
   public onExportConfirm(): void {
-    const selectedIndices = this._$selectedExportIndices();
-    const cols = this._store.selectedColumns();
-    const displayCols = cols.filter((col) => {
-      if (!col.endsWith('.id')) { return true; }
-      const fkKey = FK_TO_ENTITY_ID[col];
-      return !(fkKey && cols.includes(fkKey));
-    });
-
-    const rows = this._store.rows().filter((_, i) => selectedIndices.has(i));
-    const headers = displayCols.map((col) => this._displayNames.getColumnLabelByKey(col));
-    const dataRows = rows.map((row) => displayCols.map((col) => row[col]?.value ?? ''));
-
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...dataRows]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, this._store.selectedTable());
-    XLSX.writeFile(wb, `${this._store.selectedTable()}.xlsx`);
-
-    this._$isExportMode.set(false);
-    this._$selectedExportIndices.set(new Set());
+    this._exportService.exportToExcel(
+      this._store.rows(),
+      this._$selectedExportIndices(),
+      this._store.selectedColumns(),
+      this._store.selectedTable(),
+    );
+    this._resetExportMode();
   }
 
   public onExportCancel(): void {
-    this._$isExportMode.set(false);
-    this._$selectedExportIndices.set(new Set());
+    this._resetExportMode();
   }
 
   public onRowExportToggled(index: number): void {
     this._$selectedExportIndices.update((prev) => {
       const next = new Set(prev);
-      if (next.has(index)) {
-        next.delete(index);
-      } else {
-        next.add(index);
-      }
+      next.has(index) ? next.delete(index) : next.add(index);
       return next;
     });
+  }
+
+  private _resetExportMode(): void {
+    this._$isExportMode.set(false);
+    this._$selectedExportIndices.set(new Set());
   }
 }

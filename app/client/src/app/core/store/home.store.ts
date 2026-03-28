@@ -11,33 +11,18 @@ import { FK_TO_ENTITY_ID } from '../../shared/consts/fk-to-entity-id.consts';
 import { ColumnGroup } from '../../shared/types/column-group.type';
 import { ColumnToggleEvent } from '../../shared/types/column-toggle-event.type';
 import { TableRow } from '../../shared/types/table-view-response.type';
-
-const PAGE_SIZE = 20;
-const VALID_TABLES = new Set(Object.keys(ENTITY_COLUMN_TREE));
-const DEFAULT_TABLE = 'robots';
+import { HOME_PAGE_SIZE, DEFAULT_TABLE, VALID_TABLES } from './consts/home-store.consts';
+import { HomeState } from './types/home-state.type';
 
 function defaultColumns(tableName: string): string[] {
   const keys = ENTITY_COLUMN_TREE[tableName][0].columns;
-  // Only follow FK → child.id direction (keys that are FK columns, not id columns).
-  // This prevents adding parent FK columns when the root entity is a child table.
+  // Only follow FK → child.id direction to avoid adding parent FK columns unintentionally.
   const linked = keys
     .filter((key) => !key.endsWith('.id'))
     .map((key) => FK_TO_ENTITY_ID[key])
     .filter((id): id is string => !!id && !keys.includes(id));
   return [...keys, ...linked];
 }
-
-type HomeState = {
-  selectedTable: string;
-  selectedColumns: string[];
-  filters: Record<string, string>;
-  page: number;
-  rows: TableRow[];
-  total: number;
-  isLoading: boolean;
-  isLoadingMore: boolean;
-  refreshTick: number;
-};
 
 export const HomeStore = signalStore(
   { providedIn: 'root' },
@@ -161,13 +146,9 @@ export const HomeStore = signalStore(
       // the effect overwriting the pasted URL with default state on first run.
       // Also guard against running while on a different route (e.g. /conflicts).
       effect(() => {
-        if (!isInitialized()) {
-          return;
-        }
+        if (!isInitialized()) { return; }
         const urlPath = router.url.split('?')[0];
-        if (urlPath !== '/') {
-          return;
-        }
+        if (urlPath !== '/') { return; }
         const filterParams = Object.fromEntries(
           Object.entries(store.filters())
             .filter(([, v]) => v.length > 0)
@@ -198,7 +179,7 @@ export const HomeStore = signalStore(
               patchState(store, { isLoading: true });
             }
             return tableViewService
-              .query({ tableName, columns, filters, page, pageSize: PAGE_SIZE })
+              .query({ tableName, columns, filters, page, pageSize: HOME_PAGE_SIZE })
               .pipe(map((res) => ({ res, isAppend })));
           }),
         )

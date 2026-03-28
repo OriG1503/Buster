@@ -8,24 +8,11 @@
           }
           @for (col of _$displayColumns(); track col) {
             <th class="home-table__th">
-              <span class="home-table__th-label">{{ _displayNames.getColumnLabelByKey(col) }}</span>
-              <div class="home-table__th-search">
-                <i class="pi pi-search home-table__th-search-icon"></i>
-                <input
-                  class="home-table__th-search-input"
-                  type="text"
-                  [value]="_store.filters()[col] || ''"
-                  (input)="onFilterChange(col, $any($event.target).value)"
-                />
-                <button
-                  class="home-table__th-search-clear"
-                  [class.home-table__th-search-clear--hidden]="!_store.filters()[col]"
-                  type="button"
-                  (click)="onFilterChange(col, '')"
-                >
-                  <i class="pi pi-times"></i>
-                </button>
-              </div>
+              <app-table-column-header
+                [$label]="_displayNames.getColumnLabelByKey(col)"
+                [$filterValue]="_store.filters()[col] || ''"
+                (filterChange)="onFilterChange(col, $event)"
+              />
             </th>
           }
         </tr>
@@ -38,9 +25,7 @@
                 <td class="home-table__td home-table__td--checkbox"></td>
               }
               @for (col of _$displayColumns(); track col) {
-                <td class="home-table__td">
-                  <span class="home-table__skeleton"></span>
-                </td>
+                <td class="home-table__td"><span class="home-table__skeleton"></span></td>
               }
             </tr>
           }
@@ -64,22 +49,13 @@
                 <td
                   class="home-table__td home-table__td--{{ cellStatus(row[col]) }}"
                   (click)="onCellClick(row, col, $event)"
+                  (mouseenter)="onCellMouseEnter(row, col, $event)"
+                  (mouseleave)="onCellMouseLeave()"
                 >
-                  @if (getConflictHref(row, col); as href) {
-                    <a
-                      class="home-table__cell-text home-table__cell-link"
-                      [href]="href"
-                      (click)="$event.preventDefault()"
-                      (mouseenter)="onCellMouseEnter(row, col, $event)"
-                      (mouseleave)="onCellMouseLeave()"
-                    >{{ cellValue(row[col]) }}</a>
-                  } @else {
-                    <span
-                      class="home-table__cell-text"
-                      (mouseenter)="onCellMouseEnter(row, col, $event)"
-                      (mouseleave)="onCellMouseLeave()"
-                    >{{ cellValue(row[col]) }}</span>
-                  }
+                  <app-table-data-cell
+                    [$value]="cellValue(row[col])"
+                    [$href]="getConflictHref(row, col)"
+                  />
                 </td>
               }
             </tr>
@@ -91,9 +67,7 @@
                   <td class="home-table__td home-table__td--checkbox"></td>
                 }
                 @for (col of _$displayColumns(); track col) {
-                  <td class="home-table__td">
-                    <span class="home-table__skeleton"></span>
-                  </td>
+                  <td class="home-table__td"><span class="home-table__skeleton"></span></td>
                 }
               </tr>
             }

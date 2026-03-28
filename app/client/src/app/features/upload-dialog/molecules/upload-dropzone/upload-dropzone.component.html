@@ -1,0 +1,23 @@
+<div
+  class="upload-dialog__dropzone"
+  [class.upload-dialog__dropzone--dragging]="_$isDragging()"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave()"
+  (drop)="onDrop($event)"
+>
+  <span class="upload-dialog__upload-icon-wrap">
+    <i class="pi pi-cloud-upload"></i>
+  </span>
+  <p class="upload-dialog__drag-text">{{ _labelMap.dragText }}</p>
+  <p class="upload-dialog__browse-text">
+    <a class="upload-dialog__browse-link" (click)="onBrowseClick(fileInput)">{{ _labelMap.browseLink }}</a>
+    {{ _labelMap.browseSuffix }}
+  </p>
+  <input
+    #fileInput
+    type="file"
+    accept=".xlsx,.xls,.csv"
+    class="upload-dialog__file-input"
+    (change)="onFileSelected($event)"
+  />
+</div>

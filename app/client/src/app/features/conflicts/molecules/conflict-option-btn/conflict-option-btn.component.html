@@ -1,0 +1,34 @@
+<button
+  class="conflict-item__option"
+  [class.conflict-item__option--red]="$variant() === 'red'"
+  [class.conflict-item__option--white]="$variant() === 'white'"
+  [class.conflict-item__option--selected]="$isSelected()"
+  [disabled]="$isDisabled()"
+  (click)="selected.emit()"
+>
+  <span
+    class="conflict-item__dot"
+    [class.conflict-item__dot--active]="$isSelected()"
+  ></span>
+
+  @if ($isIdStyle()) {
+    <span
+      class="conflict-item__id"
+      [class.conflict-item__id--red]="$variant() === 'red'"
+      [class.conflict-item__id--yellow]="$isYellow()"
+    >{{ $label() }}</span>
+  } @else {
+    <span
+      class="conflict-item__value conflict-item__value--red"
+      [class.conflict-item__value--yellow]="$isYellow()"
+    >{{ $label() }}</span>
+  }
+
+  @if (_$metaLine()) {
+    <span class="conflict-item__meta">{{ _$metaLine() }}</span>
+  }
+
+  @if ($notes()) {
+    <span class="conflict-item__comment">{{ $notes() }}</span>
+  }
+</button>

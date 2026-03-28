@@ -3,6 +3,7 @@ type ValueHistoryTarget = {
   tableName: string;
   entityId: string;
   columnName: string;
+  anchorTop: number;
   anchorBottom: number;
   anchorCenterX: number;
 };
@@ -12,6 +13,7 @@ type RelationalHistoryTarget = {
   anchorTable: string;
   anchorId: string;
   relatedTable: string;
+  anchorTop: number;
   anchorBottom: number;
   anchorCenterX: number;
 };

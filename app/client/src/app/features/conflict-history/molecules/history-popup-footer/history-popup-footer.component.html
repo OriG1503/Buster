@@ -1,0 +1,29 @@
+<div class="history-footer">
+  @if ($isEditMode()) {
+    <app-popup-meta-field [$label]="'שם משתמש'" [$value]="$editUserName()" />
+    <div class="history-footer__edit-notes">
+      <label class="history-footer__edit-notes-label" for="edit-notes">הערות</label>
+      <textarea
+        id="edit-notes"
+        class="history-footer__edit-notes-input"
+        dir="rtl"
+        rows="2"
+        placeholder="הוסף הערה לשינוי..."
+        [value]="$editNotes()"
+        (input)="editNotesChange.emit($any($event.target).value)"
+      ></textarea>
+    </div>
+  } @else {
+    <div class="history-footer__meta-row">
+      <app-popup-meta-field [$label]="'שם משתמש'" [$value]="$resolverName() ?? '—'" />
+      <app-popup-meta-field [$label]="'תאריך הכרעה'" [$value]="$resolutionDate() ?? '—'" />
+    </div>
+    <app-popup-meta-field [$label]="'הערות'" [$value]="$resolutionNotes() ?? '—'" [$isNotes]="true" />
+  }
+  <button
+    class="history-footer__btn-confirm"
+    type="button"
+    [disabled]="$isSaving()"
+    (click)="confirm.emit()"
+  >{{ _$confirmLabel() }}</button>
+</div>

@@ -1,17 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, Observable, tap } from 'rxjs';
-import { JwtPayload } from '../../../shared/types/jwt-payload.type';
-import { MeResponse } from '../../../shared/types/me-response.type';
+
 import { Role, ROLE_LEVEL } from '../../../shared/consts/role.consts';
-
-const TOKEN_KEY = 'buster_access_token';
-
-const BUSTER_GROUP_ROLE: Record<string, Role> = {
-  buster_editor: Role.EDITOR,
-  buster_uploader: Role.UPLOADER,
-  buster_viewer: Role.VIEWER,
-};
+import { API_ROUTES } from '../../../shared/consts/api-routes.consts';
+import { JwtPayload } from './types/jwt-payload.type';
+import { MeResponse } from './types/me-response.type';
+import { TOKEN_KEY, BUSTER_GROUP_ROLE } from './auth.consts';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -23,7 +18,7 @@ export class AuthService {
    * Stores the returned token in localStorage.
    */
   public fetchMe(): Observable<void> {
-    return this._http.get<MeResponse>('/api/auth/me').pipe(
+    return this._http.get<MeResponse>(API_ROUTES.auth.me).pipe(
       tap((res) => localStorage.setItem(TOKEN_KEY, res.accessToken)),
       map(() => undefined),
     );

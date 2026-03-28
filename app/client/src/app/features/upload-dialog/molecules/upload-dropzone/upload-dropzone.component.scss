@@ -1,0 +1,53 @@
+.upload-dialog {
+  &__dropzone {
+    border: 2px dashed var(--color-navy-gray);
+    border-radius: 0.75rem;
+    padding: 3.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: border-color 0.2s, background-color 0.2s;
+
+    &--dragging {
+      border-color: var(--color-blue);
+      background-color: var(--color-option-hover);
+    }
+  }
+
+  &__upload-icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background-color: rgba(63, 112, 227, 0.15);
+    color: var(--color-blue);
+    font-size: 1.25rem;
+  }
+
+  &__drag-text {
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--color-dark-navy);
+    margin: 0;
+  }
+
+  &__browse-text {
+    font-size: var(--font-size-sm);
+    color: var(--color-dark-navy);
+    margin: 0;
+  }
+
+  &__browse-link {
+    color: var(--color-blue);
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  &__file-input {
+    display: none;
+  }
+}
