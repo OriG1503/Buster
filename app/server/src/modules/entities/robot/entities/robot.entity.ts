@@ -1,4 +1,4 @@
-import { Entity, OneToOne, ManyToOne, JoinColumn, RelationId } from 'typeorm';
+import { Entity, Column, OneToOne, ManyToOne, JoinColumn, RelationId } from 'typeorm';
 import { BaseEntity } from '../../../../shared/entities/base.entity';
 import { CardboardEntity } from '../../cardboard/entities/cardboard.entity';
 import { SensorEntity } from '../../sensor/entities/sensor.entity';
@@ -27,6 +27,18 @@ export class RobotEntity extends BaseEntity {
 
   @RelationId((robot: RobotEntity) => robot.communication)
   public communicationId: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  public carrier: string | null;
+
+  @Column({ type: 'boolean', nullable: true })
+  public isPurchased: boolean | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  public district: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  public storeName: string | null;
 
   @ManyToOne(() => WiringEntity, (wiring) => wiring.robots, { nullable: true, onDelete: 'SET NULL', onUpdate: 'CASCADE' })
   @JoinColumn({ name: 'wiringId' })

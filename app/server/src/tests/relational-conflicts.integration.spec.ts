@@ -72,8 +72,8 @@ const BASE_ROW: ParsedRow = {
     source: 'ERP',
     notes: null,
     wiring_type: 'Standard',
-    district: 'North',
-    store_name: 'Haifa',
+    wiring_district: 'North',
+    wiring_store_name: 'Haifa',
     storage: {
       storage_UUID: 'storage-test-001',
       source: 'ERP',

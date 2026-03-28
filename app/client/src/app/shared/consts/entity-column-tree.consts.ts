@@ -52,6 +52,10 @@ const ROBOT_GROUP: ColumnGroupStructure = {
     'robots.sensorId',
     'robots.communicationId',
     'robots.wiringId',
+    'robots.carrier',
+    'robots.isPurchased',
+    'robots.district',
+    'robots.storeName',
   ],
 };
 

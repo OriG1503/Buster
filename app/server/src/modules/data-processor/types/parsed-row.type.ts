@@ -34,8 +34,8 @@ export interface ParsedPlasticRow extends EntityRowBase {
 export interface ParsedWiringRow extends EntityRowBase {
   wiring_UUID: string;
   wiring_type: string | null;
-  district: string | null;
-  store_name: string | null;
+  wiring_district: string | null;
+  wiring_store_name: string | null;
   storage: ParsedStorageRow | null;
 }
 
@@ -60,6 +60,10 @@ export interface ParsedSensorRow extends EntityRowBase {
 
 export interface ParsedRow extends EntityRowBase {
   robot_UUID: string;
+  carrier: string | null;
+  is_purchased: string | null;
+  robot_district: string | null;
+  robot_store_name: string | null;
   cardboard: ParsedCardboardRow | null;
   sensor: ParsedSensorRow | null;
   communication: ParsedCommunicationRow | null;

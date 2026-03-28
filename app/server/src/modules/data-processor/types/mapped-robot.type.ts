@@ -5,4 +5,8 @@ export interface MappedRobot extends MappedEntityBase {
   sensorId: string | null;
   communicationId: string | null;
   wiringId: string | null;
+  carrier: string | null;
+  isPurchased: boolean | null;
+  district: string | null;
+  storeName: string | null;
 }
