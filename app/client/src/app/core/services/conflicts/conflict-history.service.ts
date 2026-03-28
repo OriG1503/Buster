@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { ConflictHistoryResponse } from '../../../shared/types/conflict-history-response.type';
-import { RevertConflictParams } from '../../../shared/types/revert-conflict-params.type';
+import { RevertConflictParams } from './types/revert-conflict-params.type';
 import { RelationalHistoryResponse } from '../../../shared/types/relational-history-response.type';
 
 @Injectable({ providedIn: 'root' })

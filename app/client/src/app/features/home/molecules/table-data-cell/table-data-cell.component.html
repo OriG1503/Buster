@@ -1,0 +1,9 @@
+@if ($href(); as href) {
+  <a
+    class="home-table__cell-text home-table__cell-link"
+    [href]="href"
+    (click)="$event.preventDefault()"
+  >{{ $value() }}</a>
+} @else {
+  <span class="home-table__cell-text">{{ $value() }}</span>
+}

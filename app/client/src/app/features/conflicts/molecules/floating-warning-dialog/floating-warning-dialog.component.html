@@ -1,0 +1,13 @@
+<div class="floating-warning-dialog__overlay">
+  <div class="floating-warning-dialog__dialog">
+    <p class="floating-warning-dialog__text">{{ $message() }}</p>
+    <div class="floating-warning-dialog__actions">
+      <button class="floating-warning-dialog__confirm" (click)="confirmed.emit()">
+        {{ $confirmLabel() }}
+      </button>
+      <button class="floating-warning-dialog__cancel" (click)="cancelled.emit()">
+        {{ $cancelLabel() }}
+      </button>
+    </div>
+  </div>
+</div>

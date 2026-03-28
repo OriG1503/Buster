@@ -1,6 +1,7 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 
 import { ConflictHistoryService } from '../../../../core/services/conflicts/conflict-history.service';
+import { HistoryPopupFooterComponent } from '../../molecules/history-popup-footer/history-popup-footer.component';
 import { ConflictHistoryResponse } from '../../../../shared/types/conflict-history-response.type';
 import { RelationalHistoryAnchor, RelationalHistoryGroup, RelationalHistoryResponse } from '../../../../shared/types/relational-history-response.type';
 import { HistoryTarget } from '../../../../shared/types/history-target.type';
@@ -11,7 +12,7 @@ import { PermissionsService } from '../../../../core/services/permissions/permis
 
 @Component({
   selector: 'app-conflict-history-popup',
-  imports: [],
+  imports: [HistoryPopupFooterComponent],
   templateUrl: './conflict-history-popup.component.html',
   styleUrl: './conflict-history-popup.component.scss',
 })

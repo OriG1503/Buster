@@ -2,27 +2,11 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-import { ConflictCountResponse } from '../../../shared/types/conflict-count-response.type';
 import { ConflictGroup } from '../../../shared/types/conflict-group.type';
 import { ConflictEntityDetail } from '../../../shared/types/conflict-entity-detail.type';
-
-type ResolveValueConflictParams = {
-  tableName: string;
-  entityId: string;
-  columnName: string;
-  winnerValue: string;
-  conflictResolver: string;
-  resolutionNotes: string;
-};
-
-type ResolveRelationalConflictParams = {
-  conflictIds: number[];
-  winnerRelatedId: string;
-  winnerChildId?: string | null;
-  winnerChildFkField?: string | null;
-  conflictResolver: string;
-  resolutionNotes?: string | null;
-};
+import { ConflictCountResponse } from './types/conflict-count-response.type';
+import { ResolveValueConflictParams } from './types/resolve-value-conflict-params.type';
+import { ResolveRelationalConflictParams } from './types/resolve-relational-conflict-params.type';
 
 @Injectable({ providedIn: 'root' })
 export class ConflictsService {

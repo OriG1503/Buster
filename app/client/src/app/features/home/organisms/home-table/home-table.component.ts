@@ -3,6 +3,8 @@ import { Router } from '@angular/router';
 
 import { ConflictHistoryPopupComponent } from '../../../conflict-history/organisms/conflict-history-popup/conflict-history-popup.component';
 import { CellInfoPopupComponent } from '../cell-info-popup/cell-info-popup.component';
+import { TableColumnHeaderComponent } from '../../molecules/table-column-header/table-column-header.component';
+import { TableDataCellComponent } from '../../molecules/table-data-cell/table-data-cell.component';
 import { HomeStore } from '../../../../core/store/home.store';
 import { DisplayNamesService } from '../../../../core/services/display-names/display-names.service';
 import { FK_TO_ENTITY_ID } from '../../../../shared/consts/fk-to-entity-id.consts';
@@ -13,7 +15,7 @@ import { CellInfoTarget } from '../../types/cell-info-target.type';
 
 @Component({
   selector: 'app-home-table',
-  imports: [ConflictHistoryPopupComponent, CellInfoPopupComponent],
+  imports: [ConflictHistoryPopupComponent, CellInfoPopupComponent, TableColumnHeaderComponent, TableDataCellComponent],
   templateUrl: './home-table.component.html',
   styleUrl: './home-table.component.scss',
 })
