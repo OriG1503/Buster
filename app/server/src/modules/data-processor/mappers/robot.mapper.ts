@@ -1,8 +1,9 @@
+import { MappedEntity } from '../../../shared/types/mapped-entity.type';
+import { RobotInsertData } from '../../entities/robot/types/robot-insert-data.type';
 import { ParsedRow } from '../types/parsed-row.type';
-import { MappedRobot } from '../types/mapped-robot.type';
 import { nullIfEmpty, parseBool } from './mapper.utils';
 
-export const mapRobotRow = (row: ParsedRow): MappedRobot | null => {
+export const mapRobotRow = (row: ParsedRow): MappedEntity<RobotInsertData> | null => {
   const id = nullIfEmpty(row.robot_UUID);
   if (!id) { return null; }
   return {

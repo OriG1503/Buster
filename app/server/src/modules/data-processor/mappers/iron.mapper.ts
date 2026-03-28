@@ -1,8 +1,9 @@
+import { MappedEntity } from '../../../shared/types/mapped-entity.type';
+import { IronInsertData } from '../../entities/iron/types/iron-insert-data.type';
 import { ParsedIronRow } from '../types/parsed-row.type';
-import { MappedIron } from '../types/mapped-iron.type';
 import { nullIfEmpty, parseBool } from './mapper.utils';
 
-export const mapIronRow = (raw: ParsedIronRow | null): MappedIron | null => {
+export const mapIronRow = (raw: ParsedIronRow | null): MappedEntity<IronInsertData> | null => {
   if (!raw) { return null; }
   return {
     id: nullIfEmpty(raw.iron_UUID) as string,

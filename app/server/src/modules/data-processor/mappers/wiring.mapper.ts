@@ -1,8 +1,9 @@
+import { MappedEntity } from '../../../shared/types/mapped-entity.type';
+import { WiringInsertData } from '../../entities/wiring/types/wiring-insert-data.type';
 import { ParsedRow } from '../types/parsed-row.type';
-import { MappedWiring } from '../types/mapped-wiring.type';
 import { nullIfEmpty } from './mapper.utils';
 
-export const mapWiringRow = (row: ParsedRow): MappedWiring | null => {
+export const mapWiringRow = (row: ParsedRow): MappedEntity<WiringInsertData> | null => {
   const raw = row.wiring;
   if (!raw) { return null; }
   return {

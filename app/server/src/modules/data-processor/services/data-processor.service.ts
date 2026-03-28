@@ -5,20 +5,19 @@ import { FK_FIELD_TO_TABLE } from '../../../shared/consts/fk-field-to-table.cons
 import { ONE_TO_ONE_FK_FIELDS } from '../../../shared/consts/one-to-one-fk-fields.const';
 import { BaseEntity } from '../../../shared/entities/base.entity';
 import { EntityValue } from '../../../shared/types/entity-value.type';
+import { EntityService } from '../../../shared/types/entity-service.type';
 import { EntityServiceRegistry } from '../../../shared/services/entity-service-registry.service';
 import { ValueConflictRepository } from '../../entities/conflict/value-conflict.repository';
 import { ValueConflictService } from '../../entities/conflict/services/value-conflict.service';
 import { RelationalConflictDetectionService } from '../../entities/conflict/services/relational-conflict-detection.service';
 import { ParserRowMapper } from '../mappers/parser-row.mapper';
 import { ParsedRowEnricher } from './parsed-row-enricher.service';
-import { EntityService } from '../../../shared/types/entity-service.type';
 import { FlyingField } from '../types/flying-field.type';
 import { ParsedRow } from '../types/parsed-row.type';
 import { ProcessResult } from '../types/process-result.type';
 import { MappedEntityBase } from '../types/mapped-entity-base.type';
-
-type EntityResult = { count: number; conflictIds: number[]; flyingField: FlyingField | null; totalFields: number; wasSkipped: boolean };
-type RowResult = { conflictCount: number; conflictIds: number[]; flyingFields: FlyingField[]; totalFields: number };
+import { EntityResult } from '../types/entity-result.type';
+import { RowResult } from '../types/row-result.type';
 
 @Injectable()
 export class DataProcessorService {
@@ -53,13 +52,16 @@ export class DataProcessorService {
       Promise.resolve([]),
     );
 
+    return this._aggregateResults(results);
+  }
+
+  private _aggregateResults(results: RowResult[]): ProcessResult {
     const conflictCount = results.reduce((sum, r) => sum + r.conflictCount, 0);
     const conflictIds = results.flatMap((r) => r.conflictIds);
     const flyingFields = results.flatMap((r) => r.flyingFields);
     const totalFields = results.reduce((sum, r) => sum + r.totalFields, 0);
     const flyingFieldCount = flyingFields.reduce((sum, f) => sum + f.redFields.length, 0);
     const uploadPercentage = totalFields > 0 ? Math.round(((totalFields - flyingFieldCount) / totalFields) * 100) : 100;
-
     this._logger.log(`Processing done — ${uploadPercentage}% uploaded, ${conflictCount} conflicts detected`);
     return { conflictCount, conflictIds, flyingFields, uploadPercentage };
   }
@@ -117,8 +119,8 @@ export class DataProcessorService {
   /**
    * Returns a copy of the mapped entity with any FK fields that point to a skipped entity nulled out.
    * Prevents FK constraint violations when an upstream entity was skipped (UUID-only, no data).
-   * The null propagation cascades naturally: if plastic is skipped and communication then has
-   * no remaining non-null fields, it too will be treated as UUID-only and skipped.
+   * Null propagation cascades: if plastic is skipped and communication then has no remaining
+   * non-null fields, it too will be treated as UUID-only and skipped.
    */
   private _nullifySkippedFKs(mapped: MappedEntityBase | null, skippedByTable: Map<string, Set<string>>): MappedEntityBase | null {
     if (!mapped || skippedByTable.size === 0) { return mapped; }
@@ -149,36 +151,16 @@ export class DataProcessorService {
     const mappedRecord = mapped as MappedEntityBase & Record<string, EntityValue>;
 
     if (!mappedRecord.id) {
-      // FK fields (e.g. plasticId, ironId) have no direct CSV column — child entities are processed
-      // independently, so only actual data fields are counted and colored red.
-      // The UUID cell is always colored yellow (it's empty — the user needs to fill it in).
-      const dataFields = Object.keys(mappedRecord).filter(
-        (k) => k !== 'id' && k !== 'source' && k !== 'notes' && !k.endsWith('Id') && mappedRecord[k] !== null,
-      );
-      return {
-        count: 0, conflictIds: [],
-        flyingField: { entity: service.tableName, rowIndex, redFields: dataFields, yellowFields: [], isUuidRed: false },
-        totalFields: dataFields.length, wasSkipped: false,
-      };
+      return this._buildMissingIdResult(service.tableName, rowIndex, mappedRecord);
     }
 
     const { source: incomingSource, notes: incomingNotes, id, ...incomingFields } = mappedRecord;
     const nonNullFieldCount = Object.keys(incomingFields).filter((k) => incomingFields[k] !== null).length;
 
-    // UUID-only row (no data fields) — insert a stub record so the entity exists in the DB,
+    // UUID-only row (no data fields) — insert a stub so the entity exists in the DB
     // and flag it in the report so the user knows which fields to fill in.
     if (nonNullFieldCount === 0) {
-      const metaFields = Object.keys(incomingFields).filter((k) => !k.endsWith('Id'));
-      try {
-        await service.insert({ id, ...incomingFields }, incomingSource, incomingNotes);
-      } catch (error) {
-        if (!(error instanceof QueryFailedError) || (error as any).code !== PG_UNIQUE_VIOLATION) { throw error; }
-      }
-      return {
-        count: 0, conflictIds: [],
-        flyingField: { entity: service.tableName, rowIndex, redFields: [], yellowFields: metaFields, isUuidRed: true },
-        totalFields: 0, wasSkipped: false,
-      };
+      return this._handleUuidOnlyRow(service, id, incomingFields, incomingSource, incomingNotes, rowIndex);
     }
 
     const storedRecord = await service.findById(id);
@@ -188,6 +170,39 @@ export class DataProcessorService {
     }
 
     return this._updateExistingEntity(service, id, storedRecord, incomingFields, incomingSource, incomingNotes, username, nonNullFieldCount);
+  }
+
+  /** Returns a flying-field result when no UUID is present — marks data fields red so user knows to fill them. */
+  private _buildMissingIdResult(tableName: string, rowIndex: number, record: Record<string, EntityValue>): EntityResult {
+    // FK fields (e.g. plasticId) have no direct CSV column — only count actual data fields.
+    const dataFields = Object.keys(record).filter(
+      (k) => k !== 'id' && k !== 'source' && k !== 'notes' && !k.endsWith('Id') && record[k] !== null,
+    );
+    return {
+      count: 0, conflictIds: [],
+      flyingField: { entity: tableName, rowIndex, redFields: dataFields, yellowFields: [], isUuidRed: false },
+      totalFields: dataFields.length, wasSkipped: false,
+    };
+  }
+
+  /** Inserts a UUID-only stub and flags all non-FK fields yellow (to be filled in later). */
+  private async _handleUuidOnlyRow(
+    service: EntityService<{ id: string }>,
+    id: string, incomingFields: Record<string, EntityValue>,
+    incomingSource: string, incomingNotes: string | null, rowIndex: number,
+  ): Promise<EntityResult> {
+    const metaFields = Object.keys(incomingFields).filter((k) => !k.endsWith('Id'));
+    try {
+      await service.insert({ id, ...incomingFields }, incomingSource, incomingNotes);
+    } catch (error) {
+      const pgError = error as { code?: string };
+      if (!(error instanceof QueryFailedError) || pgError.code !== PG_UNIQUE_VIOLATION) { throw error; }
+    }
+    return {
+      count: 0, conflictIds: [],
+      flyingField: { entity: service.tableName, rowIndex, redFields: [], yellowFields: metaFields, isUuidRed: true },
+      totalFields: 0, wasSkipped: false,
+    };
   }
 
   /**
@@ -208,38 +223,44 @@ export class DataProcessorService {
       await Promise.all(
         Object.keys(incomingFields)
           .filter((field) => field.endsWith('Id') && ONE_TO_ONE_FK_FIELDS.has(field) && incomingFields[field] != null)
-          .map(async (fkField) => {
-            const childId = String(incomingFields[fkField]);
-            const existingOwner = await service.findByFkValue(fkField, childId, id);
-
-            if (!existingOwner) { return null; }
-
-            cleanedFields[fkField] = null;
-            const childTable = FK_FIELD_TO_TABLE[fkField];
-            const childEntity = await this._registry.get(childTable).findById(childId);
-
-            return this._relationalConflictDetectionService.detectTwoFathers(
-              childId, childTable,
-              childEntity?.source?.[fkField] ?? null,
-              childEntity?.notes?.[fkField] ?? null,
-              existingOwner.id as string, id,
-              service.tableName,
-              (existingOwner.source as Record<string, string | null> | null)?.[fkField] ?? null,
-              (existingOwner.notes as Record<string, string | null> | null)?.[fkField] ?? null,
-              incomingSource, incomingNotes,
-              username,
-            );
-          }),
+          .map((fkField) => this._detectTwoFathersForFk(service, id, fkField, cleanedFields, incomingSource, incomingNotes, username)),
       )
-    ).filter((id): id is number => id !== null);
+    ).filter((conflictId): conflictId is number => conflictId !== null);
 
     try {
       await service.insert({ id, ...cleanedFields }, incomingSource, incomingNotes);
     } catch (error) {
-      if (!(error instanceof QueryFailedError) || (error as any).code !== PG_UNIQUE_VIOLATION) { throw error; }
+      const pgError = error as { code?: string };
+      if (!(error instanceof QueryFailedError) || pgError.code !== PG_UNIQUE_VIOLATION) { throw error; }
     }
 
     return { count: relationalConflictIds.length, conflictIds: [], flyingField: null, totalFields: nonNullFieldCount, wasSkipped: false };
+  }
+
+  /** Checks one FK field for a TWO_FATHERS conflict on insert. Mutates cleanedFields to null out the FK if conflicted. */
+  private async _detectTwoFathersForFk(
+    service: EntityService<{ id: string }>,
+    id: string, fkField: string,
+    cleanedFields: Record<string, EntityValue>,
+    incomingSource: string, incomingNotes: string | null,
+    username: string,
+  ): Promise<number | null> {
+    const childId = String(cleanedFields[fkField]);
+    const existingOwner = await service.findByFkValue(fkField, childId, id);
+    if (!existingOwner) { return null; }
+
+    cleanedFields[fkField] = null;
+    const childTable = FK_FIELD_TO_TABLE[fkField];
+    const childEntity = await this._registry.get(childTable).findById(childId);
+
+    return this._relationalConflictDetectionService.detectTwoFathers(
+      childId, childTable,
+      childEntity?.source?.[fkField] ?? null, childEntity?.notes?.[fkField] ?? null,
+      existingOwner.id as string, id, service.tableName,
+      (existingOwner.source as Record<string, string | null> | null)?.[fkField] ?? null,
+      (existingOwner.notes as Record<string, string | null> | null)?.[fkField] ?? null,
+      incomingSource, incomingNotes, username,
+    );
   }
 
   /**
@@ -262,26 +283,13 @@ export class DataProcessorService {
       incomingFields, incomingSource, username, incomingNotes,
     );
 
-    let conflictIds: number[] = [];
-    if (result.conflictsToCreate.length > 0) {
-      await this._valueConflictRepository.insertMany(result.conflictsToCreate, true);
-      conflictIds = await this._valueConflictRepository.findOpenIdsByData(
-        result.conflictsToCreate.map((c) => ({
-          tableName: c.tableName as string,
-          entityId: c.entityId as string,
-          columnName: c.columnName as string,
-          newValue: c.newValue as string,
-        })),
-      );
-    }
-
+    const conflictIds = await this._persistValueConflicts(result.conflictsToCreate);
     const relationalCount = await this._detectTwoChildsConflicts(service, id, storedRecord, incomingFields, incomingSource, incomingNotes, username);
 
     // Check FK gap-fills for TWO_FATHERS before applying the update.
     // detectConflicts puts FK fields with stored=null into fieldsToUpdate, but doesn't check
     // whether the incoming child is already owned by another parent — this would violate the
-    // OneToOne unique constraint. Detect such cases here, remove them from the pending update,
-    // and create a relational conflict record instead.
+    // OneToOne unique constraint. Detect such cases, remove them from the update, create conflicts.
     const gapFillRelationalCount = await this._checkFkGapFillTwoFathers(
       service, id, result.fieldsToUpdate, result.sourceUpdates, result.notesUpdates,
       incomingSource, incomingNotes, username,
@@ -292,19 +300,33 @@ export class DataProcessorService {
         await service.update(id, result.fieldsToUpdate, result.sourceUpdates, storedRecord.source, result.notesUpdates, storedRecord.notes);
       }
     } catch (error) {
-      if (!(error instanceof QueryFailedError) || (error as any).code !== PG_UNIQUE_VIOLATION) { throw error; }
+      const pgError = error as { code?: string };
+      if (!(error instanceof QueryFailedError) || pgError.code !== PG_UNIQUE_VIOLATION) { throw error; }
       this._logger.warn(`Gap-fill update skipped for ${service.tableName}/${id} — unique constraint violation`);
     }
 
     return { count: result.conflictsToCreate.length + relationalCount + gapFillRelationalCount, conflictIds, flyingField: null, totalFields: nonNullFieldCount, wasSkipped: false };
   }
 
+  /** Persists value conflicts and returns their IDs. Returns empty array if none to create. */
+  private async _persistValueConflicts(conflictsToCreate: Record<string, EntityValue>[]): Promise<number[]> {
+    if (conflictsToCreate.length === 0) { return []; }
+    await this._valueConflictRepository.insertMany(conflictsToCreate, true);
+    return this._valueConflictRepository.findOpenIdsByData(
+      conflictsToCreate.map((c) => ({
+        tableName: c.tableName as string,
+        entityId: c.entityId as string,
+        columnName: c.columnName as string,
+        newValue: c.newValue as string,
+      })),
+    );
+  }
+
   /**
    * For FK fields being gap-filled (stored null → incoming value), checks whether the target
-   * child entity is already owned by another parent entity (TWO_FATHERS situation).
-   * Mutates fieldsToUpdate / sourceUpdates / notesUpdates in-place — removes the conflicting
-   * FK field so the caller's update does not attempt to set an already-claimed FK.
-   * Creates a TWO_FATHERS relational conflict record for each case found.
+   * child entity is already owned by another parent (TWO_FATHERS situation).
+   * Mutates fieldsToUpdate / sourceUpdates / notesUpdates — removes the conflicting FK field
+   * so the caller's update does not attempt to set an already-claimed FK.
    */
   private async _checkFkGapFillTwoFathers(
     service: EntityService<{ id: string }>,
@@ -317,32 +339,42 @@ export class DataProcessorService {
   ): Promise<number> {
     const fkFields = Object.keys(fieldsToUpdate).filter((k) => k.endsWith('Id'));
     const counts = await Promise.all(
-      fkFields.map(async (fkField) => {
-        const incomingChildId = String(fieldsToUpdate[fkField]);
-        const relatedTable = FK_FIELD_TO_TABLE[fkField];
-        if (!relatedTable) { return 0; }
-        const existingOwner = await service.findByFkValue(fkField, incomingChildId, id);
-        if (!existingOwner) { return 0; }
-        // Child is already claimed — remove from gap-fill and create a TWO_FATHERS conflict.
-        delete fieldsToUpdate[fkField];
-        delete sourceUpdates[fkField];
-        delete notesUpdates[fkField];
-        const childEntity = await this._registry.get(relatedTable).findById(incomingChildId);
-        const conflictId = await this._relationalConflictDetectionService.detectTwoFathers(
-          incomingChildId, relatedTable,
-          childEntity?.source?.[fkField] ?? null,
-          childEntity?.notes?.[fkField] ?? null,
-          existingOwner.id as string, id,
-          service.tableName,
-          (existingOwner.source as Record<string, string | null> | null)?.[fkField] ?? null,
-          (existingOwner.notes as Record<string, string | null> | null)?.[fkField] ?? null,
-          incomingSource, incomingNotes,
-          username,
-        );
-        return conflictId !== null ? 1 : 0;
-      }),
+      fkFields.map((fkField) => this._checkOneFkGapFillTwoFathers(service, id, fkField, fieldsToUpdate, sourceUpdates, notesUpdates, incomingSource, incomingNotes, username)),
     );
     return counts.reduce((sum, c) => sum + c, 0);
+  }
+
+  /** Checks a single FK field for a TWO_FATHERS conflict during gap-fill. Returns 1 if conflict created, 0 otherwise. */
+  private async _checkOneFkGapFillTwoFathers(
+    service: EntityService<{ id: string }>,
+    id: string, fkField: string,
+    fieldsToUpdate: Record<string, EntityValue>,
+    sourceUpdates: Record<string, string>,
+    notesUpdates: Record<string, string | null>,
+    incomingSource: string, incomingNotes: string | null,
+    username: string,
+  ): Promise<number> {
+    const incomingChildId = String(fieldsToUpdate[fkField]);
+    const relatedTable = FK_FIELD_TO_TABLE[fkField];
+    if (!relatedTable) { return 0; }
+    const existingOwner = await service.findByFkValue(fkField, incomingChildId, id);
+    if (!existingOwner) { return 0; }
+
+    // Child is already claimed — remove from gap-fill and create a TWO_FATHERS conflict.
+    delete fieldsToUpdate[fkField];
+    delete sourceUpdates[fkField];
+    delete notesUpdates[fkField];
+
+    const childEntity = await this._registry.get(relatedTable).findById(incomingChildId);
+    const conflictId = await this._relationalConflictDetectionService.detectTwoFathers(
+      incomingChildId, relatedTable,
+      childEntity?.source?.[fkField] ?? null, childEntity?.notes?.[fkField] ?? null,
+      existingOwner.id as string, id, service.tableName,
+      (existingOwner.source as Record<string, string | null> | null)?.[fkField] ?? null,
+      (existingOwner.notes as Record<string, string | null> | null)?.[fkField] ?? null,
+      incomingSource, incomingNotes, username,
+    );
+    return conflictId !== null ? 1 : 0;
   }
 
   /**
@@ -366,26 +398,32 @@ export class DataProcessorService {
           const incomingValue = incomingFields[field];
           return storedValue != null && incomingValue != null && storedValue !== incomingValue;
         })
-        .map(async (fkField) => {
-          const oldRelatedId = String(storedRecord_[fkField]);
-          const newRelatedId = String(incomingFields[fkField]);
-          const relatedTable = FK_FIELD_TO_TABLE[fkField];
-
-          if (!relatedTable) { return null; }
-
-          return this._relationalConflictDetectionService.detectTwoChilds(
-            id, service.tableName,
-            storedRecord.source?.[fkField] ?? null,
-            storedRecord.notes?.[fkField] ?? null,
-            oldRelatedId, newRelatedId, relatedTable,
-            storedRecord.source?.[fkField] ?? null,
-            storedRecord.notes?.[fkField] ?? null,
-            incomingSource, incomingNotes,
-            username,
-          );
-        }),
+        .map((fkField) => this._detectOneTwoChildsConflict(service, id, fkField, storedRecord, storedRecord_, incomingFields, incomingSource, incomingNotes, username)),
     );
 
     return results.filter((conflictId): conflictId is number => conflictId !== null).length;
+  }
+
+  /** Detects a single TWO_CHILDS relational conflict for a differing FK field. */
+  private async _detectOneTwoChildsConflict(
+    service: EntityService<{ id: string }>,
+    id: string, fkField: string,
+    storedRecord: BaseEntity, storedRecord_: Record<string, EntityValue>,
+    incomingFields: Record<string, EntityValue>,
+    incomingSource: string, incomingNotes: string | null,
+    username: string,
+  ): Promise<number | null> {
+    const oldRelatedId = String(storedRecord_[fkField]);
+    const newRelatedId = String(incomingFields[fkField]);
+    const relatedTable = FK_FIELD_TO_TABLE[fkField];
+    if (!relatedTable) { return null; }
+
+    return this._relationalConflictDetectionService.detectTwoChilds(
+      id, service.tableName,
+      storedRecord.source?.[fkField] ?? null, storedRecord.notes?.[fkField] ?? null,
+      oldRelatedId, newRelatedId, relatedTable,
+      storedRecord.source?.[fkField] ?? null, storedRecord.notes?.[fkField] ?? null,
+      incomingSource, incomingNotes, username,
+    );
   }
 }

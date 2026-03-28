@@ -1,8 +1,9 @@
+import { MappedEntity } from '../../../shared/types/mapped-entity.type';
+import { CardboardInsertData } from '../../entities/cardboard/types/cardboard-insert-data.type';
 import { ParsedRow } from '../types/parsed-row.type';
-import { MappedCardboard } from '../types/mapped-cardboard.type';
 import { nullIfEmpty } from './mapper.utils';
 
-export const mapCardboardRow = (row: ParsedRow): MappedCardboard | null => {
+export const mapCardboardRow = (row: ParsedRow): MappedEntity<CardboardInsertData> | null => {
   const raw = row.cardboard;
   if (!raw) { return null; }
   return {

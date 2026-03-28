@@ -1,8 +1,9 @@
+import { MappedEntity } from '../../../shared/types/mapped-entity.type';
+import { CommunicationInsertData } from '../../entities/communication/types/communication-insert-data.type';
 import { ParsedCommunicationRow } from '../types/parsed-row.type';
-import { MappedCommunication } from '../types/mapped-communication.type';
 import { nullIfEmpty } from './mapper.utils';
 
-export const mapCommunicationRow = (raw: ParsedCommunicationRow | null): MappedCommunication | null => {
+export const mapCommunicationRow = (raw: ParsedCommunicationRow | null): MappedEntity<CommunicationInsertData> | null => {
   if (!raw) { return null; }
   return {
     id: nullIfEmpty(raw.communication_UUID) as string,

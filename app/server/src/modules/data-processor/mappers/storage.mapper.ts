@@ -1,8 +1,9 @@
+import { MappedEntity } from '../../../shared/types/mapped-entity.type';
+import { StorageInsertData } from '../../entities/storage/types/storage-insert-data.type';
 import { ParsedStorageRow } from '../types/parsed-row.type';
-import { MappedStorage } from '../types/mapped-storage.type';
 import { nullIfEmpty, parseBool } from './mapper.utils';
 
-export const mapStorageRow = (raw: ParsedStorageRow | null): MappedStorage | null => {
+export const mapStorageRow = (raw: ParsedStorageRow | null): MappedEntity<StorageInsertData> | null => {
   if (!raw) { return null; }
   return {
     id: nullIfEmpty(raw.storage_UUID) as string,

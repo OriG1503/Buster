@@ -1,8 +1,9 @@
+import { MappedEntity } from '../../../shared/types/mapped-entity.type';
+import { BatteryInsertData } from '../../entities/battery/types/battery-insert-data.type';
 import { ParsedBatteryRow } from '../types/parsed-row.type';
-import { MappedBattery } from '../types/mapped-battery.type';
 import { nullIfEmpty, parseBool } from './mapper.utils';
 
-export const mapBatteryRow = (raw: ParsedBatteryRow | null): MappedBattery | null => {
+export const mapBatteryRow = (raw: ParsedBatteryRow | null): MappedEntity<BatteryInsertData> | null => {
   if (!raw) { return null; }
   return {
     id: nullIfEmpty(raw.battery_UUID) as string,
