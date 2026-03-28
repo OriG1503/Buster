@@ -8,7 +8,6 @@ import { MappedWiring } from '../types/mapped-wiring.type';
 import { MappedCommunication } from '../types/mapped-communication.type';
 import { MappedCardboard } from '../types/mapped-cardboard.type';
 import { MappedSensor } from '../types/mapped-sensor.type';
-import { MappedSale } from '../types/mapped-sale.type';
 import { MappedRobot } from '../types/mapped-robot.type';
 import { mapBatteryRow } from './battery.mapper';
 import { mapStorageRow } from './storage.mapper';
@@ -18,7 +17,6 @@ import { mapWiringRow } from './wiring.mapper';
 import { mapCommunicationRow } from './communication.mapper';
 import { mapCardboardRow } from './cardboard.mapper';
 import { mapSensorRow } from './sensor.mapper';
-import { mapSaleRow } from './sale.mapper';
 import { mapRobotRow } from './robot.mapper';
 
 @Injectable()
@@ -31,6 +29,5 @@ export class ParserRowMapper {
   public mapCommunication(row: ParsedRow): MappedCommunication | null { return mapCommunicationRow(row.communication); }
   public mapCardboard(row: ParsedRow): MappedCardboard | null { return mapCardboardRow(row); }
   public mapSensor(row: ParsedRow): MappedSensor | null { return mapSensorRow(row); }
-  public mapSale(row: ParsedRow): MappedSale | null { return mapSaleRow(row); }
   public mapRobot(row: ParsedRow): MappedRobot | null { return mapRobotRow(row); }
 }

@@ -18,7 +18,6 @@ const TABLES_TO_TRUNCATE = [
   'storages',
   'sensors',
   'cardboards',
-  'sales',
 ];
 
 const BASE_ROW: ParsedRow = {
@@ -84,19 +83,6 @@ const BASE_ROW: ParsedRow = {
       is_stock_netanya: 'true',
       is_stock_afula: 'false',
     },
-  },
-  sale: {
-    sale_UUID: 'sale-test-001',
-    source: 'ERP',
-    notes: null,
-    carrier: 'DHL',
-    salesperson: 'Alice',
-    is_purchased: 'true',
-    online_store_name: null,
-    is_stock_ashdod: null,
-    is_stock_tel_aviv: null,
-    is_stock_rehovot: null,
-    data_source: null,
   },
 };
 

@@ -4,7 +4,6 @@ export const FK_FIELD_TO_TABLE: Record<string, string> = {
   wiringId: 'wirings',
   cardboardId: 'cardboards',
   sensorId: 'sensors',
-  saleId: 'sales',
   plasticId: 'plastics',
   ironId: 'irons',
   batteryId: 'batteries',
@@ -13,7 +12,7 @@ export const FK_FIELD_TO_TABLE: Record<string, string> = {
 
 /** Maps each table to the FK fields it owns (pointing down the tree). */
 export const ENTITY_CHILDREN_FK_FIELDS: Record<string, string[]> = {
-  robots: ['communicationId', 'wiringId', 'cardboardId', 'sensorId', 'saleId'],
+  robots: ['communicationId', 'wiringId', 'cardboardId', 'sensorId'],
   communications: ['plasticId', 'ironId'],
   plastics: ['batteryId'],
   wirings: ['storageId'],
@@ -22,7 +21,6 @@ export const ENTITY_CHILDREN_FK_FIELDS: Record<string, string[]> = {
   irons: [],
   cardboards: [],
   sensors: [],
-  sales: [],
 };
 
 /**
@@ -35,7 +33,6 @@ export const ONE_TO_ONE_FK_FIELDS = new Set([
   'communicationId',
   'cardboardId',
   'sensorId',
-  'saleId',
   'plasticId',
   'ironId',
   'batteryId',

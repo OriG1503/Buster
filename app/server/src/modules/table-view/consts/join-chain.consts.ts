@@ -7,7 +7,7 @@ export type JoinDef = {
  * Maps each joinable table to the table + FK column that owns the relationship.
  * Captures the full entity graph (Robot as the natural root):
  *
- *   Sale ←── Robot ──→ Cardboard
+ *   Robot ──→ Cardboard
  *                 ├──→ Sensor
  *                 ├──→ Communication ──→ Plastic ──→ Battery
  *                 │                  └──→ Iron
@@ -17,7 +17,6 @@ export const PARENT_JOIN: Record<string, JoinDef> = {
   sensors: { parentTable: 'robots', fkColumn: 'sensorId' },
   cardboards: { parentTable: 'robots', fkColumn: 'cardboardId' },
   communications: { parentTable: 'robots', fkColumn: 'communicationId' },
-  sales: { parentTable: 'robots', fkColumn: 'saleId' },
   wirings: { parentTable: 'robots', fkColumn: 'wiringId' },
   plastics: { parentTable: 'communications', fkColumn: 'plasticId' },
   irons: { parentTable: 'communications', fkColumn: 'ironId' },
@@ -33,7 +32,6 @@ export const JOIN_ORDER: string[] = [
   'sensors',
   'cardboards',
   'communications',
-  'sales',
   'wirings',
   'plastics',
   'irons',

@@ -6,7 +6,6 @@ import { PlasticModule } from './modules/entities/plastic/plastic.module';
 import { IronModule } from './modules/entities/iron/iron.module';
 import { CommunicationModule } from './modules/entities/communication/communication.module';
 import { SensorModule } from './modules/entities/sensor/sensor.module';
-import { SaleModule } from './modules/entities/sale/sale.module';
 import { CardboardModule } from './modules/entities/cardboard/cardboard.module';
 import { RobotModule } from './modules/entities/robot/robot.module';
 import { StorageModule } from './modules/entities/storage/storage.module';
@@ -49,7 +48,6 @@ import { DisplayNamesModule } from './modules/display-names/display-names.module
     IronModule,
     CommunicationModule,
     SensorModule,
-    SaleModule,
     CardboardModule,
     RobotModule,
     StorageModule,

@@ -83,13 +83,12 @@ export class DataProcessorService {
     };
 
     // Level 1 — independent leaves: no FK dependencies on each other
-    const [batteryResult, storageResult, ironResult, cardboardResult, sensorResult, saleResult] = await Promise.all([
+    const [batteryResult, storageResult, ironResult, cardboardResult, sensorResult] = await Promise.all([
       run(this._mapper.mapBattery(enriched), this._registry.get('batteries')),
       run(this._mapper.mapStorage(enriched), this._registry.get('storages')),
       run(this._mapper.mapIron(enriched), this._registry.get('irons')),
       run(this._mapper.mapCardboard(enriched), this._registry.get('cardboards')),
       run(this._mapper.mapSensor(enriched), this._registry.get('sensors')),
-      run(this._mapper.mapSale(enriched), this._registry.get('sales')),
     ]);
 
     // Level 2 — Plastic (needs Battery), Wiring (needs Storage): independent of each other
@@ -101,10 +100,10 @@ export class DataProcessorService {
     // Level 3 — Communication (needs Plastic + Iron)
     const commResult = await run(this._mapper.mapCommunication(enriched), this._registry.get('communications'));
 
-    // Level 4 — Robot (needs Communication, Wiring, Cardboard, Sensor, Sale)
+    // Level 4 — Robot (needs Communication, Wiring, Cardboard, Sensor)
     const robotResult = await run(this._mapper.mapRobot(enriched), this._registry.get('robots'));
 
-    const results: EntityResult[] = [batteryResult, storageResult, ironResult, cardboardResult, sensorResult, saleResult, plasticResult, wiringResult, commResult, robotResult];
+    const results: EntityResult[] = [batteryResult, storageResult, ironResult, cardboardResult, sensorResult, plasticResult, wiringResult, commResult, robotResult];
 
     return {
       conflictCount: results.reduce((sum, r) => sum + r.count, 0),

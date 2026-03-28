@@ -6,7 +6,6 @@ from entities.communication import Communication
 from entities.plastic import Plastic
 from entities.battery import Battery
 from entities.iron import Iron
-from entities.sale import Sale
 from entities.wiring import Wiring
 from entities.storage import Storage
 from hierarchies.communication_hierarchy import CommunicationHierarchy
@@ -24,7 +23,6 @@ _UUID_FIELDS = {
     Plastic: "plastic_UUID",
     Battery: "battery_UUID",
     Iron: "iron_UUID",
-    Sale: "sale_UUID",
     Wiring: "wiring_UUID",
     Storage: "storage_UUID",
 }
@@ -78,7 +76,6 @@ def _build_hierarchy_from_row(row: dict) -> RobotHierarchy:
     ├── WiringHierarchy
     │   ├── Wiring
     │   └── Storage
-    └── Sale
     """
 
     return RobotHierarchy(
@@ -105,7 +102,6 @@ def _build_hierarchy_from_row(row: dict) -> RobotHierarchy:
             storage=_build_entity(Storage, row),
         ),
 
-        sale=_build_entity(Sale, row),
     )
 
 

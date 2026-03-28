@@ -16,7 +16,6 @@ const FORMAT_OPTION_ASSET_PATHS: Record<string, { assetPath: string; filename: s
   storages: { assetPath: 'assets/templates/storage_template.xlsx', filename: 'storage_template.xlsx' },
   plastics: { assetPath: 'assets/templates/plastic_template.xlsx', filename: 'plastic_template.xlsx' },
   irons: { assetPath: 'assets/templates/iron_template.xlsx', filename: 'iron_template.xlsx' },
-  sales: { assetPath: 'assets/templates/sale_template.xlsx', filename: 'sale_template.xlsx' },
 };
 
 @Injectable({ providedIn: 'root' })

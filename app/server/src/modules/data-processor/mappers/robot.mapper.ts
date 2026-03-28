@@ -12,7 +12,6 @@ export const mapRobotRow = (row: ParsedRow): MappedRobot | null => {
     cardboardId: row.cardboard ? nullIfEmpty(row.cardboard.cardboard_UUID) : null,
     sensorId: row.sensor ? nullIfEmpty(row.sensor.sensor_UUID) : null,
     communicationId: row.communication ? nullIfEmpty(row.communication.communication_UUID) : null,
-    saleId: row.sale ? nullIfEmpty(row.sale.sale_UUID) : null,
     wiringId: row.wiring ? nullIfEmpty(row.wiring.wiring_UUID) : null,
   };
 };

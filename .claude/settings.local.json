@@ -65,7 +65,8 @@
       "Bash(py -c \":*)",
       "Bash(py:*)",
       "Bash(python test-data/generate_test_files.py)",
-      "mcp__neon__get_database_tables"
+      "mcp__neon__get_database_tables",
+      "Bash(python3:*)"
     ]
   }
 }

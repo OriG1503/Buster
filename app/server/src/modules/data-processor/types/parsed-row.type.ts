@@ -58,23 +58,10 @@ export interface ParsedSensorRow extends EntityRowBase {
   sensor_version: string | null;
 }
 
-export interface ParsedSaleRow extends EntityRowBase {
-  sale_UUID: string;
-  carrier: string | null;
-  online_store_name: string | null;
-  salesperson: string | null;
-  is_purchased: string | null;
-  is_stock_ashdod: string | null;
-  is_stock_tel_aviv: string | null;
-  is_stock_rehovot: string | null;
-  data_source: string | null;
-}
-
 export interface ParsedRow extends EntityRowBase {
   robot_UUID: string;
   cardboard: ParsedCardboardRow | null;
   sensor: ParsedSensorRow | null;
   communication: ParsedCommunicationRow | null;
   wiring: ParsedWiringRow | null;
-  sale: ParsedSaleRow | null;
 }

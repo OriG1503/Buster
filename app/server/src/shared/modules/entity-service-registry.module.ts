@@ -5,14 +5,13 @@ import { CommunicationModule } from '../../modules/entities/communication/commun
 import { IronModule } from '../../modules/entities/iron/iron.module';
 import { PlasticModule } from '../../modules/entities/plastic/plastic.module';
 import { RobotModule } from '../../modules/entities/robot/robot.module';
-import { SaleModule } from '../../modules/entities/sale/sale.module';
 import { SensorModule } from '../../modules/entities/sensor/sensor.module';
 import { StorageModule } from '../../modules/entities/storage/storage.module';
 import { WiringModule } from '../../modules/entities/wiring/wiring.module';
 import { EntityServiceRegistry } from '../services/entity-service-registry.service';
 
 @Module({
-  imports: [BatteryModule, CardboardModule, CommunicationModule, IronModule, PlasticModule, RobotModule, SaleModule, SensorModule, StorageModule, WiringModule],
+  imports: [BatteryModule, CardboardModule, CommunicationModule, IronModule, PlasticModule, RobotModule, SensorModule, StorageModule, WiringModule],
   providers: [EntityServiceRegistry],
   exports: [EntityServiceRegistry],
 })

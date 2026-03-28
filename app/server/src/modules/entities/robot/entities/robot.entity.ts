@@ -3,7 +3,6 @@ import { BaseEntity } from '../../../../shared/entities/base.entity';
 import { CardboardEntity } from '../../cardboard/entities/cardboard.entity';
 import { SensorEntity } from '../../sensor/entities/sensor.entity';
 import { CommunicationEntity } from '../../communication/entities/communication.entity';
-import { SaleEntity } from '../../sale/entities/sale.entity';
 import { WiringEntity } from '../../wiring/entities/wiring.entity';
 
 @Entity('robots')
@@ -28,13 +27,6 @@ export class RobotEntity extends BaseEntity {
 
   @RelationId((robot: RobotEntity) => robot.communication)
   public communicationId: string | null;
-
-  @OneToOne(() => SaleEntity, (sale) => sale.robot, { nullable: true, onDelete: 'SET NULL', onUpdate: 'CASCADE' })
-  @JoinColumn({ name: 'saleId' })
-  public sale: SaleEntity | null;
-
-  @RelationId((robot: RobotEntity) => robot.sale)
-  public saleId: string | null;
 
   @ManyToOne(() => WiringEntity, (wiring) => wiring.robots, { nullable: true, onDelete: 'SET NULL', onUpdate: 'CASCADE' })
   @JoinColumn({ name: 'wiringId' })

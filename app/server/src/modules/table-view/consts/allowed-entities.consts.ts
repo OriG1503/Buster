@@ -8,11 +8,10 @@ export const ALLOWED_TABLES = new Set([
   'irons',
   'plastics',
   'cardboards',
-  'sales',
 ]);
 
 export const ALLOWED_COLUMNS: Record<string, Set<string>> = {
-  robots: new Set(['id', 'cardboardId', 'sensorId', 'communicationId', 'saleId', 'wiringId']),
+  robots: new Set(['id', 'cardboardId', 'sensorId', 'communicationId', 'wiringId']),
   sensors: new Set(['id', 'sensorType', 'sensorVersion']),
   wirings: new Set(['id', 'wiringType', 'district', 'storeName', 'storageId']),
   communications: new Set(['id', 'communicationType', 'plasticId', 'ironId']),
@@ -21,5 +20,4 @@ export const ALLOWED_COLUMNS: Record<string, Set<string>> = {
   irons: new Set(['id', 'ironType', 'ironVersion', 'isHeatConductor']),
   plastics: new Set(['id', 'plasticType', 'batteryId']),
   cardboards: new Set(['id', 'cardboardType', 'cardboardVersion']),
-  sales: new Set(['id', 'carrier', 'onlineStoreName', 'salesperson', 'isPurchased', 'isStockAshdod', 'isStockTelAviv', 'isStockRehovot', 'dataSource']),
 };
