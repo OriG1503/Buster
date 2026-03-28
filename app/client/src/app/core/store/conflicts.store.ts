@@ -3,7 +3,7 @@ import { patchState, signalStore, withHooks, withMethods, withState } from '@ngr
 
 import { ConflictsService } from '../services/conflicts/conflicts.service';
 import { ConflictsState } from './types/conflicts-state.type';
-import { CONFLICTS_PAGE_SIZE, CONFLICTS_INITIAL_STATE } from './conflicts-store.consts';
+import { CONFLICTS_PAGE_SIZE, CONFLICTS_INITIAL_STATE } from './consts/conflicts-store.consts';
 
 export const ConflictsStore = signalStore(
   { providedIn: 'root' },

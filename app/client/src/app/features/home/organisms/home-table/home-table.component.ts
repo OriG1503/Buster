@@ -104,6 +104,7 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
           anchorTable: cell.anchorTable,
           anchorId: cell.anchorId,
           relatedTable: cell.relatedTable ?? '',
+          anchorTop: rect.top,
           anchorBottom: rect.bottom,
           anchorCenterX: rect.left + rect.width / 2,
         });
@@ -115,6 +116,7 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
           tableName,
           entityId,
           columnName,
+          anchorTop: rect.top,
           anchorBottom: rect.bottom,
           anchorCenterX: rect.left + rect.width / 2,
         });

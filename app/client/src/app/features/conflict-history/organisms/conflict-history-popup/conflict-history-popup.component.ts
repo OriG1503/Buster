@@ -41,12 +41,18 @@ export class ConflictHistoryPopupComponent {
 
 
   protected readonly _$panelStyle = computed(() => {
-    const { anchorBottom, anchorCenterX } = this.$target();
+    const { anchorTop, anchorBottom, anchorCenterX } = this.$target();
     const popupWidth = this._$isRelational() ? 700 : 480;
     const gap = 8;
-    const top = anchorBottom + gap;
-    const left = Math.max(8, Math.min(anchorCenterX - popupWidth / 2, window.innerWidth - popupWidth - 8));
-    return { top: `${top}px`, left: `${left}px`, width: `${popupWidth}px` };
+    const screenMargin = 8;
+    const left = Math.max(screenMargin, Math.min(anchorCenterX - popupWidth / 2, window.innerWidth - popupWidth - screenMargin));
+    const spaceBelow = window.innerHeight - anchorBottom - gap;
+    // Flip above the anchor when there isn't enough space below (use a rough min-height estimate)
+    const minPopupHeight = 220;
+    if (spaceBelow < minPopupHeight && anchorTop > minPopupHeight) {
+      return { top: 'auto', bottom: `${window.innerHeight - anchorTop + gap}px`, left: `${left}px`, width: `${popupWidth}px` };
+    }
+    return { top: `${anchorBottom + gap}px`, bottom: 'auto', left: `${left}px`, width: `${popupWidth}px` };
   });
 
   public constructor() {

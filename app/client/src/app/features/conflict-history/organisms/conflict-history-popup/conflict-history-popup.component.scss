@@ -15,6 +15,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    max-height: 80vh;
   }
 
   &__header {
@@ -74,6 +75,9 @@
 
   &__scroll-area {
     overflow-x: auto;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
   }
 
   &__table {

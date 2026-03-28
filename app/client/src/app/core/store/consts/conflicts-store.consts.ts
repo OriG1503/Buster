@@ -1,4 +1,4 @@
-import { ConflictsState } from './types/conflicts-state.type';
+import { ConflictsState } from '../types/conflicts-state.type';
 
 export const CONFLICTS_PAGE_SIZE = 20;
 

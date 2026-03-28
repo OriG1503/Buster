@@ -11,7 +11,7 @@ import { FK_TO_ENTITY_ID } from '../../shared/consts/fk-to-entity-id.consts';
 import { ColumnGroup } from '../../shared/types/column-group.type';
 import { ColumnToggleEvent } from '../../shared/types/column-toggle-event.type';
 import { TableRow } from '../../shared/types/table-view-response.type';
-import { HOME_PAGE_SIZE, DEFAULT_TABLE, VALID_TABLES } from './home-store.consts';
+import { HOME_PAGE_SIZE, DEFAULT_TABLE, VALID_TABLES } from './consts/home-store.consts';
 import { HomeState } from './types/home-state.type';
 
 function defaultColumns(tableName: string): string[] {

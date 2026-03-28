@@ -5,6 +5,7 @@ import { ButtonModule } from 'primeng/button';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 
 import { APP_ROUTES } from '../../../shared/consts/app-routes.consts';
+import { API_ROUTES } from '../../../shared/consts/api-routes.consts';
 import { UPLOAD_DIALOG_LABEL_MAP } from '../mapping/upload-dialog.label-map';
 import { FORMAT_OPTION_ASSET_PATHS } from '../consts/upload-dialog.consts';
 import { UploadedFile } from '../types/uploaded-file.type';
@@ -60,7 +61,7 @@ export class UploadDialogComponent {
   }
 
   public onDownloadReport(reportFileName: string): void {
-    this._downloadService.downloadFromUrl(`/api/file/report/${reportFileName}`, reportFileName);
+    this._downloadService.downloadFromUrl(API_ROUTES.file.report(reportFileName), reportFileName);
   }
 
   public onFilesDropped(files: File[]): void {

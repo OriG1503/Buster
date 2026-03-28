@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, Observable, tap } from 'rxjs';
 
 import { Role, ROLE_LEVEL } from '../../../shared/consts/role.consts';
+import { API_ROUTES } from '../../../shared/consts/api-routes.consts';
 import { JwtPayload } from './types/jwt-payload.type';
 import { MeResponse } from './types/me-response.type';
 import { TOKEN_KEY, BUSTER_GROUP_ROLE } from './auth.consts';
@@ -17,7 +18,7 @@ export class AuthService {
    * Stores the returned token in localStorage.
    */
   public fetchMe(): Observable<void> {
-    return this._http.get<MeResponse>('/api/auth/me').pipe(
+    return this._http.get<MeResponse>(API_ROUTES.auth.me).pipe(
       tap((res) => localStorage.setItem(TOKEN_KEY, res.accessToken)),
       map(() => undefined),
     );

@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 
 import { ENTITY_COLUMN_TREE } from '../../../shared/consts/entity-column-tree.consts';
+import { API_ROUTES } from '../../../shared/consts/api-routes.consts';
 import { ColumnGroup } from '../../../shared/types/column-group.type';
 import { DisplayNamesConfig } from './types/display-names-config.type';
 
@@ -14,7 +15,7 @@ export class DisplayNamesService {
 
   /** Fetches the display-names config from the server. Call once on app startup. */
   public load(): void {
-    this._http.get<DisplayNamesConfig>('/api/display-names').subscribe((config) => {
+    this._http.get<DisplayNamesConfig>(API_ROUTES.displayNames.config).subscribe((config) => {
       this._$config.set(config);
     });
   }

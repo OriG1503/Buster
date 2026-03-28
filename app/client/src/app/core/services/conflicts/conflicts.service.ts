@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 import { ConflictGroup } from '../../../shared/types/conflict-group.type';
 import { ConflictEntityDetail } from '../../../shared/types/conflict-entity-detail.type';
+import { API_ROUTES } from '../../../shared/consts/api-routes.consts';
 import { ConflictCountResponse } from './types/conflict-count-response.type';
 import { ResolveValueConflictParams } from './types/resolve-value-conflict-params.type';
 import { ResolveRelationalConflictParams } from './types/resolve-relational-conflict-params.type';
@@ -13,7 +14,7 @@ export class ConflictsService {
   private readonly _http = inject(HttpClient);
 
   public getCount(): Observable<ConflictCountResponse> {
-    return this._http.get<ConflictCountResponse>('/api/conflicts/count');
+    return this._http.get<ConflictCountResponse>(API_ROUTES.conflicts.count);
   }
 
   public getList(page: number, limit: number, tableName?: string, entityId?: string, conflictIds?: number[]): Observable<ConflictGroup[]> {
@@ -21,24 +22,24 @@ export class ConflictsService {
     if (tableName) { params['tableName'] = tableName; }
     if (entityId) { params['entityId'] = entityId; }
     if (conflictIds?.length) { params['conflictIds'] = conflictIds.join(','); }
-    return this._http.get<ConflictGroup[]>('/api/conflicts', { params });
+    return this._http.get<ConflictGroup[]>(API_ROUTES.conflicts.list, { params });
   }
 
   public getEntityDetail(tableName: string, entityId: string): Observable<ConflictEntityDetail> {
-    return this._http.get<ConflictEntityDetail>('/api/conflicts/entity', {
+    return this._http.get<ConflictEntityDetail>(API_ROUTES.conflicts.entity, {
       params: { tableName, entityId },
     });
   }
 
   public resolveConflict(params: ResolveValueConflictParams): Observable<unknown> {
-    return this._http.patch('/api/conflicts/value/resolve', params);
+    return this._http.patch(API_ROUTES.conflicts.resolveValue, params);
   }
 
   public resolveRelationalConflict(params: ResolveRelationalConflictParams): Observable<unknown> {
-    return this._http.patch('/api/conflicts/relational/resolve', params);
+    return this._http.patch(API_ROUTES.conflicts.resolveRelational, params);
   }
 
   public checkOpenIds(ids: string[]): Observable<string[]> {
-    return this._http.post<string[]>('/api/conflicts/open-ids', { ids });
+    return this._http.post<string[]>(API_ROUTES.conflicts.openIds, { ids });
   }
 }
