@@ -6,4 +6,6 @@ export type BatteryInsertData = {
   lithiumVersion: string | null;
   batteryName: string | null;
   salesPerson: string | null;
+  isStockTelAviv: boolean | null;
+  isStockRehovot: boolean | null;
 };

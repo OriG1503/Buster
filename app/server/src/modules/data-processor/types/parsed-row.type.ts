@@ -8,6 +8,8 @@ export interface ParsedBatteryRow extends EntityRowBase {
   lithium_version: string | null;
   battery_name: string | null;
   sales_person: string | null;
+  battery_is_stock_tel_aviv: string | null;
+  battery_is_stock_rehovot: string | null;
 }
 
 export interface ParsedStorageRow extends EntityRowBase {
@@ -23,6 +25,7 @@ export interface ParsedIronRow extends EntityRowBase {
   iron_type: string | null;
   iron_version: string | null;
   is_heat_conductor: string | null;
+  iron_is_stock_ashdod: string | null;
 }
 
 export interface ParsedPlasticRow extends EntityRowBase {

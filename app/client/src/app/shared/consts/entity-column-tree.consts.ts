@@ -16,12 +16,12 @@ const STORAGE_GROUP: ColumnGroupStructure = {
 
 const BATTERY_GROUP: ColumnGroupStructure = {
   entityTable: 'batteries',
-  columns: ['batteries.id', 'batteries.sku', 'batteries.batteryType', 'batteries.batteryVersion', 'batteries.lithiumVersion', 'batteries.batteryName', 'batteries.salesPerson'],
+  columns: ['batteries.id', 'batteries.sku', 'batteries.batteryType', 'batteries.batteryVersion', 'batteries.lithiumVersion', 'batteries.batteryName', 'batteries.salesPerson', 'batteries.isStockTelAviv', 'batteries.isStockRehovot'],
 };
 
 const IRON_GROUP: ColumnGroupStructure = {
   entityTable: 'irons',
-  columns: ['irons.id', 'irons.ironType', 'irons.ironVersion', 'irons.isHeatConductor'],
+  columns: ['irons.id', 'irons.ironType', 'irons.ironVersion', 'irons.isHeatConductor', 'irons.isStockAshdod'],
 };
 
 const PLASTIC_GROUP: ColumnGroupStructure = {

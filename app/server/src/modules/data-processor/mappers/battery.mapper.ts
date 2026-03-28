@@ -1,6 +1,6 @@
 import { ParsedBatteryRow } from '../types/parsed-row.type';
 import { MappedBattery } from '../types/mapped-battery.type';
-import { nullIfEmpty } from './mapper.utils';
+import { nullIfEmpty, parseBool } from './mapper.utils';
 
 export const mapBatteryRow = (raw: ParsedBatteryRow | null): MappedBattery | null => {
   if (!raw) { return null; }
@@ -14,5 +14,7 @@ export const mapBatteryRow = (raw: ParsedBatteryRow | null): MappedBattery | nul
     lithiumVersion: nullIfEmpty(raw.lithium_version),
     batteryName: nullIfEmpty(raw.battery_name),
     salesPerson: nullIfEmpty(raw.sales_person),
+    isStockTelAviv: parseBool(raw.battery_is_stock_tel_aviv),
+    isStockRehovot: parseBool(raw.battery_is_stock_rehovot),
   };
 };
