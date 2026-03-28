@@ -1,20 +1,21 @@
 import { HttpService } from '@nestjs/axios';
 import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { mkdir, readFile, writeFile } from 'fs/promises';
 import * as iconv from 'iconv-lite';
-import { basename, extname } from 'path';
+import { basename, extname, resolve } from 'path';
 import { firstValueFrom } from 'rxjs';
 import * as XLSX from 'xlsx';
 import { DataProcessorService } from '../data-processor/services/data-processor.service';
 import { ProcessReportService } from '../data-processor/services/process-report.service';
 import { ParsedRow } from '../data-processor/types/parsed-row.type';
 import { DisplayNamesService } from '../display-names/display-names.service';
-import { S3Service } from './s3.service';
 import { UploadSummary } from './types/upload-summary.type';
 
 const ACCEPTED_EXTENSIONS = ['.csv', '.xlsx', '.xls'] as const;
-const S3_UPLOADS_PREFIX = 'uploads/';
-const S3_TMP_PREFIX = 'tmp/';
-const S3_REPORTS_PREFIX = 'reports/';
+const FILES_ROOT = resolve(process.cwd(), '../../files');
+const TMP_DIR = `${FILES_ROOT}/tmp`;
+const UPLOADS_DIR = `${FILES_ROOT}/uploads`;
+const REPORTS_DIR = `${FILES_ROOT}/reports`;
 
 // UTF-8 BOM is the byte sequence EF BB BF at the start of the file.
 const UTF8_BOM = Buffer.from([0xef, 0xbb, 0xbf]);
@@ -25,35 +26,37 @@ export class FileService {
 
   public constructor(
     private readonly _httpService: HttpService,
-    private readonly _s3Service: S3Service,
     private readonly _dataProcessorService: DataProcessorService,
     private readonly _reportService: ProcessReportService,
     private readonly _displayNamesService: DisplayNamesService,
   ) {}
 
-  /** Full upload pipeline: validate → convert → upload to S3 → parse → process → generate report. */
+  /** Full upload pipeline: validate → convert → save locally → parse → process → generate report. */
   public async handleFile(file: Express.Multer.File, username: string): Promise<UploadSummary> {
     this._logger.log(`Upload started — file: ${file?.originalname}, size: ${file?.size ?? 0} bytes, user: ${username}`);
     this._validateUsername(username);
     const csvFile = this._toCsvFile(file);
 
-    // Save the original file (with user-facing display headers) to S3 as the permanent record.
-    void this._s3Service.upload(`${S3_UPLOADS_PREFIX}${csvFile.originalname}`, csvFile.buffer);
+    // Save the original file (with user-facing display headers) as the permanent record.
+    await mkdir(UPLOADS_DIR, { recursive: true });
+    await writeFile(`${UPLOADS_DIR}/${csvFile.originalname}`, csvFile.buffer);
 
     // Translate display-name column headers → parser snake_case names before sending to parser.
     const { buffer: translatedBuffer, unknownColumns } = this._translateCsvHeaders(csvFile.buffer);
 
-    // Upload translated CSV to S3 tmp/ — the parser reads directly from there.
-    const tmpS3Key = `${S3_TMP_PREFIX}${csvFile.originalname}`;
-    await this._s3Service.upload(tmpS3Key, translatedBuffer);
+    // Write translated CSV to tmp/ — the parser reads directly from there.
+    await mkdir(TMP_DIR, { recursive: true });
+    const tmpPath = `${TMP_DIR}/${csvFile.originalname}`;
+    await writeFile(tmpPath, translatedBuffer);
 
-    const parsedRows = await this._sendToParser(tmpS3Key);
+    const parsedRows = await this._sendToParser(tmpPath);
     this._logger.log(`Processing ${parsedRows.length} parsed rows — file: ${csvFile.originalname}`);
     const result = await this._dataProcessorService.process(parsedRows, username);
 
     const reportName = `${basename(csvFile.originalname, '.csv')}_report.xlsx`;
-    const reportBuffer = await this._reportService.generate(tmpS3Key, result);
-    void this._s3Service.upload(`${S3_REPORTS_PREFIX}${reportName}`, reportBuffer);
+    const reportBuffer = await this._reportService.generate(tmpPath, result);
+    await mkdir(REPORTS_DIR, { recursive: true });
+    await writeFile(`${REPORTS_DIR}/${reportName}`, reportBuffer);
 
     const summary: UploadSummary = {
       conflictIds: result.conflictIds,
@@ -67,13 +70,12 @@ export class FileService {
     return summary;
   }
 
-  /** Returns the report buffer for the given filename from S3. */
+  /** Returns the report buffer for the given filename from local storage. */
   public async getReport(filename: string): Promise<Buffer> {
-    const buffer = await this._s3Service.download(`${S3_REPORTS_PREFIX}${filename}`);
-    if (!buffer) {
+    const reportPath = `${REPORTS_DIR}/${filename}`;
+    return readFile(reportPath).catch(() => {
       throw new NotFoundException(`Report "${filename}" not found`);
-    }
-    return buffer;
+    });
   }
 
   /** Throws if the file extension is not in the accepted list. */
@@ -153,12 +155,12 @@ export class FileService {
     return { buffer: Buffer.from(translatedHeaders + rest, 'utf8'), unknownColumns };
   }
 
-  /** Sends the S3 key to the parser service and returns the structured parsed rows. */
-  private async _sendToParser(s3Key: string): Promise<ParsedRow[]> {
-    this._logger.log(`Sending to parser: ${s3Key}`);
+  /** Sends the local file path to the parser service and returns the structured parsed rows. */
+  private async _sendToParser(localPath: string): Promise<ParsedRow[]> {
+    this._logger.log(`Sending to parser: ${localPath}`);
     const start = Date.now();
     const { data } = await firstValueFrom(
-      this._httpService.post<ParsedRow[]>(process.env.PARSER_URL!, { path: s3Key }),
+      this._httpService.post<ParsedRow[]>(process.env.PARSER_URL!, { path: localPath }),
     ).catch((err) => {
       this._logger.error(`Parser request failed: ${err?.message ?? err}`);
       throw new InternalServerErrorException('Parser service failed to process the file');

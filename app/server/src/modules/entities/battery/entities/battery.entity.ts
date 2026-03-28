@@ -16,6 +16,12 @@ export class BatteryEntity extends BaseEntity {
   @Column({ type: 'varchar', nullable: true })
   public lithiumVersion: string | null;
 
+  @Column({ type: 'varchar', nullable: true })
+  public batteryName: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  public salesPerson: string | null;
+
   @OneToOne(() => PlasticEntity, (plastic) => plastic.battery, { nullable: true })
   public plastic: PlasticEntity | null;
 }

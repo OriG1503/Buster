@@ -6,6 +6,8 @@ export interface ParsedBatteryRow extends EntityRowBase {
   battery_type: string | null;
   battery_version: string | null;
   lithium_version: string | null;
+  battery_name: string | null;
+  sales_person: string | null;
 }
 
 export interface ParsedStorageRow extends EntityRowBase {

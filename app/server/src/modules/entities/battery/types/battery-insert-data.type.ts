@@ -4,4 +4,6 @@ export type BatteryInsertData = {
   batteryType: string | null;
   batteryVersion: string | null;
   lithiumVersion: string | null;
+  batteryName: string | null;
+  salesPerson: string | null;
 };

@@ -5,4 +5,6 @@ export interface MappedBattery extends MappedEntityBase {
   batteryType: string | null;
   batteryVersion: string | null;
   lithiumVersion: string | null;
+  batteryName: string | null;
+  salesPerson: string | null;
 }
