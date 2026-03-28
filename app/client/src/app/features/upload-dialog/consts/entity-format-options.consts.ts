@@ -26,5 +26,4 @@ export const ENTITY_FORMAT_OPTIONS: EntityFormatOption[] = [
     filename: 'plastic_template.xlsx',
   },
   { label: 'פורמט ברזלים', assetPath: 'assets/templates/iron_template.xlsx', filename: 'iron_template.xlsx' },
-  { label: 'פורמט מכירות', assetPath: 'assets/templates/sale_template.xlsx', filename: 'sale_template.xlsx' },
 ];

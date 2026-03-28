@@ -11,5 +11,6 @@ export const mapIronRow = (raw: ParsedIronRow | null): MappedIron | null => {
     ironType: nullIfEmpty(raw.iron_type),
     ironVersion: nullIfEmpty(raw.iron_version),
     isHeatConductor: parseBool(raw.is_heat_conductor),
+    isStockAshdod: parseBool(raw.iron_is_stock_ashdod),
   };
 };

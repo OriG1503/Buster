@@ -3,7 +3,6 @@ from typing import Optional
 from entities.robot import Robot
 from entities.sensor import Sensor
 from entities.cardboard import Cardboard
-from entities.sale import Sale
 from hierarchies.communication_hierarchy import CommunicationHierarchy
 from hierarchies.wiring_hierarchy import WiringHierarchy
 
@@ -15,4 +14,3 @@ class RobotHierarchy:
     sensor: Optional[Sensor] = None
     communication: Optional[CommunicationHierarchy] = None
     wiring: Optional[WiringHierarchy] = None
-    sale: Optional[Sale] = None

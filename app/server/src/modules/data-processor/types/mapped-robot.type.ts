@@ -4,6 +4,14 @@ export interface MappedRobot extends MappedEntityBase {
   cardboardId: string | null;
   sensorId: string | null;
   communicationId: string | null;
-  saleId: string | null;
   wiringId: string | null;
+  carrier: string | null;
+  isPurchased: boolean | null;
+  district: string | null;
+  storeName: string | null;
+  isStockAshdod: boolean | null;
+  isStockTelAviv: boolean | null;
+  isStockRehovot: boolean | null;
+  isStockNetanya: boolean | null;
+  isStockAfula: boolean | null;
 }

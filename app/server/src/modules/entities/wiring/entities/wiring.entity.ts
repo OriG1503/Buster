@@ -12,7 +12,7 @@ export class WiringEntity extends BaseEntity {
   public district: string | null;
 
   @Column({ type: 'varchar', nullable: true })
-  public municipality: string | null;
+  public storeName: string | null;
 
   @OneToOne(() => StorageEntity, (storage) => storage.wiring, { nullable: true, onDelete: 'SET NULL', onUpdate: 'CASCADE' })
   @JoinColumn({ name: 'storageId' })

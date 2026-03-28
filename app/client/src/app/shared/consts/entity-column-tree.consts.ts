@@ -16,12 +16,12 @@ const STORAGE_GROUP: ColumnGroupStructure = {
 
 const BATTERY_GROUP: ColumnGroupStructure = {
   entityTable: 'batteries',
-  columns: ['batteries.id', 'batteries.sku', 'batteries.batteryType', 'batteries.batteryVersion', 'batteries.lithiumVersion', 'batteries.batteryName', 'batteries.salesPerson'],
+  columns: ['batteries.id', 'batteries.sku', 'batteries.batteryType', 'batteries.batteryVersion', 'batteries.lithiumVersion', 'batteries.batteryName', 'batteries.salesPerson', 'batteries.isStockTelAviv', 'batteries.isStockRehovot'],
 };
 
 const IRON_GROUP: ColumnGroupStructure = {
   entityTable: 'irons',
-  columns: ['irons.id', 'irons.ironType', 'irons.ironVersion', 'irons.isHeatConductor'],
+  columns: ['irons.id', 'irons.ironType', 'irons.ironVersion', 'irons.isHeatConductor', 'irons.isStockAshdod'],
 };
 
 const PLASTIC_GROUP: ColumnGroupStructure = {
@@ -34,21 +34,6 @@ const CARDBOARD_GROUP: ColumnGroupStructure = {
   columns: ['cardboards.id', 'cardboards.cardboardType', 'cardboards.cardboardVersion'],
 };
 
-const SALE_GROUP: ColumnGroupStructure = {
-  entityTable: 'sales',
-  columns: [
-    'sales.id',
-    'sales.carrier',
-    'sales.onlineStoreName',
-    'sales.salesperson',
-    'sales.isPurchased',
-    'sales.isStockAshdod',
-    'sales.isStockTelAviv',
-    'sales.isStockRehovot',
-    'sales.dataSource',
-  ],
-};
-
 const COMMUNICATION_GROUP: ColumnGroupStructure = {
   entityTable: 'communications',
   columns: ['communications.id', 'communications.communicationType', 'communications.plasticId', 'communications.ironId'],
@@ -56,7 +41,7 @@ const COMMUNICATION_GROUP: ColumnGroupStructure = {
 
 const WIRING_GROUP: ColumnGroupStructure = {
   entityTable: 'wirings',
-  columns: ['wirings.id', 'wirings.wiringType', 'wirings.district', 'wirings.municipality', 'wirings.storageId'],
+  columns: ['wirings.id', 'wirings.wiringType', 'wirings.district', 'wirings.storeName', 'wirings.storageId'],
 };
 
 const ROBOT_GROUP: ColumnGroupStructure = {
@@ -66,13 +51,21 @@ const ROBOT_GROUP: ColumnGroupStructure = {
     'robots.cardboardId',
     'robots.sensorId',
     'robots.communicationId',
-    'robots.saleId',
     'robots.wiringId',
+    'robots.carrier',
+    'robots.isPurchased',
+    'robots.district',
+    'robots.storeName',
+    'robots.isStockAshdod',
+    'robots.isStockTelAviv',
+    'robots.isStockRehovot',
+    'robots.isStockNetanya',
+    'robots.isStockAfula',
   ],
 };
 
 export const ENTITY_COLUMN_TREE: Record<string, ColumnGroupStructure[]> = {
-  robots: [ROBOT_GROUP, CARDBOARD_GROUP, SENSOR_GROUP, COMMUNICATION_GROUP, PLASTIC_GROUP, BATTERY_GROUP, IRON_GROUP, SALE_GROUP, WIRING_GROUP, STORAGE_GROUP],
+  robots: [ROBOT_GROUP, CARDBOARD_GROUP, SENSOR_GROUP, COMMUNICATION_GROUP, PLASTIC_GROUP, BATTERY_GROUP, IRON_GROUP, WIRING_GROUP, STORAGE_GROUP],
   sensors: [SENSOR_GROUP, ROBOT_GROUP],
   wirings: [WIRING_GROUP, STORAGE_GROUP, ROBOT_GROUP],
   communications: [COMMUNICATION_GROUP, PLASTIC_GROUP, BATTERY_GROUP, IRON_GROUP, ROBOT_GROUP],
@@ -81,5 +74,4 @@ export const ENTITY_COLUMN_TREE: Record<string, ColumnGroupStructure[]> = {
   irons: [IRON_GROUP, COMMUNICATION_GROUP, PLASTIC_GROUP, BATTERY_GROUP, ROBOT_GROUP],
   plastics: [PLASTIC_GROUP, BATTERY_GROUP, IRON_GROUP, COMMUNICATION_GROUP, ROBOT_GROUP],
   cardboards: [CARDBOARD_GROUP, ROBOT_GROUP],
-  sales: [SALE_GROUP, ROBOT_GROUP],
 };

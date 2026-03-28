@@ -8,18 +8,16 @@ export const ALLOWED_TABLES = new Set([
   'irons',
   'plastics',
   'cardboards',
-  'sales',
 ]);
 
 export const ALLOWED_COLUMNS: Record<string, Set<string>> = {
-  robots: new Set(['id', 'cardboardId', 'sensorId', 'communicationId', 'saleId', 'wiringId']),
+  robots: new Set(['id', 'cardboardId', 'sensorId', 'communicationId', 'wiringId', 'carrier', 'isPurchased', 'district', 'storeName', 'isStockAshdod', 'isStockTelAviv', 'isStockRehovot', 'isStockNetanya', 'isStockAfula']),
   sensors: new Set(['id', 'sensorType', 'sensorVersion']),
-  wirings: new Set(['id', 'wiringType', 'district', 'municipality', 'storageId']),
+  wirings: new Set(['id', 'wiringType', 'district', 'storeName', 'storageId']),
   communications: new Set(['id', 'communicationType', 'plasticId', 'ironId']),
-  batteries: new Set(['id', 'sku', 'batteryType', 'batteryVersion', 'lithiumVersion', 'batteryName', 'salesPerson']),
+  batteries: new Set(['id', 'sku', 'batteryType', 'batteryVersion', 'lithiumVersion', 'batteryName', 'salesPerson', 'isStockTelAviv', 'isStockRehovot']),
   storages: new Set(['id', 'storageType', 'storageVersion', 'isStockNetanya', 'isStockAfula']),
-  irons: new Set(['id', 'ironType', 'ironVersion', 'isHeatConductor']),
+  irons: new Set(['id', 'ironType', 'ironVersion', 'isHeatConductor', 'isStockAshdod']),
   plastics: new Set(['id', 'plasticType', 'batteryId']),
   cardboards: new Set(['id', 'cardboardType', 'cardboardVersion']),
-  sales: new Set(['id', 'carrier', 'onlineStoreName', 'salesperson', 'isPurchased', 'isStockAshdod', 'isStockTelAviv', 'isStockRehovot', 'dataSource']),
 };

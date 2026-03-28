@@ -38,7 +38,6 @@ The core goal is to produce a **Single Source of Truth**: users review each conf
 | `Iron`          | Raw material — iron                         |
 | `Plastic`       | Raw material — plastic                      |
 | `Cardboard`     | Raw material — cardboard                    |
-| `Sale`          | Sale/order records                          |
 | `Conflict`      | Detected data conflicts / validation issues |
 
 ## Repository

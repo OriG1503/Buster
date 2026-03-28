@@ -22,6 +22,12 @@ export class BatteryEntity extends BaseEntity {
   @Column({ type: 'varchar', nullable: true })
   public salesPerson: string | null;
 
+  @Column({ type: 'boolean', nullable: true })
+  public isStockTelAviv: boolean | null;
+
+  @Column({ type: 'boolean', nullable: true })
+  public isStockRehovot: boolean | null;
+
   @OneToOne(() => PlasticEntity, (plastic) => plastic.battery, { nullable: true })
   public plastic: PlasticEntity | null;
 }

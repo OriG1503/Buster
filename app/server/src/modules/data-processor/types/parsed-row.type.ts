@@ -8,14 +8,16 @@ export interface ParsedBatteryRow extends EntityRowBase {
   lithium_version: string | null;
   battery_name: string | null;
   sales_person: string | null;
+  battery_is_stock_tel_aviv: string | null;
+  battery_is_stock_rehovot: string | null;
 }
 
 export interface ParsedStorageRow extends EntityRowBase {
   storage_UUID: string;
   storage_type: string | null;
   storage_version: string | null;
-  is_stock_netanya: string | null;
-  is_stock_afula: string | null;
+  storage_is_stock_netanya: string | null;
+  storage_is_stock_afula: string | null;
 }
 
 export interface ParsedIronRow extends EntityRowBase {
@@ -23,6 +25,7 @@ export interface ParsedIronRow extends EntityRowBase {
   iron_type: string | null;
   iron_version: string | null;
   is_heat_conductor: string | null;
+  iron_is_stock_ashdod: string | null;
 }
 
 export interface ParsedPlasticRow extends EntityRowBase {
@@ -34,8 +37,8 @@ export interface ParsedPlasticRow extends EntityRowBase {
 export interface ParsedWiringRow extends EntityRowBase {
   wiring_UUID: string;
   wiring_type: string | null;
-  district: string | null;
-  municipality: string | null;
+  wiring_district: string | null;
+  wiring_store_name: string | null;
   storage: ParsedStorageRow | null;
 }
 
@@ -58,23 +61,19 @@ export interface ParsedSensorRow extends EntityRowBase {
   sensor_version: string | null;
 }
 
-export interface ParsedSaleRow extends EntityRowBase {
-  sale_UUID: string;
-  carrier: string | null;
-  online_store_name: string | null;
-  salesperson: string | null;
-  is_purchased: string | null;
-  is_stock_ashdod: string | null;
-  is_stock_tel_aviv: string | null;
-  is_stock_rehovot: string | null;
-  data_source: string | null;
-}
-
 export interface ParsedRow extends EntityRowBase {
   robot_UUID: string;
+  carrier: string | null;
+  is_purchased: string | null;
+  robot_district: string | null;
+  robot_store_name: string | null;
+  robot_is_stock_ashdod: string | null;
+  robot_is_stock_tel_aviv: string | null;
+  robot_is_stock_rehovot: string | null;
+  robot_is_stock_netanya: string | null;
+  robot_is_stock_afula: string | null;
   cardboard: ParsedCardboardRow | null;
   sensor: ParsedSensorRow | null;
   communication: ParsedCommunicationRow | null;
   wiring: ParsedWiringRow | null;
-  sale: ParsedSaleRow | null;
 }

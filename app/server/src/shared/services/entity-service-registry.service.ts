@@ -5,7 +5,6 @@ import { CommunicationService } from '../../modules/entities/communication/commu
 import { IronService } from '../../modules/entities/iron/iron.service';
 import { PlasticService } from '../../modules/entities/plastic/plastic.service';
 import { RobotService } from '../../modules/entities/robot/robot.service';
-import { SaleService } from '../../modules/entities/sale/sale.service';
 import { SensorService } from '../../modules/entities/sensor/sensor.service';
 import { StorageService } from '../../modules/entities/storage/storage.service';
 import { WiringService } from '../../modules/entities/wiring/wiring.service';
@@ -27,7 +26,6 @@ export class EntityServiceRegistry {
     ironService: IronService,
     plasticService: PlasticService,
     robotService: RobotService,
-    saleService: SaleService,
     sensorService: SensorService,
     storageService: StorageService,
     wiringService: WiringService,
@@ -39,7 +37,6 @@ export class EntityServiceRegistry {
       ironService,
       plasticService,
       robotService,
-      saleService,
       sensorService,
       storageService,
       wiringService,

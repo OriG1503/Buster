@@ -13,7 +13,7 @@ const camelToSnake = (str: string): string => str.replace(/([A-Z])/g, (c) => `_$
 const ENTITY_UUID_COLUMN: Record<string, string> = {
   batteries: 'battery_UUID', storages: 'storage_UUID', irons: 'iron_UUID',
   plastics: 'plastic_UUID', wirings: 'wiring_UUID', communications: 'communication_UUID',
-  cardboards: 'cardboard_UUID', sensors: 'sensor_UUID', sales: 'sale_UUID', robots: 'robot_UUID',
+  cardboards: 'cardboard_UUID', sensors: 'sensor_UUID', robots: 'robot_UUID',
 };
 
 type FlyingCellMap = Map<number, { redCols: Set<string>; yellowCols: Set<string> }>;

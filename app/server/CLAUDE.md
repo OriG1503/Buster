@@ -101,7 +101,7 @@ Always add the inverse side (`@OneToOne(() => X, (x) => x.y)`) on the related en
 
 ### ParsedRow type and enrichment
 
-`ParsedRow` (in `src/modules/data-processor/types/parsed-row.type.ts`) is the structured JSON the Python parser returns. It is a flat robot row that nests child rows: `robot_UUID`, `source`, and optional `cardboard`, `sensor`, `communication` (which nests `plastic` → `battery`, and `iron`), `wiring` (which nests `storage`), `sale`.
+`ParsedRow` (in `src/modules/data-processor/types/parsed-row.type.ts`) is the structured JSON the Python parser returns. It is a flat robot row that nests child rows: `robot_UUID`, `source`, and optional `cardboard`, `sensor`, `communication` (which nests `plastic` → `battery`, and `iron`), `wiring` (which nests `storage`).
 
 `ParsedRowEnricher` (`parsed-row-enricher.service.ts`) runs before mapping and **auto-generates UUIDs** for intermediate entities that lack their own UUID but have child data. The pattern is deterministic:
 - `plastic_UUID` → `auto-plastic-for-{battery_UUID}`
@@ -113,13 +113,13 @@ This ensures intermediate entities are created even when the upload source doesn
 ### DataProcessorService ingestion order
 
 Entities are always processed leaf-first to satisfy FK constraints:
-`Battery → Storage → Iron → Plastic → Wiring → Communication → Cardboard → Sensor → Sale → Robot`
+`Battery → Storage → Iron → Plastic → Wiring → Communication → Cardboard → Sensor → Robot`
 
 For each entity: if not found → `insert` (catches unique-constraint race); if found → `ConflictService.detectConflicts()` → create `ConflictEntity` records for differing fields, call `update` for null gap-fills.
 
 ### EntityServiceRegistry
 
-`src/shared/services/entity-service-registry.service.ts` — service locator that maps `tableName → BaseService`. All 10 entity services are injected in the constructor; `get(tableName)` returns the right one at runtime. Used by `DataProcessorService` and `ConflictResolverService` to avoid hard-coding service imports per entity.
+`src/shared/services/entity-service-registry.service.ts` — service locator that maps `tableName → BaseService`. All 9 entity services are injected in the constructor; `get(tableName)` returns the right one at runtime. Used by `DataProcessorService` and `ConflictResolverService` to avoid hard-coding service imports per entity.
 
 Each `BaseService` subclass must declare `public readonly tableName: string` so the registry can build its map.
 
@@ -143,8 +143,8 @@ All entities extend `BaseEntity` (user-provided string `id`, `source` jsonb) exc
 
 | Entity | Table | Key columns | Relations (owning side holds FK) |
 |--------|-------|-------------|----------------------------------|
-| `RobotEntity` | `robots` | — | OneToOne → Cardboard, Sensor, Communication, Sale; ManyToOne → Wiring |
-| `WiringEntity` | `wirings` | wiringType, district, municipality | OneToOne → Storage; OneToMany ← Robot |
+| `RobotEntity` | `robots` | — | OneToOne → Cardboard, Sensor, Communication; ManyToOne → Wiring |
+| `WiringEntity` | `wirings` | wiringType, district, storeName | OneToOne → Storage; OneToMany ← Robot |
 | `StorageEntity` | `storages` | storageType, storageVersion, isStockNetanya, isStockAfula | OneToOne ← Wiring |
 | `SensorEntity` | `sensors` | sensorType, sensorVersion | OneToOne ← Robot |
 | `CommunicationEntity` | `communications` | communicationType | OneToOne → Plastic, Iron; OneToOne ← Robot |
@@ -152,12 +152,11 @@ All entities extend `BaseEntity` (user-provided string `id`, `source` jsonb) exc
 | `BatteryEntity` | `batteries` | sku, batteryType, batteryVersion, lithiumVersion | OneToOne ← Plastic |
 | `IronEntity` | `irons` | ironType, ironVersion, isHeatConductor | OneToOne ← Communication |
 | `CardboardEntity` | `cardboards` | cardboardType, cardboardVersion | OneToOne ← Robot |
-| `SaleEntity` | `sales` | carrier, onlineStoreName, salesperson, isPurchased, isStockAshdod, isStockTelAviv, isStockRehovot, notes, dataSource | OneToOne ← Robot |
 | `ConflictEntity` | `conflicts` | tableName, columnName, entityId, newValue, newSource, newNotes, oldValue, oldSource, oldNotes, conflictCreator, conflictResolver, resolutionNotes, isSolved | standalone |
 
 ### Entity relationship chain
 ```
-Sale ←── Robot ──→ Cardboard
+Robot ──→ Cardboard
               ├──→ Sensor
               ├──→ Communication ──→ Plastic ──→ Battery
               │                 └──→ Iron

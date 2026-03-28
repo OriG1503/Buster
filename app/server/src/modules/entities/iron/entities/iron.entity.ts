@@ -13,6 +13,9 @@ export class IronEntity extends BaseEntity {
   @Column({ type: 'boolean', nullable: true })
   public isHeatConductor: boolean | null;
 
+  @Column({ type: 'boolean', nullable: true })
+  public isStockAshdod: boolean | null;
+
   @OneToOne(() => CommunicationEntity, (communication) => communication.iron)
   public communication: CommunicationEntity | null;
 }
