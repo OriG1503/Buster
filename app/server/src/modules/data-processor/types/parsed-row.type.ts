@@ -14,8 +14,8 @@ export interface ParsedStorageRow extends EntityRowBase {
   storage_UUID: string;
   storage_type: string | null;
   storage_version: string | null;
-  is_stock_netanya: string | null;
-  is_stock_afula: string | null;
+  storage_is_stock_netanya: string | null;
+  storage_is_stock_afula: string | null;
 }
 
 export interface ParsedIronRow extends EntityRowBase {
@@ -64,6 +64,11 @@ export interface ParsedRow extends EntityRowBase {
   is_purchased: string | null;
   robot_district: string | null;
   robot_store_name: string | null;
+  robot_is_stock_ashdod: string | null;
+  robot_is_stock_tel_aviv: string | null;
+  robot_is_stock_rehovot: string | null;
+  robot_is_stock_netanya: string | null;
+  robot_is_stock_afula: string | null;
   cardboard: ParsedCardboardRow | null;
   sensor: ParsedSensorRow | null;
   communication: ParsedCommunicationRow | null;

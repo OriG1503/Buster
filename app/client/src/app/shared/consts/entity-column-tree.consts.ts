@@ -56,6 +56,11 @@ const ROBOT_GROUP: ColumnGroupStructure = {
     'robots.isPurchased',
     'robots.district',
     'robots.storeName',
+    'robots.isStockAshdod',
+    'robots.isStockTelAviv',
+    'robots.isStockRehovot',
+    'robots.isStockNetanya',
+    'robots.isStockAfula',
   ],
 };
 

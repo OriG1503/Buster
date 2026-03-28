@@ -40,6 +40,21 @@ export class RobotEntity extends BaseEntity {
   @Column({ type: 'varchar', nullable: true })
   public storeName: string | null;
 
+  @Column({ type: 'boolean', nullable: true })
+  public isStockAshdod: boolean | null;
+
+  @Column({ type: 'boolean', nullable: true })
+  public isStockTelAviv: boolean | null;
+
+  @Column({ type: 'boolean', nullable: true })
+  public isStockRehovot: boolean | null;
+
+  @Column({ type: 'boolean', nullable: true })
+  public isStockNetanya: boolean | null;
+
+  @Column({ type: 'boolean', nullable: true })
+  public isStockAfula: boolean | null;
+
   @ManyToOne(() => WiringEntity, (wiring) => wiring.robots, { nullable: true, onDelete: 'SET NULL', onUpdate: 'CASCADE' })
   @JoinColumn({ name: 'wiringId' })
   public wiring: WiringEntity | null;

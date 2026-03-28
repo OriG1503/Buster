@@ -17,5 +17,10 @@ export const mapRobotRow = (row: ParsedRow): MappedRobot | null => {
     isPurchased: parseBool(row.is_purchased),
     district: nullIfEmpty(row.robot_district),
     storeName: nullIfEmpty(row.robot_store_name),
+    isStockAshdod: parseBool(row.robot_is_stock_ashdod),
+    isStockTelAviv: parseBool(row.robot_is_stock_tel_aviv),
+    isStockRehovot: parseBool(row.robot_is_stock_rehovot),
+    isStockNetanya: parseBool(row.robot_is_stock_netanya),
+    isStockAfula: parseBool(row.robot_is_stock_afula),
   };
 };

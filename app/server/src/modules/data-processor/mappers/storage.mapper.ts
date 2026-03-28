@@ -10,7 +10,7 @@ export const mapStorageRow = (raw: ParsedStorageRow | null): MappedStorage | nul
     notes: raw.notes,
     storageType: nullIfEmpty(raw.storage_type),
     storageVersion: nullIfEmpty(raw.storage_version),
-    isStockNetanya: parseBool(raw.is_stock_netanya),
-    isStockAfula: parseBool(raw.is_stock_afula),
+    isStockNetanya: parseBool(raw.storage_is_stock_netanya),
+    isStockAfula: parseBool(raw.storage_is_stock_afula),
   };
 };

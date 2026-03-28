@@ -11,7 +11,7 @@ export const ALLOWED_TABLES = new Set([
 ]);
 
 export const ALLOWED_COLUMNS: Record<string, Set<string>> = {
-  robots: new Set(['id', 'cardboardId', 'sensorId', 'communicationId', 'wiringId', 'carrier', 'isPurchased', 'district', 'storeName']),
+  robots: new Set(['id', 'cardboardId', 'sensorId', 'communicationId', 'wiringId', 'carrier', 'isPurchased', 'district', 'storeName', 'isStockAshdod', 'isStockTelAviv', 'isStockRehovot', 'isStockNetanya', 'isStockAfula']),
   sensors: new Set(['id', 'sensorType', 'sensorVersion']),
   wirings: new Set(['id', 'wiringType', 'district', 'storeName', 'storageId']),
   communications: new Set(['id', 'communicationType', 'plasticId', 'ironId']),
