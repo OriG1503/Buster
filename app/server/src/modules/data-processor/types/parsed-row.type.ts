@@ -35,7 +35,7 @@ export interface ParsedWiringRow extends EntityRowBase {
   wiring_UUID: string;
   wiring_type: string | null;
   district: string | null;
-  municipality: string | null;
+  store_name: string | null;
   storage: ParsedStorageRow | null;
 }
 

@@ -144,7 +144,7 @@ All entities extend `BaseEntity` (user-provided string `id`, `source` jsonb) exc
 | Entity | Table | Key columns | Relations (owning side holds FK) |
 |--------|-------|-------------|----------------------------------|
 | `RobotEntity` | `robots` | — | OneToOne → Cardboard, Sensor, Communication, Sale; ManyToOne → Wiring |
-| `WiringEntity` | `wirings` | wiringType, district, municipality | OneToOne → Storage; OneToMany ← Robot |
+| `WiringEntity` | `wirings` | wiringType, district, storeName | OneToOne → Storage; OneToMany ← Robot |
 | `StorageEntity` | `storages` | storageType, storageVersion, isStockNetanya, isStockAfula | OneToOne ← Wiring |
 | `SensorEntity` | `sensors` | sensorType, sensorVersion | OneToOne ← Robot |
 | `CommunicationEntity` | `communications` | communicationType | OneToOne → Plastic, Iron; OneToOne ← Robot |

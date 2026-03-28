@@ -33,7 +33,7 @@ export const DISPLAY_NAMES_CONFIG: DisplayNamesConfig = {
       id: { label: 'מזהה כבל', parserFieldName: 'wiring_UUID' },
       wiringType: { label: 'סוג כבל', parserFieldName: 'wiring_type' },
       district: { label: 'מחוז', parserFieldName: 'district' },
-      municipality: { label: 'עיריה', parserFieldName: 'municipality' },
+      storeName: { label: 'עיריה', parserFieldName: 'store_name' },
       storageId: { label: 'מזהה אחסון', parserFieldName: 'storage_UUID' },
       notes: { label: 'הערות', parserFieldName: 'notes' },
       source: { label: 'מקור', parserFieldName: 'source' },

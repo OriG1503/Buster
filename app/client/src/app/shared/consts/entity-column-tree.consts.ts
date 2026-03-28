@@ -56,7 +56,7 @@ const COMMUNICATION_GROUP: ColumnGroupStructure = {
 
 const WIRING_GROUP: ColumnGroupStructure = {
   entityTable: 'wirings',
-  columns: ['wirings.id', 'wirings.wiringType', 'wirings.district', 'wirings.municipality', 'wirings.storageId'],
+  columns: ['wirings.id', 'wirings.wiringType', 'wirings.district', 'wirings.storeName', 'wirings.storageId'],
 };
 
 const ROBOT_GROUP: ColumnGroupStructure = {

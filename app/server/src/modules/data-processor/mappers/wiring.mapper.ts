@@ -11,7 +11,7 @@ export const mapWiringRow = (row: ParsedRow): MappedWiring | null => {
     notes: raw.notes,
     wiringType: nullIfEmpty(raw.wiring_type),
     district: nullIfEmpty(raw.district),
-    municipality: nullIfEmpty(raw.municipality),
+    storeName: nullIfEmpty(raw.store_name),
     storageId: raw.storage ? nullIfEmpty(raw.storage.storage_UUID) : null,
   };
 };
