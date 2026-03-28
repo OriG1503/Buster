@@ -1,0 +1,24 @@
+.popup-meta-field {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 0.35rem;
+  font-size: var(--font-size-xs);
+
+  &__label {
+    color: rgba(255, 255, 255, 0.4);
+    white-space: nowrap;
+
+    &::after {
+      content: ':';
+    }
+  }
+
+  &__value {
+    color: rgba(255, 255, 255, 0.8);
+
+    &--notes {
+      white-space: pre-line;
+    }
+  }
+}

@@ -1,4 +1,3 @@
-import { animate, style, transition, trigger } from '@angular/animations';
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 
 import { ConflictColumnDetail, ConflictEntityDetail, RelationalConflictDetail, TwoFathersConflictDetail } from '../../../../shared/types/conflict-entity-detail.type';
@@ -13,24 +12,7 @@ import { DEFAULT_USER_NAME } from '../../../../shared/consts/default-user.consts
 import { PendingResolution, PendingValueResolution, PendingRelationalResolution } from '../../types/pending-resolution.type';
 import { ConflictOptionBtnComponent } from '../../molecules/conflict-option-btn/conflict-option-btn.component';
 import { FloatingWarningDialogComponent } from '../../molecules/floating-warning-dialog/floating-warning-dialog.component';
-
-const SLIDE_DOWN_ANIMATION = trigger('slideDown', [
-  transition(':enter', [
-    style({ height: '0', overflow: 'hidden', opacity: 0 }),
-    animate('220ms ease-out', style({ height: '*', overflow: 'hidden', opacity: 1 })),
-  ]),
-  transition(':leave', [
-    style({ height: '*', overflow: 'hidden', opacity: 1 }),
-    animate('180ms ease-in', style({ height: '0', overflow: 'hidden', opacity: 0 })),
-  ]),
-]);
-
-const FADE_SLIDE_IN_ANIMATION = trigger('fadeSlideIn', [
-  transition(':enter', [
-    style({ opacity: 0, transform: 'translateY(-6px)' }),
-    animate('200ms ease-out', style({ opacity: 1, transform: 'translateY(0)' })),
-  ]),
-]);
+import { FADE_SLIDE_IN_ANIMATION, SLIDE_DOWN_ANIMATION } from './conflict-item.consts';
 
 @Component({
   selector: 'app-conflict-item',
