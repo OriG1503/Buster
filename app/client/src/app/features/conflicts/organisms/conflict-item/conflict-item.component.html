@@ -135,7 +135,7 @@
                     }
                   }
 
-                  <!-- Value conflict cells -->
+                  <!-- Value conflict cells (includes cross-entity conflict entries) -->
                   @for (col of _$valueConflictColumns(); track col.columnName) {
                     <td class="conflict-item__cell conflict-item__cell--conflict">
                       <div class="conflict-item__options">
@@ -152,6 +152,21 @@
                             [$uploadedLabel]="UPLOADED_LABEL"
                             [$notes]="entry.notes"
                             (selected)="selectValueWinner(col.columnName, entry.value)"
+                          />
+                        }
+                        @for (crossEntry of col.crossEntityConflicts; track crossEntry.conflictId) {
+                          <app-conflict-option-btn
+                            [$label]="crossEntry.value ?? '—'"
+                            [$isIdStyle]="false"
+                            [$isSelected]="isCrossEntityWinnerSelected(col.columnName, crossEntry.value)"
+                            [$isDisabled]="!_$canEdit()"
+                            [$source]="crossEntry.source"
+                            [$sourceTime]="crossEntry.sourceTime"
+                            [$sourceLabel]="_$sourceLabel()"
+                            [$uploadedLabel]="UPLOADED_LABEL"
+                            [$notes]="crossEntry.notes"
+                            [$entityBadge]="getCrossEntityBadge(crossEntry)"
+                            (selected)="selectCrossEntityWinner(col.columnName, crossEntry, crossEntry.value, $group().tableName === 'robots')"
                           />
                         }
                       </div>

@@ -1,15 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { ValueConflictEntityDetailService } from './value-conflict-entity-detail.service';
 import { RelationalConflictRepository } from '../relational-conflict.repository';
+import { CrossEntityConflictRepository } from '../cross-entity-conflict.repository';
 import {
+  ConflictColumnDetail,
   ConflictEntityDetailResponse,
+  CrossEntityConflictEntry,
   RelationalConflictDetail,
   RelationalConflictOption,
   TwoFathersConflictDetail,
 } from '../types/conflict-entity-detail-response.type';
 import { RelationalConflictEntity } from '../entities/relational-conflict.entity';
+import { CrossEntityConflictEntity } from '../entities/cross-entity-conflict.entity';
 import { FK_FIELD_TO_TABLE } from '../../../../shared/consts/fk-field-to-table.const';
 import { RELATIONAL_CONFLICT_TYPE } from '../consts/relational-conflict-type.const';
+import { CROSS_ENTITY_FIELDS } from '../consts/cross-entity-fields.const';
 
 const FK_ID_SUFFIX = 'Id';
 
@@ -18,28 +23,61 @@ export class ConflictEntityDetailService {
   public constructor(
     private readonly _valueConflictEntityDetailService: ValueConflictEntityDetailService,
     private readonly _relationalConflictRepository: RelationalConflictRepository,
+    private readonly _crossEntityConflictRepository: CrossEntityConflictRepository,
   ) {}
 
   public async getEntityDetail(tableName: string, entityId: string): Promise<ConflictEntityDetailResponse> {
-    const [columns, relationalConflicts] = await Promise.all([
+    const [columns, relationalConflicts, crossEntityConflicts] = await Promise.all([
       this._valueConflictEntityDetailService.getEntityDetail(tableName, entityId),
       this._relationalConflictRepository.findOpenByAnchor(entityId, tableName),
+      this._fetchCrossEntityConflicts(tableName, entityId),
     ]);
 
     const twoChilds = relationalConflicts.filter((rc) => rc.conflictType === RELATIONAL_CONFLICT_TYPE.TWO_CHILDS);
     const twoFathers = relationalConflicts.filter((rc) => rc.conflictType === RELATIONAL_CONFLICT_TYPE.TWO_FATHERS);
 
     const twoChildsByFkField = this._groupByFkField(twoChilds);
+    const crossEntityByField = this._groupCrossEntityByField(crossEntityConflicts, tableName, entityId);
 
-    const enrichedColumns = columns.map((col) => {
-      const group = twoChildsByFkField[col.columnName];
-      if (!group) { return col; }
-      return { ...col, relationalConflict: this._buildRelationalDetail(group) };
+    const enrichedColumns = columns.map((col): ConflictColumnDetail => {
+      const relGroup = twoChildsByFkField[col.columnName];
+      const crossGroup = crossEntityByField[col.columnName] ?? [];
+      const isConflicted = col.isConflicted || crossGroup.length > 0;
+      return {
+        ...col,
+        isConflicted,
+        crossEntityConflicts: crossGroup,
+        ...(relGroup ? { relationalConflict: this._buildRelationalDetail(relGroup) } : {}),
+      };
     });
 
     const twoFathersConflict = twoFathers.length > 0 ? this._buildTwoFathersDetail(twoFathers) : null;
 
     return { columns: enrichedColumns, twoFathersConflict };
+  }
+
+  /** Returns cross-entity conflicts keyed by fieldName, with the "other entity" perspective. */
+  private _groupCrossEntityByField(
+    conflicts: CrossEntityConflictEntity[],
+    viewingTable: string,
+    viewingEntityId: string,
+  ): Record<string, CrossEntityConflictEntry[]> {
+    return conflicts.reduce<Record<string, CrossEntityConflictEntry[]>>((acc, conflict) => {
+      if (!CROSS_ENTITY_FIELDS.includes(conflict.fieldName as (typeof CROSS_ENTITY_FIELDS)[number])) { return acc; }
+      const isViewingRobot = viewingTable === 'robots' && conflict.robotId === viewingEntityId;
+      const entry: CrossEntityConflictEntry = isViewingRobot
+        ? { conflictId: conflict.id, entityId: conflict.wiringId, entityTable: 'wirings', value: conflict.wiringValue, source: conflict.wiringSource, notes: conflict.wiringNotes, sourceTime: conflict.wiringSourceTime }
+        : { conflictId: conflict.id, entityId: conflict.robotId, entityTable: 'robots', value: conflict.robotValue, source: conflict.robotSource, notes: conflict.robotNotes, sourceTime: conflict.robotSourceTime };
+      acc[conflict.fieldName] = [...(acc[conflict.fieldName] ?? []), entry];
+      return acc;
+    }, {});
+  }
+
+  /** Loads open cross-entity conflicts relevant to this entity (as robot or as wiring). */
+  private _fetchCrossEntityConflicts(tableName: string, entityId: string): Promise<CrossEntityConflictEntity[]> {
+    if (tableName === 'robots') { return this._crossEntityConflictRepository.findOpenByRobot(entityId); }
+    if (tableName === 'wirings') { return this._crossEntityConflictRepository.findOpenByWiring(entityId); }
+    return Promise.resolve([]);
   }
 
   private _groupByFkField(conflicts: RelationalConflictEntity[]): Record<string, RelationalConflictEntity[]> {

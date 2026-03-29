@@ -12,4 +12,12 @@ export class RobotRepository extends BaseRepository<RobotEntity> {
   ) {
     super(repository);
   }
+
+  public findManyByWiringId(wiringId: string): Promise<RobotEntity[]> {
+    return this._repository
+      .createQueryBuilder('r')
+      .where('r."wiringId" = :wiringId', { wiringId })
+      .loadAllRelationIds()
+      .getMany();
+  }
 }

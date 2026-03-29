@@ -25,6 +25,8 @@ export class ConflictOptionBtnComponent {
   /** Label for the upload-date badge — supplied by the parent from a label-map. */
   public readonly $uploadedLabel = input<string>('');
   public readonly $notes = input<string | null>(null);
+  /** Optional badge marking this option as coming from another entity (cross-entity conflict). */
+  public readonly $entityBadge = input<{ entityLabel: string; entityId: string } | null>(null);
 
   public readonly selected = output<void>();
 

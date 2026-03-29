@@ -160,4 +160,36 @@
     color: var(--color-navy-gray);
     font-style: italic;
   }
+
+  &__entity-badge {
+    display: flex;
+    align-self: flex-start;
+    align-items: center;
+    gap: 0.3rem;
+    background-color: rgba(100, 200, 160, 0.15);
+    border: 1px solid rgba(100, 200, 160, 0.45);
+    border-radius: 8px;
+    padding: 0.15rem 0.45rem;
+  }
+
+  &__entity-badge-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #64c8a0;
+    flex-shrink: 0;
+  }
+
+  &__entity-badge-sep {
+    width: 1px;
+    height: 0.75rem;
+    background-color: rgba(100, 200, 160, 0.4);
+    flex-shrink: 0;
+  }
+
+  &__entity-badge-id {
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+    word-break: break-all;
+  }
 }

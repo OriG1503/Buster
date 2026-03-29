@@ -5,8 +5,10 @@ import { Role } from '../../auth/types/role.type';
 import { ValueConflictHistoryService } from './value-conflict-history.service';
 import { ValueConflictResolverService } from './services/value-conflict-resolver.service';
 import { RelationalConflictResolverService } from './services/relational-conflict-resolver.service';
+import { CrossEntityConflictResolverService } from './services/cross-entity-conflict-resolver.service';
 import { ResolveValueConflictDto } from './dto/resolve-value-conflict.dto';
 import { ResolveRelationalConflictDto } from './dto/resolve-relational-conflict.dto';
+import { ResolveCrossEntityConflictDto } from './dto/resolve-cross-entity-conflict.dto';
 import { RevertService } from './services/revert.service';
 import { RevertValueConflictDto } from './dto/revert-value-conflict.dto';
 import { ConflictHistoryResponse } from './types/conflict-history-response.type';
@@ -25,6 +27,7 @@ export class ConflictController {
   public constructor(
     private readonly _valueConflictResolverService: ValueConflictResolverService,
     private readonly _relationalConflictResolverService: RelationalConflictResolverService,
+    private readonly _crossEntityConflictResolverService: CrossEntityConflictResolverService,
     private readonly _revertService: RevertService,
     private readonly _valueConflictHistoryService: ValueConflictHistoryService,
     private readonly _conflictListService: ConflictListService,
@@ -64,6 +67,12 @@ export class ConflictController {
   @Patch('relational/resolve')
   public async resolveRelational(@Body() dto: ResolveRelationalConflictDto): Promise<RelationalConflictEntity> {
     return this._relationalConflictResolverService.resolve(dto);
+  }
+
+  @RequireRole(Role.EDITOR)
+  @Patch('cross-entity/resolve')
+  public async resolveCrossEntity(@Body() dto: ResolveCrossEntityConflictDto): Promise<void> {
+    return this._crossEntityConflictResolverService.resolve(dto);
   }
 
   @RequireRole(Role.EDITOR)
