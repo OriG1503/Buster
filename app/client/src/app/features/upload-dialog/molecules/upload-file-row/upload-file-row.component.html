@@ -1,0 +1,51 @@
+<div
+  class="upload-dialog__file"
+  [class.upload-dialog__file--warning]="$file().status === 'warning'"
+  [class.upload-dialog__file--error]="$file().status === 'error'"
+>
+  <div class="upload-dialog__file-info">
+    <span class="upload-dialog__file-name">{{ $file().name }}</span>
+
+    @if ($file().status === 'error') {
+      <span class="upload-dialog__file-error">{{ $file().errorMessage }}</span>
+    } @else if ($file().status !== 'pending') {
+      <div class="upload-dialog__file-meta">
+        <span class="upload-dialog__meta-success">{{ $file().successRate }}{{ _labelMap.successRateSuffix }}</span>
+        <span class="upload-dialog__meta-sep">|</span>
+        <span class="upload-dialog__meta-conflicts">
+          {{ $file().newConflictsCount }} {{ _labelMap.newConflictsSuffix }}
+          @if ($file().newConflictsCount > 0) {
+            <a class="upload-dialog__conflicts-link" (click)="viewConflicts.emit($file().conflictIds)">
+              {{ _labelMap.viewConflicts }}
+            </a>
+          }
+        </span>
+        @if ($file().reportFileName) {
+          <span class="upload-dialog__meta-sep">|</span>
+          <a class="upload-dialog__report-link" (click)="downloadReport.emit($file().reportFileName!)">
+            {{ _labelMap.downloadReport }}
+          </a>
+        }
+      </div>
+      @if ($file().unknownColumns && $file().unknownColumns!.length > 0) {
+        <div class="upload-dialog__unknown-cols">
+          <i class="pi pi-exclamation-triangle upload-dialog__unknown-icon"></i>
+          <span class="upload-dialog__unknown-label">{{ _labelMap.unknownColumnsSuffix }}</span>
+          <span class="upload-dialog__unknown-list">{{ $file().unknownColumns!.join(', ') }}</span>
+        </div>
+      }
+    }
+  </div>
+
+  <div class="upload-dialog__file-status">
+    @if ($file().status === 'success') {
+      <i class="pi pi-check upload-dialog__file-icon upload-dialog__file-icon--success"></i>
+    } @else if ($file().status === 'error') {
+      <i class="pi pi-times upload-dialog__file-icon upload-dialog__file-icon--error"></i>
+    } @else if ($file().status === 'warning') {
+      <i class="pi pi-exclamation-triangle upload-dialog__file-icon upload-dialog__file-icon--warning"></i>
+    } @else {
+      <i class="pi pi-spin pi-spinner upload-dialog__file-icon upload-dialog__file-icon--pending"></i>
+    }
+  </div>
+</div>

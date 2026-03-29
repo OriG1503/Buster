@@ -1,39 +1,47 @@
-import { Component, computed, inject, signal, ViewChild, ElementRef, ViewEncapsulation } from '@angular/core';
+import { Component, computed, inject, signal, ViewEncapsulation } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ButtonModule } from 'primeng/button';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 
 import { APP_ROUTES } from '../../../shared/consts/app-routes.consts';
-import { DEFAULT_USER_NAME } from '../../../shared/consts/default-user.consts';
-
+import { API_ROUTES } from '../../../shared/consts/api-routes.consts';
 import { UPLOAD_DIALOG_LABEL_MAP } from '../mapping/upload-dialog.label-map';
-import { EntityFormatOption } from '../consts/entity-format-options.consts';
+import { FORMAT_OPTION_ASSET_PATHS } from '../consts/upload-dialog.consts';
 import { UploadedFile } from '../types/uploaded-file.type';
+import { EntityFormatOption } from '../types/entity-format-option.type';
 import { FileService } from '../../../core/services/file/file.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { DisplayNamesService } from '../../../core/services/display-names/display-names.service';
+import { DownloadService } from '../services/download.service';
+import { UploadDropzoneComponent } from '../molecules/upload-dropzone/upload-dropzone.component';
+import { UploadFileRowComponent } from '../molecules/upload-file-row/upload-file-row.component';
+import { UploadSummary } from '../../../shared/types/upload-summary.type';
 
 @Component({
   selector: 'app-upload-dialog',
   standalone: true,
-  imports: [ButtonModule, OverlayPanelModule],
+  imports: [ButtonModule, OverlayPanelModule, UploadDropzoneComponent, UploadFileRowComponent],
   templateUrl: './upload-dialog.component.html',
   styleUrl: './upload-dialog.component.scss',
 })
 export class UploadDialogComponent {
-  @ViewChild('fileInput') private readonly _fileInputRef!: ElementRef<HTMLInputElement>;
-
   private readonly _dialogRef = inject(DynamicDialogRef);
   private readonly _fileService = inject(FileService);
   private readonly _authService = inject(AuthService);
   private readonly _displayNames = inject(DisplayNamesService);
+  private readonly _downloadService = inject(DownloadService);
 
   protected readonly _labelMap = UPLOAD_DIALOG_LABEL_MAP;
-  protected readonly _$formatOptions = computed<EntityFormatOption[]>(() => this._displayNames.$formatOptions());
+  protected readonly _$uploadedFiles = signal<UploadedFile[]>([]);
 
-  protected _$isDragging = signal(false);
-  protected _$uploadedFiles = signal<UploadedFile[]>([]);
+  /** Format options with dynamic labels from the server config. */
+  protected readonly _$formatOptions = computed<EntityFormatOption[]>(() =>
+    Object.entries(FORMAT_OPTION_ASSET_PATHS).map(([tableName, paths]) => ({
+      ...paths,
+      label: `פורמט ${this._displayNames.getEntityPluralName(tableName)}`,
+    })),
+  );
 
   public onClose(): void {
     this._dialogRef.close();
@@ -47,103 +55,52 @@ export class UploadDialogComponent {
     window.open(`${APP_ROUTES.conflicts}?conflictIds=${conflictIds.join(',')}`, '_blank');
   }
 
-  public onBrowseClick(): void {
-    this._fileInputRef.nativeElement.click();
-  }
-
-  public onFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files?.length) {
-      this._processFiles(Array.from(input.files));
-    }
-    input.value = '';
-  }
-
-  public onDragOver(event: DragEvent): void {
-    event.preventDefault();
-    this._$isDragging.set(true);
-  }
-
-  public onDragLeave(): void {
-    this._$isDragging.set(false);
-  }
-
-  public onDrop(event: DragEvent): void {
-    event.preventDefault();
-    this._$isDragging.set(false);
-    const files = event.dataTransfer?.files;
-    if (files?.length) {
-      this._processFiles(Array.from(files));
-    }
-  }
-
   public onDownloadTemplate(option: EntityFormatOption, panel: { hide: () => void }): void {
     panel.hide();
-    fetch(option.assetPath)
-      .then((res) => res.blob())
-      .then((blob) => {
-        const url = URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
-        anchor.href = url;
-        anchor.download = option.filename;
-        document.body.appendChild(anchor);
-        anchor.click();
-        document.body.removeChild(anchor);
-        URL.revokeObjectURL(url);
-      });
+    this._downloadService.downloadFromUrl(option.assetPath, option.filename);
   }
 
   public onDownloadReport(reportFileName: string): void {
-    fetch(`/api/file/report/${reportFileName}`)
-      .then((res) => res.blob())
-      .then((blob) => {
-        const url = URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
-        anchor.href = url;
-        anchor.download = reportFileName;
-        document.body.appendChild(anchor);
-        anchor.click();
-        document.body.removeChild(anchor);
-        URL.revokeObjectURL(url);
-      });
+    this._downloadService.downloadFromUrl(API_ROUTES.file.report(reportFileName), reportFileName);
+  }
+
+  public onFilesDropped(files: File[]): void {
+    files.filter((file) => this._isValidFile(file)).forEach((file) => this._uploadFile(file));
   }
 
   private _isValidFile(file: File): boolean {
     return /\.(xlsx|xls|csv)$/i.test(file.name);
   }
 
-  private _processFiles(files: File[]): void {
-    files.filter((file) => this._isValidFile(file)).forEach((file) => {
-      const id = crypto.randomUUID();
-      const pending: UploadedFile = { id, name: file.name, successRate: 0, newConflictsCount: 0, conflictIds: [], status: 'pending' };
-      this._$uploadedFiles.update((prev) => [...prev, pending]);
+  private _uploadFile(file: File): void {
+    const id = crypto.randomUUID();
+    this._$uploadedFiles.update((prev) => [...prev, { id, name: file.name, successRate: 0, newConflictsCount: 0, conflictIds: [], status: 'pending' }]);
 
-      this._fileService.upload(file, this._authService.getPayload()?.email ?? 'unknown').subscribe({
-        next: (summary) => {
-          this._$uploadedFiles.update((prev) =>
-            prev.map((f) =>
-              f.id === id
-                ? {
-                    id,
-                    name: file.name,
-                    successRate: summary.uploadPercentage,
-                    newConflictsCount: summary.conflictCount,
-                    conflictIds: summary.conflictIds,
-                    status: (summary.conflictCount > 0 || summary.uploadPercentage < 100) ? 'warning' : 'success',
-                    reportFileName: summary.uploadPercentage < 100 ? summary.reportFileName : undefined,
-                    unknownColumns: summary.unknownColumns.length > 0 ? summary.unknownColumns : undefined,
-                  }
-                : f,
-            ),
-          );
-        },
-        error: (err: HttpErrorResponse) => {
-          const errorMessage = err.error?.message ?? err.message ?? 'שגיאה בהעלאת הקובץ';
-          this._$uploadedFiles.update((prev) =>
-            prev.map((f) => (f.id === id ? { ...f, status: 'error', errorMessage } : f)),
-          );
-        },
-      });
+    this._fileService.upload(file, this._authService.getPayload()?.email ?? 'unknown').subscribe({
+      next: (summary) => this._onUploadSuccess(id, file.name, summary),
+      error: (err: HttpErrorResponse) => this._onUploadError(id, err),
     });
+  }
+
+  private _onUploadSuccess(id: string, name: string, summary: UploadSummary): void {
+    this._$uploadedFiles.update((prev) =>
+      prev.map((f) => f.id !== id ? f : {
+        id,
+        name,
+        successRate: summary.uploadPercentage,
+        newConflictsCount: summary.conflictCount,
+        conflictIds: summary.conflictIds,
+        status: (summary.conflictCount > 0 || summary.uploadPercentage < 100) ? 'warning' : 'success',
+        reportFileName: summary.reportFileName,
+        unknownColumns: summary.unknownColumns.length > 0 ? summary.unknownColumns : undefined,
+      }),
+    );
+  }
+
+  private _onUploadError(id: string, err: HttpErrorResponse): void {
+    const errorMessage = err.error?.message ?? err.message ?? 'שגיאה בהעלאת הקובץ';
+    this._$uploadedFiles.update((prev) =>
+      prev.map((f) => f.id !== id ? f : { ...f, status: 'error', errorMessage }),
+    );
   }
 }

@@ -1,4 +1,4 @@
-import { Role } from '../consts/role.consts';
+import { Role } from '../../../../shared/consts/role.consts';
 
 export type MeResponse = {
   accessToken: string;

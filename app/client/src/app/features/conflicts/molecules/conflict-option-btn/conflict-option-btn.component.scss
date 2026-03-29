@@ -1,0 +1,112 @@
+.conflict-item {
+  &__option {
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem 0.5rem 1.25rem;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    text-align: right;
+    width: 100%;
+    background: transparent;
+    transition:
+      background-color 0.15s,
+      border-color 0.15s;
+
+    &--red {
+      border-color: rgba(231, 75, 59, 0.25);
+
+      &:hover {
+        background-color: rgba(231, 75, 59, 0.08);
+      }
+    }
+
+    &--white {
+      border-color: rgba(255, 255, 255, 0.1);
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+      }
+    }
+
+    &--selected {
+      border-color: var(--color-blue);
+      background-color: rgba(63, 112, 227, 0.12);
+
+      &:hover {
+        background-color: rgba(63, 112, 227, 0.18);
+      }
+    }
+  }
+
+  &__dot {
+    position: absolute;
+    top: 50%;
+    right: -0.4rem;
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    background-color: var(--color-navy-gray);
+    transform: translateY(-50%);
+    transition: background-color 0.15s;
+    flex-shrink: 0;
+
+    &--active {
+      background-color: var(--color-blue);
+    }
+  }
+
+  &__id {
+    font-size: 0.7rem;
+    font-weight: 600;
+    word-break: break-all;
+
+    &--red {
+      color: var(--color-red);
+    }
+
+    &--yellow {
+      color: var(--color-yellow);
+    }
+  }
+
+  &__value {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--p-surface-300);
+    word-break: break-word;
+
+    &--red {
+      color: var(--color-red);
+    }
+
+    &--yellow {
+      color: var(--color-yellow);
+    }
+
+    &--fk {
+      font-size: 0.7rem;
+      word-break: break-all;
+    }
+  }
+
+  &__meta {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--color-navy-gray);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 0.1rem 0.35rem;
+    background-color: rgba(255, 255, 255, 0.03);
+  }
+
+  &__comment {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--color-navy-gray);
+    font-style: italic;
+  }
+}

@@ -1,4 +1,4 @@
-import { ConflictGroup } from './conflict-group.type';
+import { ConflictGroup } from '../../../shared/types/conflict-group.type';
 
 export type ConflictsState = {
   openCount: number;

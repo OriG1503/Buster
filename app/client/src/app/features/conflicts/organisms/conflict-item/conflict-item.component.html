@@ -1,50 +1,33 @@
-<div
-  class="conflict-item"
-  [class.conflict-item--expanded]="_isExpanded()"
->
-  <button
-    class="conflict-item__header"
-    (click)="toggle()"
-  >
+<div class="conflict-item" [class.conflict-item--expanded]="_isExpanded()">
+  <button class="conflict-item__header" (click)="toggle()">
     <i
       class="conflict-item__chevron pi"
       [class.pi-chevron-left]="!_isExpanded()"
       [class.pi-chevron-down]="_isExpanded()"
     ></i>
-    <span class="conflict-item__label"
-      >זוהה קונפליקט עבור ישות {{ getEntityLabel() }} עם מזהה {{ $group().entityId }}</span
-    >
+    <span class="conflict-item__label">
+      זוהה קונפליקט עבור ישות {{ getEntityLabel() }} עם מזהה {{ $group().entityId }}
+    </span>
   </button>
 
   @if (_isExpanded()) {
-    <div
-      @slideDown
-      class="conflict-item__body"
-    >
+    <div @slideDown class="conflict-item__body">
       @if (!_$detail()) {
         <div class="conflict-item__loading"><i class="pi pi-spin pi-spinner"></i></div>
       } @else {
-        <div
-          @fadeSlideIn
-          class="conflict-item__detail"
-        >
+        <div @fadeSlideIn class="conflict-item__detail">
           <div class="conflict-item__table-wrap">
             <table class="conflict-item__table">
               <thead class="conflict-item__thead">
                 <tr class="conflict-item__head-row">
-                  <!-- TWO_FATHERS column header (rightmost in RTL) -->
                   @if (_$twoFathersConflict()) {
                     <th class="conflict-item__th conflict-item__th--conflict conflict-item__th--fathers">
                       {{ getFathersColumnLabel(_$twoFathersConflict()!) }}
                     </th>
                   }
-
-                  <!-- Entity PK column header -->
                   @if (_$pkColumn()) {
                     <th class="conflict-item__th conflict-item__th--pk">מזהה {{ getEntityLabel() }}</th>
                   }
-
-                  <!-- TWO_CHILDS column group headers (one per FK conflict) -->
                   @for (col of _$twoChildsConflicts(); track col.columnName) {
                     <th class="conflict-item__th conflict-item__th--conflict conflict-item__th--childs">
                       {{ getLabel(col.columnName) }}
@@ -55,13 +38,9 @@
                       </th>
                     }
                   }
-
-                  <!-- Value conflict column headers -->
                   @for (col of _$valueConflictColumns(); track col.columnName) {
                     <th class="conflict-item__th conflict-item__th--conflict">{{ getLabel(col.columnName) }}</th>
                   }
-
-                  <!-- Regular column headers -->
                   @for (col of _$regularColumns(); track col.columnName) {
                     <th class="conflict-item__th">{{ getLabel(col.columnName) }}</th>
                   }
@@ -75,31 +54,20 @@
                     <td class="conflict-item__cell conflict-item__cell--conflict">
                       <div class="conflict-item__options">
                         @for (opt of _$twoFathersConflict()!.options; track opt.id) {
-                          <button
-                            class="conflict-item__option conflict-item__option--red"
-                            [class.conflict-item__option--selected]="isTwoFathersWinnerSelected(opt.id)"
-                            [disabled]="!_$canEdit()"
-                            (click)="selectTwoFathersWinner(_$twoFathersConflict()!, opt.id)"
-                          >
-                            <span
-                              class="conflict-item__dot"
-                              [class.conflict-item__dot--active]="isTwoFathersWinnerSelected(opt.id)"
-                            ></span>
-                            <span
-                              class="conflict-item__id conflict-item__id--red"
-                              [class.conflict-item__id--yellow]="isIdOpen(opt.id)"
-                              >{{ opt.id }}</span
-                            >
-                            @if (opt.source) {
-                              <span class="conflict-item__meta">{{ opt.source }}</span>
-                            }
-                          </button>
+                          <app-conflict-option-btn
+                            [$label]="opt.id"
+                            [$isSelected]="isTwoFathersWinnerSelected(opt.id)"
+                            [$isDisabled]="!_$canEdit()"
+                            [$isYellow]="isIdOpen(opt.id)"
+                            [$source]="opt.source"
+                            (selected)="selectTwoFathersWinner(_$twoFathersConflict()!, opt.id)"
+                          />
                         }
                       </div>
                     </td>
                   }
 
-                  <!-- Entity PK cell -->
+                  <!-- PK cell -->
                   @if (_$pkColumn()) {
                     <td class="conflict-item__cell conflict-item__cell--pk">
                       <div class="conflict-item__cell-content">
@@ -114,56 +82,35 @@
                     </td>
                   }
 
-                  <!-- TWO_CHILDS cells (FK conflict + subtree) -->
+                  <!-- TWO_CHILDS cells -->
                   @for (col of _$twoChildsConflicts(); track col.columnName) {
-                    <!-- FK conflict cell -->
                     <td class="conflict-item__cell conflict-item__cell--conflict">
                       <div class="conflict-item__options">
                         @for (opt of col.relationalConflict!.options; track opt.id) {
-                          <button
-                            class="conflict-item__option conflict-item__option--red"
-                            [class.conflict-item__option--selected]="isTwoChildsWinnerSelected(col.columnName, opt.id)"
-                            [disabled]="!_$canEdit()"
-                            (click)="selectTwoChildsWinner(col.columnName, col.relationalConflict!, opt.id)"
-                          >
-                            <span
-                              class="conflict-item__dot"
-                              [class.conflict-item__dot--active]="isTwoChildsWinnerSelected(col.columnName, opt.id)"
-                            ></span>
-                            <span
-                              class="conflict-item__id conflict-item__id--red"
-                              [class.conflict-item__id--yellow]="isIdOpen(opt.id)"
-                              >{{ opt.id }}</span
-                            >
-                            @if (opt.source) {
-                              <span class="conflict-item__meta">{{ opt.source }}</span>
-                            }
-                          </button>
+                          <app-conflict-option-btn
+                            [$label]="opt.id"
+                            [$isSelected]="isTwoChildsWinnerSelected(col.columnName, opt.id)"
+                            [$isDisabled]="!_$canEdit()"
+                            [$isYellow]="isIdOpen(opt.id)"
+                            [$source]="opt.source"
+                            (selected)="selectTwoChildsWinner(col.columnName, col.relationalConflict!, opt.id)"
+                          />
                         }
                       </div>
                     </td>
-
                     <!-- Subtree FK columns for this TWO_CHILDS -->
                     @for (fkField of getSubtreeFkFields(col.relationalConflict!); track fkField) {
                       <td class="conflict-item__cell conflict-item__cell--subtree">
                         <div class="conflict-item__options">
                           @for (childId of getSubtreeOptions(col.relationalConflict!, fkField); track childId) {
-                            <button
-                              class="conflict-item__option conflict-item__option--white"
-                              [class.conflict-item__option--selected]="isSubtreeLevelSelected(col.columnName, fkField, childId)"
-                              [disabled]="!_$canEdit()"
-                              (click)="selectSubtreeLevel(col.columnName, fkField, childId)"
-                            >
-                              <span
-                                class="conflict-item__dot"
-                                [class.conflict-item__dot--active]="isSubtreeLevelSelected(col.columnName, fkField, childId)"
-                              ></span>
-                              <span
-                                class="conflict-item__id"
-                                [class.conflict-item__id--yellow]="isIdOpen(childId)"
-                                >{{ childId }}</span
-                              >
-                            </button>
+                            <app-conflict-option-btn
+                              [$label]="childId"
+                              [$variant]="'white'"
+                              [$isSelected]="isSubtreeLevelSelected(col.columnName, fkField, childId)"
+                              [$isDisabled]="!_$canEdit()"
+                              [$isYellow]="isIdOpen(childId)"
+                              (selected)="selectSubtreeLevel(col.columnName, fkField, childId)"
+                            />
                           }
                         </div>
                       </td>
@@ -175,24 +122,16 @@
                     <td class="conflict-item__cell conflict-item__cell--conflict">
                       <div class="conflict-item__options">
                         @for (entry of col.conflictValues; track entry.value) {
-                          <button
-                            class="conflict-item__option conflict-item__option--red"
-                            [class.conflict-item__option--selected]="isValueWinnerSelected(col.columnName, entry.value)"
-                            [disabled]="!_$canEdit()"
-                            (click)="selectValueWinner(col.columnName, entry.value)"
-                          >
-                            <span
-                              class="conflict-item__dot"
-                              [class.conflict-item__dot--active]="isValueWinnerSelected(col.columnName, entry.value)"
-                            ></span>
-                            <span class="conflict-item__value conflict-item__value--red">{{ entry.value ?? '—' }}</span>
-                            <span class="conflict-item__meta"
-                              >{{ formatDate(entry.createdAt) }} | {{ entry.source ?? 'אין מקור' }}</span
-                            >
-                            @if (entry.notes) {
-                              <span class="conflict-item__comment">{{ entry.notes }}</span>
-                            }
-                          </button>
+                          <app-conflict-option-btn
+                            [$label]="entry.value ?? '—'"
+                            [$isIdStyle]="false"
+                            [$isSelected]="isValueWinnerSelected(col.columnName, entry.value)"
+                            [$isDisabled]="!_$canEdit()"
+                            [$source]="entry.source ?? 'אין מקור'"
+                            [$date]="formatDate(entry.createdAt)"
+                            [$notes]="entry.notes"
+                            (selected)="selectValueWinner(col.columnName, entry.value)"
+                          />
                         }
                       </div>
                     </td>
@@ -206,8 +145,7 @@
                           class="conflict-item__value"
                           [class.conflict-item__value--fk]="col.columnName.endsWith('Id')"
                           [class.conflict-item__id--yellow]="col.columnName.endsWith('Id') && col.currentValue && isIdOpen(col.currentValue)"
-                          >{{ col.currentValue ?? '—' }}</span
-                        >
+                        >{{ col.currentValue ?? '—' }}</span>
                         @if (col.currentValue) {
                           <span class="conflict-item__meta">{{ formatDate(col.currentDate) }} | {{ col.currentSource ?? 'אין מקור' }}</span>
                         }
@@ -228,9 +166,7 @@
                 class="conflict-item__resolve-btn"
                 [disabled]="!_$canResolve()"
                 (click)="resolve()"
-              >
-                אישור
-              </button>
+              >אישור</button>
               <div class="conflict-item__notes-wrap">
                 <input
                   class="conflict-item__notes-input"
@@ -248,27 +184,10 @@
   }
 </div>
 
-<!-- Floating warning dialog -->
 @if (_$showFloatingWarning()) {
-  <div class="conflict-item__warning-overlay">
-    <div class="conflict-item__warning-dialog">
-      <p class="conflict-item__warning-text">
-        פעולה זו עשויה לגרום לישויות להיות ללא קישור (floating entities). הישויות יישארו גלויות במערכת. האם להמשיך?
-      </p>
-      <div class="conflict-item__warning-actions">
-        <button
-          class="conflict-item__warning-confirm"
-          (click)="confirmResolution()"
-        >
-          המשך
-        </button>
-        <button
-          class="conflict-item__warning-cancel"
-          (click)="cancelResolution()"
-        >
-          ביטול
-        </button>
-      </div>
-    </div>
-  </div>
+  <app-floating-warning-dialog
+    [$message]="'פעולה זו עשויה לגרום לישויות להיות ללא קישור (floating entities). הישויות יישארו גלויות במערכת. האם להמשיך?'"
+    (confirmed)="confirmResolution()"
+    (cancelled)="cancelResolution()"
+  />
 }
