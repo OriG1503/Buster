@@ -25,5 +25,11 @@
     type="button"
     [disabled]="$isSaving()"
     (click)="confirm.emit()"
-  >{{ _$confirmLabel() }}</button>
+  >
+    @if ($isSaving()) {
+      <i class="pi pi-spin pi-spinner"></i>
+    } @else {
+      אישור
+    }
+  </button>
 </div>

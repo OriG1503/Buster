@@ -1,0 +1,44 @@
+<div class="history-table-value__scroll-area">
+  <table class="history-table-value__table">
+    <thead>
+      <tr>
+        <th class="history-table-value__th history-table-value__th--dot"></th>
+        <th class="history-table-value__th">{{ VALUE_HEADER }}</th>
+        <th class="history-table-value__th">{{ $notesLabel() }}</th>
+        <th class="history-table-value__th">{{ $sourceLabel() }}</th>
+        <th class="history-table-value__th">{{ $sourceTimeLabel() }}</th>
+        <th class="history-table-value__th">{{ UPLOADED_AT_HEADER }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (entry of $history().entries; track $index) {
+        <tr
+          class="history-table-value__tr"
+          [class.history-table-value__tr--selectable]="$isEditMode()"
+          [class.history-table-value__tr--selected]="$isEditMode() && $pendingWinnerValue() === entry.value"
+          (click)="$isEditMode() && entrySelected.emit(entry.value)"
+        >
+          <td class="history-table-value__td history-table-value__td--dot">
+            <button
+              class="history-table-value__dot-btn"
+              type="button"
+              [class.history-table-value__dot-btn--clickable]="$isEditMode()"
+              (click)="$event.stopPropagation(); entrySelected.emit(entry.value)"
+            >
+              <span
+                class="history-table-value__dot"
+                [class.history-table-value__dot--winner]="!$isEditMode() && entry.isWinner"
+                [class.history-table-value__dot--pending]="$isEditMode() && $pendingWinnerValue() === entry.value"
+              ></span>
+            </button>
+          </td>
+          <td class="history-table-value__td">{{ entry.value ?? '—' }}</td>
+          <td class="history-table-value__td">{{ entry.notes ?? '—' }}</td>
+          <td class="history-table-value__td">{{ entry.source ?? '—' }}</td>
+          <td class="history-table-value__td">{{ formatDate(entry.sourceTime) }}</td>
+          <td class="history-table-value__td">{{ formatDate(entry.createdAt) }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,26 @@
+@if ($hasValue()) {
+  @if ($source() || $sourceTime()) {
+    <span class="conflict-cell-meta__source-group">
+      <span class="conflict-cell-meta__source-label">{{ $sourceLabel() }}</span>
+      <span class="conflict-cell-meta__source-label-sep"></span>
+      @if ($source()) {
+        <span class="conflict-cell-meta__source-name">{{ $source() }}</span>
+      }
+      @if ($source() && $sourceTime()) {
+        <span class="conflict-cell-meta__source-divider">·</span>
+      }
+      @if ($sourceTime()) {
+        <span class="conflict-cell-meta__source-time">{{ $sourceTime() }}</span>
+      }
+    </span>
+  }
+  @if ($date()) {
+    <span class="conflict-cell-meta__meta">
+      <span class="conflict-cell-meta__meta-label">{{ $uploadedLabel() }}</span>
+      {{ $date() }}
+    </span>
+  }
+}
+@if ($notes()) {
+  <span class="conflict-cell-meta__comment">{{ $notes() }}</span>
+}

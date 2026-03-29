@@ -1,4 +1,4 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 
 import { PopupMetaFieldComponent } from '../../../../shared/atoms/popup-meta-field/popup-meta-field.component';
 
@@ -22,5 +22,4 @@ export class HistoryPopupFooterComponent {
   public readonly confirm = output<void>();
   public readonly editNotesChange = output<string>();
 
-  protected readonly _$confirmLabel = computed(() => this.$isSaving() ? '...' : 'אישור');
 }

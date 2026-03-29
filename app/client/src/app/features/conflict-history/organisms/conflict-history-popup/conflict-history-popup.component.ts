@@ -2,19 +2,21 @@ import { Component, computed, effect, inject, input, output, signal } from '@ang
 
 import { ConflictHistoryService } from '../../../../core/services/conflicts/conflict-history.service';
 import { HistoryPopupFooterComponent } from '../../molecules/history-popup-footer/history-popup-footer.component';
+import { HistoryTableValueComponent } from '../../molecules/history-table-value/history-table-value.component';
+import { HistoryTableCrossEntityComponent } from '../../molecules/history-table-cross-entity/history-table-cross-entity.component';
+import { HistoryTableRelationalComponent } from '../../molecules/history-table-relational/history-table-relational.component';
 import { ConflictHistoryResponse } from '../../../../shared/types/conflict-history-response.type';
-import { RelationalHistoryAnchor, RelationalHistoryGroup, RelationalHistoryResponse } from '../../../../shared/types/relational-history-response.type';
-import { CrossEntityHistoryEntry, CrossEntityHistoryResponse } from '../../../../shared/types/cross-entity-history-response.type';
+import { RelationalHistoryResponse } from '../../../../shared/types/relational-history-response.type';
+import { CrossEntityHistoryResponse } from '../../../../shared/types/cross-entity-history-response.type';
 import { HistoryTarget } from '../../../../shared/types/history-target.type';
 import { ToastService } from '../../../../shared/services/toast.service';
 import { DisplayNamesService } from '../../../../core/services/display-names/display-names.service';
 import { DEFAULT_USER_NAME } from '../../../../shared/consts/default-user.consts';
 import { PermissionsService } from '../../../../core/services/permissions/permissions.service';
-import { CONFLICT_HISTORY_LABEL_MAP } from '../../mapping/conflict-history.label-map';
 
 @Component({
   selector: 'app-conflict-history-popup',
-  imports: [HistoryPopupFooterComponent],
+  imports: [HistoryPopupFooterComponent, HistoryTableValueComponent, HistoryTableCrossEntityComponent, HistoryTableRelationalComponent],
   templateUrl: './conflict-history-popup.component.html',
   styleUrl: './conflict-history-popup.component.scss',
 })
@@ -51,8 +53,6 @@ export class ConflictHistoryPopupComponent {
   protected readonly _$sourceLabel = computed(() => this._displayNames.getColumnLabel(this._$tableName(), 'source'));
   protected readonly _$sourceTimeLabel = computed(() => this._displayNames.getColumnLabel(this._$tableName(), 'sourceTime'));
   protected readonly _$notesLabel = computed(() => this._displayNames.getColumnLabel(this._$tableName(), 'notes'));
-  protected readonly VALUE_HEADER = CONFLICT_HISTORY_LABEL_MAP.valueHeader;
-  protected readonly UPLOADED_AT_HEADER = CONFLICT_HISTORY_LABEL_MAP.uploadedAtHeader;
 
   protected readonly _$panelStyle = computed(() => {
     const { anchorTop, anchorBottom, anchorCenterX } = this.$target();
@@ -165,36 +165,6 @@ export class ConflictHistoryPopupComponent {
         next: () => { this._$isSaving.set(false); this._$editNotes.set(''); this._toastService.show('הערך עודכן בהצלחה', 'success'); this.reverted.emit(); this.closed.emit(); },
         error: () => { this._$isSaving.set(false); this._toastService.show('שגיאה בעדכון הערך', 'error'); },
       });
-  }
-
-  protected getEntityName(tableName: string): string {
-    return this._displayNames.getEntityName(tableName);
-  }
-
-  protected getAnchorFieldKeys(anchor: RelationalHistoryAnchor): string[] {
-    return Object.keys(anchor.fields);
-  }
-
-  protected getAnchorFieldLabel(tableName: string, field: string): string {
-    return this._displayNames.getColumnLabel(tableName, field);
-  }
-
-  protected getGroupLabel(group: RelationalHistoryGroup): string {
-    return `אופציות ${this._displayNames.getEntityName(group.relatedTable)}`;
-  }
-
-  protected getGroupSubtreeFields(group: RelationalHistoryGroup): string[] {
-    const fields = new Set<string>();
-    group.options.forEach((opt) => Object.keys(opt.subtreeIds).forEach((field) => fields.add(field)));
-    return [...fields];
-  }
-
-  protected getSubtreeFieldLabel(relatedTable: string, fkField: string): string {
-    return this._displayNames.getColumnLabel(relatedTable, fkField);
-  }
-
-  protected getCrossEntityEntryBadge(entry: CrossEntityHistoryEntry): string {
-    return this._displayNames.getEntityName(entry.entityTable);
   }
 
   protected formatDate(iso: string | null): string {

@@ -12,13 +12,15 @@ import { DEFAULT_USER_NAME } from '../../../../shared/consts/default-user.consts
 import { PendingResolution, PendingValueResolution, PendingRelationalResolution, PendingCrossEntityResolution } from '../../types/pending-resolution.type';
 import { ConflictOptionBtnComponent } from '../../molecules/conflict-option-btn/conflict-option-btn.component';
 import { FloatingWarningDialogComponent } from '../../molecules/floating-warning-dialog/floating-warning-dialog.component';
+import { ConflictItemFooterComponent } from '../../molecules/conflict-item-footer/conflict-item-footer.component';
+import { ConflictCellMetaComponent } from '../../molecules/conflict-cell-meta/conflict-cell-meta.component';
 import { FADE_SLIDE_IN_ANIMATION, SLIDE_DOWN_ANIMATION } from './conflict-item.consts';
 import { CONFLICTS_LABEL_MAP } from '../../mapping/conflicts.label-map';
 
 @Component({
   selector: 'app-conflict-item',
   standalone: true,
-  imports: [ConflictOptionBtnComponent, FloatingWarningDialogComponent],
+  imports: [ConflictOptionBtnComponent, FloatingWarningDialogComponent, ConflictItemFooterComponent, ConflictCellMetaComponent],
   templateUrl: './conflict-item.component.html',
   styleUrl: './conflict-item.component.scss',
   animations: [SLIDE_DOWN_ANIMATION, FADE_SLIDE_IN_ANIMATION],
@@ -41,6 +43,7 @@ export class ConflictItemComponent {
   protected readonly _$openConflictIds = signal<Set<string>>(new Set());
   protected readonly _$showFloatingWarning = signal(false);
   protected readonly _$confirmedRelational = signal<PendingRelationalResolution | null>(null);
+  protected readonly _$isResolving = signal(false);
 
   protected readonly _$allColumns = computed<ConflictColumnDetail[]>(() => {
     const detail = this._$detail();
@@ -69,6 +72,7 @@ export class ConflictItemComponent {
     this._$allColumns().filter((col) => !col.isConflicted && !col.relationalConflict && col.crossEntityConflicts.length === 0 && col.columnName !== 'id'),
   );
   protected readonly _$canResolve = computed(() => {
+    if (this._$isResolving()) { return false; }
     const resolution = this._$pendingResolution();
     if (!resolution || !this._$notes().trim()) { return false; }
     if (resolution.type === 'value' || resolution.type === 'twoFathers' || resolution.type === 'crossEntity') { return true; }
@@ -295,13 +299,18 @@ export class ConflictItemComponent {
 
   private _submitValueResolution(resolution: PendingValueResolution): void {
     const { tableName, entityId } = this.$group();
+    this._$isResolving.set(true);
     this._conflictsService
       .resolveConflict({ tableName, entityId, columnName: resolution.columnName, winnerValue: resolution.winnerValue, conflictResolver: DEFAULT_USER_NAME, resolutionNotes: this._$notes() })
-      .subscribe({ next: () => this._afterResolve() });
+      .subscribe({
+        next: () => this._afterResolve(),
+        error: () => this._$isResolving.set(false),
+      });
   }
 
   private _submitRelationalResolution(resolution: PendingRelationalResolution): void {
     const subtreeEntries = [...resolution.subtreeLevels.entries()];
+    this._$isResolving.set(true);
     this._conflictsService
       .resolveRelationalConflict({
         conflictIds: resolution.conflictIds,
@@ -311,10 +320,14 @@ export class ConflictItemComponent {
         conflictResolver: DEFAULT_USER_NAME,
         resolutionNotes: this._$notes(),
       })
-      .subscribe({ next: () => this._afterResolve() });
+      .subscribe({
+        next: () => this._afterResolve(),
+        error: () => this._$isResolving.set(false),
+      });
   }
 
   private _afterResolve(): void {
+    this._$isResolving.set(false);
     this._$pendingResolution.set(null);
     this._$notes.set('');
     this._$detail.set(null);
@@ -324,6 +337,7 @@ export class ConflictItemComponent {
 
   private _submitCrossEntityResolution(resolution: PendingCrossEntityResolution): void {
     const isRobotTable = this.$group().tableName === 'robots';
+    this._$isResolving.set(true);
     this._conflictsService
       .resolveCrossEntityConflict({
         conflictId: resolution.conflictId,
@@ -332,10 +346,14 @@ export class ConflictItemComponent {
         resolutionNotes: this._$notes(),
         applyToRobot: isRobotTable,
       })
-      .subscribe({ next: () => this._afterCrossEntityResolve() });
+      .subscribe({
+        next: () => this._afterCrossEntityResolve(),
+        error: () => this._$isResolving.set(false),
+      });
   }
 
   private _afterCrossEntityResolve(): void {
+    this._$isResolving.set(false);
     this._$pendingResolution.set(null);
     this._$notes.set('');
     this._$detail.set(null);

@@ -72,30 +72,15 @@
                     <td class="conflict-item__cell conflict-item__cell--pk">
                       <div class="conflict-item__cell-content">
                         <span class="conflict-item__pk-value">{{ $group().entityId }}</span>
-                        @if (_$pkColumn()!.currentValue) {
-                          @if (_$pkColumn()!.currentSource || _$pkColumn()!.currentSourceTime) {
-                            <span class="conflict-item__source-group">
-                              <span class="conflict-item__source-label">{{ _$sourceLabel() }}</span>
-                              <span class="conflict-item__source-label-sep"></span>
-                              @if (_$pkColumn()!.currentSource) {
-                                <span class="conflict-item__source-name">{{ _$pkColumn()!.currentSource }}</span>
-                              }
-                              @if (_$pkColumn()!.currentSource && _$pkColumn()!.currentSourceTime) {
-                                <span class="conflict-item__source-divider">·</span>
-                              }
-                              @if (_$pkColumn()!.currentSourceTime) {
-                                <span class="conflict-item__source-time">{{ formatDate(_$pkColumn()!.currentSourceTime) }}</span>
-                              }
-                            </span>
-                          }
-                          <span class="conflict-item__meta">
-                            <span class="conflict-item__meta-label">{{ UPLOADED_LABEL }}</span>
-                            {{ formatDate(_$pkColumn()!.currentDate) }}
-                          </span>
-                        }
-                        @if (_$pkColumn()!.currentNotes) {
-                          <span class="conflict-item__comment">{{ _$pkColumn()!.currentNotes }}</span>
-                        }
+                        <app-conflict-cell-meta
+                          [$hasValue]="!!_$pkColumn()!.currentValue"
+                          [$source]="_$pkColumn()!.currentSource"
+                          [$sourceTime]="formatDate(_$pkColumn()!.currentSourceTime)"
+                          [$date]="formatDate(_$pkColumn()!.currentDate)"
+                          [$notes]="_$pkColumn()!.currentNotes"
+                          [$sourceLabel]="_$sourceLabel()"
+                          [$uploadedLabel]="UPLOADED_LABEL"
+                        />
                       </div>
                     </td>
                   }
@@ -197,30 +182,15 @@
                           [class.conflict-item__value--fk]="col.columnName.endsWith('Id')"
                           [class.conflict-item__id--yellow]="col.columnName.endsWith('Id') && col.currentValue && isIdOpen(col.currentValue)"
                         >{{ col.currentValue ?? '—' }}</span>
-                        @if (col.currentValue) {
-                          @if (col.currentSource || col.currentSourceTime) {
-                            <span class="conflict-item__source-group">
-                              <span class="conflict-item__source-label">{{ _$sourceLabel() }}</span>
-                              <span class="conflict-item__source-label-sep"></span>
-                              @if (col.currentSource) {
-                                <span class="conflict-item__source-name">{{ col.currentSource }}</span>
-                              }
-                              @if (col.currentSource && col.currentSourceTime) {
-                                <span class="conflict-item__source-divider">·</span>
-                              }
-                              @if (col.currentSourceTime) {
-                                <span class="conflict-item__source-time">{{ formatDate(col.currentSourceTime) }}</span>
-                              }
-                            </span>
-                          }
-                          <span class="conflict-item__meta">
-                            <span class="conflict-item__meta-label">{{ UPLOADED_LABEL }}</span>
-                            {{ formatDate(col.currentDate) }}
-                          </span>
-                        }
-                        @if (col.currentNotes) {
-                          <span class="conflict-item__comment">{{ col.currentNotes }}</span>
-                        }
+                        <app-conflict-cell-meta
+                          [$hasValue]="!!col.currentValue"
+                          [$source]="col.currentSource"
+                          [$sourceTime]="formatDate(col.currentSourceTime)"
+                          [$date]="formatDate(col.currentDate)"
+                          [$notes]="col.currentNotes"
+                          [$sourceLabel]="_$sourceLabel()"
+                          [$uploadedLabel]="UPLOADED_LABEL"
+                        />
                       </div>
                     </td>
                   }
@@ -230,22 +200,13 @@
           </div>
 
           @if (_$canEdit()) {
-            <div class="conflict-item__footer">
-              <button
-                class="conflict-item__resolve-btn"
-                [disabled]="!_$canResolve()"
-                (click)="resolve()"
-              >אישור</button>
-              <div class="conflict-item__notes-wrap">
-                <input
-                  class="conflict-item__notes-input"
-                  type="text"
-                  placeholder="פרט את סיבת הבחירה... (שדה חובה)"
-                  [value]="_$notes()"
-                  (input)="_$notes.set($any($event.target).value)"
-                />
-              </div>
-            </div>
+            <app-conflict-item-footer
+              [$canResolve]="_$canResolve()"
+              [$isResolving]="_$isResolving()"
+              [$notes]="_$notes()"
+              (resolve)="resolve()"
+              (notesChange)="_$notes.set($event)"
+            />
           }
         </div>
       }
