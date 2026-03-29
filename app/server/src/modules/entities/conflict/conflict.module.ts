@@ -22,6 +22,7 @@ import { ValueConflictEntityDetailService } from './services/value-conflict-enti
 import { ConflictListService } from './services/conflict-list.service';
 import { ConflictEntityDetailService } from './services/conflict-entity-detail.service';
 import { RelationalConflictHistoryService } from './relational-conflict-history.service';
+import { CrossEntityConflictHistoryService } from './cross-entity-conflict-history.service';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { RelationalConflictHistoryService } from './relational-conflict-history.
     ConflictListService,
     ConflictEntityDetailService,
     RelationalConflictHistoryService,
+    CrossEntityConflictHistoryService,
   ],
   exports: [ValueConflictRepository, ValueConflictService, RelationalConflictDetectionService, CrossEntityConflictDetectionService],
 })

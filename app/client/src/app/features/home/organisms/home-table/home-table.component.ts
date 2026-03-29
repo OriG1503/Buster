@@ -111,15 +111,12 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
       } else {
         const [tableName, columnName] = col.split('.');
         const entityId = row[`${tableName}.id`]?.value ?? '';
-        this._$historyTarget.set({
-          isRelational: false,
-          tableName,
-          entityId,
-          columnName,
-          anchorTop: rect.top,
-          anchorBottom: rect.bottom,
-          anchorCenterX: rect.left + rect.width / 2,
-        });
+        const base = { tableName, entityId, columnName, anchorTop: rect.top, anchorBottom: rect.bottom, anchorCenterX: rect.left + rect.width / 2 };
+        if (cell.isCrossEntity) {
+          this._$historyTarget.set({ isRelational: false, isCrossEntity: true, ...base });
+        } else {
+          this._$historyTarget.set({ isRelational: false, ...base });
+        }
       }
     }
   }

@@ -332,7 +332,19 @@ export class ConflictItemComponent {
         resolutionNotes: this._$notes(),
         applyToRobot: isRobotTable,
       })
-      .subscribe({ next: () => this._afterResolve() });
+      .subscribe({ next: () => this._afterCrossEntityResolve() });
+  }
+
+  private _afterCrossEntityResolve(): void {
+    this._$pendingResolution.set(null);
+    this._$notes.set('');
+    this._$detail.set(null);
+    this._homeStore.refresh();
+    // Reload full list — re-detection may have created new conflicts for other entities
+    const filter = this._conflictsStore.filter();
+    this._conflictsStore.loadConflicts(filter.tableName, filter.entityId, filter.conflictIds);
+    // Also reload this entity's detail in case it still has conflicts
+    this._loadDetail();
   }
 
   private _reloadDetailAfterResolve(): void {

@@ -51,4 +51,16 @@ export class CrossEntityConflictRepository extends BaseRepository<CrossEntityCon
       { isSolved: true, conflictResolver, resolutionNotes },
     );
   }
+
+  public findSolvedByRobotField(robotId: string, fieldName: string): Promise<CrossEntityConflictEntity[]> {
+    return this._repository.find({ where: { robotId, fieldName, isSolved: true }, order: { updatedAt: 'ASC' } });
+  }
+
+  public findSolvedByWiringField(wiringId: string, fieldName: string): Promise<CrossEntityConflictEntity[]> {
+    return this._repository.find({ where: { wiringId, fieldName, isSolved: true }, order: { updatedAt: 'ASC' } });
+  }
+
+  public findById(id: number): Promise<CrossEntityConflictEntity | null> {
+    return this._repository.findOne({ where: { id } as any });
+  }
 }

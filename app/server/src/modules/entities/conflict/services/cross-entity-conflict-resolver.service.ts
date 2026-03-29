@@ -3,6 +3,7 @@ import { EntityServiceRegistry } from '../../../../shared/services/entity-servic
 import { CrossEntityConflictRepository } from '../cross-entity-conflict.repository';
 import { CrossEntityConflictDetectionService } from './cross-entity-conflict-detection.service';
 import { ResolveCrossEntityConflictDto } from '../dto/resolve-cross-entity-conflict.dto';
+import { RevertCrossEntityConflictDto } from '../dto/revert-cross-entity-conflict.dto';
 import { ValueConflictRepository } from '../value-conflict.repository';
 
 @Injectable()
@@ -55,7 +56,7 @@ export class CrossEntityConflictResolverService {
     await this._detectionService.detectForWiringRobots(wiringId, conflictResolver);
   }
 
-  private async _applyToRobot(robotId: string, fieldName: string, value: string, source: string | null, notes: string | null): Promise<void> {
+  private async _applyToRobot(robotId: string, fieldName: string, value: string, source: string | null, notes: string | null, sourceTime: string | null = null): Promise<void> {
     const robotService = this._registry.get('robots');
     const robot = await robotService.findById(robotId);
     if (!robot) { return; }
@@ -66,12 +67,68 @@ export class CrossEntityConflictResolverService {
       robot.source,
       { [fieldName]: notes },
       robot.notes,
-      { [fieldName]: null },
+      { [fieldName]: sourceTime },
       robot.sourceTime,
     );
   }
 
-  private async _applyToWiring(wiringId: string, fieldName: string, value: string, source: string | null, notes: string | null): Promise<void> {
+  public async revert(dto: RevertCrossEntityConflictDto): Promise<void> {
+    const { tableName, entityId, columnName, revertValue, revertedBy, resolutionNotes } = dto;
+    const isRobot = tableName === 'robots';
+
+    const solvedConflicts = isRobot
+      ? await this._crossEntityConflictRepository.findSolvedByRobotField(entityId, columnName)
+      : await this._crossEntityConflictRepository.findSolvedByWiringField(entityId, columnName);
+
+    if (solvedConflicts.length === 0) {
+      throw new NotFoundException(`No resolved cross-entity conflict found for ${tableName}/${entityId}/${columnName}`);
+    }
+
+    const matchingConflict = solvedConflicts.find((c) => c.robotValue === revertValue || c.wiringValue === revertValue);
+    const revertSource = matchingConflict
+      ? (matchingConflict.robotValue === revertValue ? matchingConflict.robotSource : matchingConflict.wiringSource)
+      : null;
+    const revertNotes = matchingConflict
+      ? (matchingConflict.robotValue === revertValue ? matchingConflict.robotNotes : matchingConflict.wiringNotes)
+      : null;
+    const revertSourceTime = matchingConflict
+      ? (matchingConflict.robotValue === revertValue ? matchingConflict.robotSourceTime : matchingConflict.wiringSourceTime)
+      : null;
+
+    const lastConflict = solvedConflicts[solvedConflicts.length - 1];
+    const cascadedNotes = [lastConflict.resolutionNotes, resolutionNotes].filter(Boolean).join('\n');
+
+    let wiringId: string;
+    let robotId: string;
+
+    if (isRobot) {
+      robotId = entityId;
+      const robot = await this._registry.get('robots').findById(robotId);
+      wiringId = (robot as unknown as Record<string, string>)?.['wiringId'];
+      if (!wiringId) { throw new BadRequestException(`Robot ${robotId} has no associated wiring`); }
+    } else {
+      wiringId = entityId;
+      robotId = lastConflict.robotId;
+    }
+
+    this._logger.log(`Reverting cross-entity ${columnName} for ${tableName}/${entityId} → "${revertValue}" by ${revertedBy}`);
+
+    if (isRobot) {
+      await this._applyToRobot(robotId, columnName, revertValue, revertSource, revertNotes, revertSourceTime);
+    }
+    await this._applyToWiring(wiringId, columnName, revertValue, revertSource, revertNotes, revertSourceTime);
+
+    await this._crossEntityConflictRepository.resolveByWiringField(wiringId, columnName, revertedBy, cascadedNotes);
+
+    if (isRobot) {
+      await this._valueConflictRepository.resolveMany('robots', robotId, columnName, revertedBy, cascadedNotes);
+    }
+    await this._valueConflictRepository.resolveMany('wirings', wiringId, columnName, revertedBy, cascadedNotes);
+
+    await this._detectionService.detectForWiringRobots(wiringId, revertedBy);
+  }
+
+  private async _applyToWiring(wiringId: string, fieldName: string, value: string, source: string | null, notes: string | null, sourceTime: string | null = null): Promise<void> {
     const wiringService = this._registry.get('wirings');
     const wiring = await wiringService.findById(wiringId);
     if (!wiring) { return; }
@@ -82,7 +139,7 @@ export class CrossEntityConflictResolverService {
       wiring.source,
       { [fieldName]: notes },
       wiring.notes,
-      { [fieldName]: null },
+      { [fieldName]: sourceTime },
       wiring.sourceTime,
     );
   }

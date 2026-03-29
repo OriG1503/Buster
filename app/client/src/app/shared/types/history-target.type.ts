@@ -1,5 +1,17 @@
 type ValueHistoryTarget = {
   isRelational: false;
+  isCrossEntity?: false;
+  tableName: string;
+  entityId: string;
+  columnName: string;
+  anchorTop: number;
+  anchorBottom: number;
+  anchorCenterX: number;
+};
+
+type CrossEntityHistoryTarget = {
+  isRelational: false;
+  isCrossEntity: true;
   tableName: string;
   entityId: string;
   columnName: string;
@@ -18,4 +30,4 @@ type RelationalHistoryTarget = {
   anchorCenterX: number;
 };
 
-export type HistoryTarget = ValueHistoryTarget | RelationalHistoryTarget;
+export type HistoryTarget = ValueHistoryTarget | CrossEntityHistoryTarget | RelationalHistoryTarget;

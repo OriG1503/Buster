@@ -4,6 +4,7 @@ export type ConflictEntry = {
   anchorTable: string | null;
   anchorId: string | null;
   relatedTable: string | null;
+  isCrossEntity?: boolean;
 };
 
 /** conflictMap[tableName][entityId][columnName] */

@@ -187,7 +187,7 @@ export class TableViewService {
     });
 
     crossEntityConflicts.forEach(({ id, robotId, wiringId, fieldName, isSolved }) => {
-      const entry = this._toValueEntry(isSolved, id);
+      const entry = this._toCrossEntityEntry(isSolved, id);
       this._markCell(conflictMap, 'robots', robotId, fieldName, entry);
       this._markCell(conflictMap, 'wirings', wiringId, fieldName, entry);
     });
@@ -295,6 +295,18 @@ export class TableViewService {
       anchorTable: null,
       anchorId: null,
       relatedTable: null,
+      isCrossEntity: false,
+    };
+  }
+
+  private _toCrossEntityEntry(isSolved: boolean | null, id: number): ConflictEntry {
+    return {
+      status: isSolved === false ? 'open' : 'resolved',
+      conflictId: isSolved === false ? id : null,
+      anchorTable: null,
+      anchorId: null,
+      relatedTable: null,
+      isCrossEntity: true,
     };
   }
 
@@ -337,6 +349,7 @@ export class TableViewService {
           anchorTable: null,
           anchorId: null,
           relatedTable: null,
+          isCrossEntity: false,
         };
       }
     });
@@ -369,6 +382,7 @@ export class TableViewService {
         anchorTable: conflictEntry?.anchorTable ?? null,
         anchorId: conflictEntry?.anchorId ?? null,
         relatedTable: conflictEntry?.relatedTable ?? null,
+        isCrossEntity: conflictEntry?.isCrossEntity ?? false,
       };
 
       result[colKey] = cell;

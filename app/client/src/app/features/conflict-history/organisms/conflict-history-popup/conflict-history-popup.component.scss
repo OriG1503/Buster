@@ -249,6 +249,18 @@
   &__tr--winner {
     background: rgba(63, 112, 227, 0.06);
   }
+
+  &__entity-badge {
+    display: inline-block;
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+    background: rgba(100, 200, 160, 0.15);
+    border: 1px solid rgba(100, 200, 160, 0.35);
+    color: #64c8a0;
+    white-space: nowrap;
+  }
 }
 
 @keyframes skeleton-shimmer {

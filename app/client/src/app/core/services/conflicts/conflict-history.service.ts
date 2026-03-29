@@ -4,8 +4,10 @@ import { Observable } from 'rxjs';
 
 import { ConflictHistoryResponse } from '../../../shared/types/conflict-history-response.type';
 import { RelationalHistoryResponse } from '../../../shared/types/relational-history-response.type';
+import { CrossEntityHistoryResponse } from '../../../shared/types/cross-entity-history-response.type';
 import { API_ROUTES } from '../../../shared/consts/api-routes.consts';
 import { RevertConflictParams } from './types/revert-conflict-params.type';
+import { RevertCrossEntityConflictParams } from './types/revert-cross-entity-conflict-params.type';
 
 @Injectable({ providedIn: 'root' })
 export class ConflictHistoryService {
@@ -25,5 +27,15 @@ export class ConflictHistoryService {
 
   public revert(params: RevertConflictParams): Observable<unknown> {
     return this._http.patch(API_ROUTES.conflicts.revert, params);
+  }
+
+  public getCrossEntityHistory(tableName: string, entityId: string, columnName: string): Observable<CrossEntityHistoryResponse> {
+    return this._http.get<CrossEntityHistoryResponse>(API_ROUTES.conflicts.crossEntityHistory, {
+      params: { tableName, entityId, columnName },
+    });
+  }
+
+  public revertCrossEntity(params: RevertCrossEntityConflictParams): Observable<unknown> {
+    return this._http.patch(API_ROUTES.conflicts.revertCrossEntity, params);
   }
 }

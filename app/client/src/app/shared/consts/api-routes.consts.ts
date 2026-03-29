@@ -16,6 +16,8 @@ export const API_ROUTES = {
     history: `${API_BASE}/conflicts/history`,
     relationalHistory: `${API_BASE}/conflicts/relational-history`,
     revert: `${API_BASE}/conflicts/revert`,
+    crossEntityHistory: `${API_BASE}/conflicts/cross-entity-history`,
+    revertCrossEntity: `${API_BASE}/conflicts/cross-entity/revert`,
   },
 
   entityCatalog: {

@@ -105,6 +105,68 @@
         (confirm)="onClose()"
       />
     }
+  } @else if (_$isCrossEntity()) {
+    @if (_$crossEntityHistory(); as history) {
+      <div class="history-popup__scroll-area">
+        <table class="history-popup__table">
+          <thead>
+            <tr>
+              <th class="history-popup__th history-popup__th--dot"></th>
+              <th class="history-popup__th">ישות</th>
+              <th class="history-popup__th">מזהה</th>
+              <th class="history-popup__th">{{ VALUE_HEADER }}</th>
+              <th class="history-popup__th">{{ _$notesLabel() }}</th>
+              <th class="history-popup__th">{{ _$sourceLabel() }}</th>
+              <th class="history-popup__th">{{ _$sourceTimeLabel() }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of history.entries; track $index) {
+              <tr
+                class="history-popup__tr"
+                [class.history-popup__tr--selectable]="_$isEditMode()"
+                [class.history-popup__tr--selected]="_$isEditMode() && _$pendingWinnerValue() === entry.value"
+                (click)="_$isEditMode() && onEntryDotClick(entry.value)"
+              >
+                <td class="history-popup__td history-popup__td--dot">
+                  <button
+                    class="history-popup__dot-btn"
+                    type="button"
+                    [class.history-popup__dot-btn--clickable]="_$isEditMode()"
+                    (click)="$event.stopPropagation(); onEntryDotClick(entry.value)"
+                  >
+                    <span
+                      class="history-popup__dot"
+                      [class.history-popup__dot--winner]="!_$isEditMode() && entry.isWinner"
+                      [class.history-popup__dot--pending]="_$isEditMode() && _$pendingWinnerValue() === entry.value"
+                    ></span>
+                  </button>
+                </td>
+                <td class="history-popup__td">
+                  <span class="history-popup__entity-badge">{{ getCrossEntityEntryBadge(entry) }}</span>
+                </td>
+                <td class="history-popup__td history-popup__td--id">{{ entry.entityId }}</td>
+                <td class="history-popup__td">{{ entry.value ?? '—' }}</td>
+                <td class="history-popup__td">{{ entry.notes ?? '—' }}</td>
+                <td class="history-popup__td">{{ entry.source ?? '—' }}</td>
+                <td class="history-popup__td">{{ formatDate(entry.sourceTime) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <app-history-popup-footer
+        [$isEditMode]="_$isEditMode()"
+        [$isSaving]="_$isSaving()"
+        [$resolverName]="history.resolverName"
+        [$resolutionDate]="formatDate(history.resolutionDate)"
+        [$resolutionNotes]="history.resolutionNotes"
+        [$editUserName]="_defaultUserName"
+        [$editNotes]="_$editNotes()"
+        (confirm)="onClose()"
+        (editNotesChange)="_$editNotes.set($event)"
+      />
+    }
   } @else {
     @if (_$valueHistory(); as history) {
       <div class="history-popup__scroll-area">
