@@ -154,6 +154,21 @@
                             (selected)="selectValueWinner(col.columnName, entry.value)"
                           />
                         }
+                        @if (col.crossEntityConflicts.length > 0 && col.currentValue) {
+                          <app-conflict-option-btn
+                            [$label]="col.currentValue"
+                            [$isIdStyle]="false"
+                            [$isSelected]="isCrossEntityWinnerSelected(col.columnName, col.currentValue)"
+                            [$isDisabled]="!_$canEdit()"
+                            [$source]="col.currentSource"
+                            [$sourceTime]="col.currentSourceTime"
+                            [$sourceLabel]="_$sourceLabel()"
+                            [$uploadedLabel]="UPLOADED_LABEL"
+                            [$notes]="col.currentNotes"
+                            [$entityBadge]="getSelfEntityBadge()"
+                            (selected)="selectCrossEntityWinner(col.columnName, col.crossEntityConflicts[0], col.currentValue, $group().tableName === 'robots')"
+                          />
+                        }
                         @for (crossEntry of col.crossEntityConflicts; track crossEntry.conflictId) {
                           <app-conflict-option-btn
                             [$label]="crossEntry.value ?? '—'"

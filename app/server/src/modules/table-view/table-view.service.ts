@@ -8,6 +8,7 @@ import { JOIN_ORDER, PARENT_JOIN } from './consts/join-chain.consts';
 import { TableViewQueryDto } from './dto/table-view-query.dto';
 import { ConflictEntry, ConflictMap, NullConflictMap } from './types/conflict-map.type';
 import { ConflictRow } from './types/conflict-row.type';
+import { CrossEntityConflictRow } from './types/cross-entity-conflict-row.type';
 import { RelationalConflictRow } from './types/relational-conflict-row.type';
 import { TableCell } from './types/table-cell.type';
 import { TableRow, TableViewResponse } from './types/table-view-response.type';
@@ -175,7 +176,7 @@ export class TableViewService {
 
     if (Object.keys(entityIdsByTable).length === 0) { return { conflictMap, nullConflictMap }; }
 
-    const [valueConflicts, relByAnchor, relByRelated] = await this._fetchConflicts(entityIdsByTable);
+    const [valueConflicts, relByAnchor, relByRelated, crossEntityConflicts] = await this._fetchConflicts(entityIdsByTable);
 
     valueConflicts.forEach(({ tableName, entityId, columnName, isSolved, id }) => {
       this._markCell(conflictMap, tableName, entityId, columnName, this._toValueEntry(isSolved, id));
@@ -185,12 +186,18 @@ export class TableViewService {
       this._applyRelationalConflict(rc, conflictMap, nullConflictMap);
     });
 
+    crossEntityConflicts.forEach(({ id, robotId, wiringId, fieldName, isSolved }) => {
+      const entry = this._toValueEntry(isSolved, id);
+      this._markCell(conflictMap, 'robots', robotId, fieldName, entry);
+      this._markCell(conflictMap, 'wirings', wiringId, fieldName, entry);
+    });
+
     return { conflictMap, nullConflictMap };
   }
 
   private async _fetchConflicts(
     entityIdsByTable: Record<string, string[]>,
-  ): Promise<[ConflictRow[], RelationalConflictRow[], RelationalConflictRow[]]> {
+  ): Promise<[ConflictRow[], RelationalConflictRow[], RelationalConflictRow[], CrossEntityConflictRow[]]> {
     const valueParams: unknown[] = [];
     const valueConditions = Object.entries(entityIdsByTable).map(([table, ids]) => {
       valueParams.push(ids);
@@ -210,6 +217,16 @@ export class TableViewService {
       return `("relatedTable" = '${table}' AND ("oldRelatedId" = ANY($${idx}) OR "newRelatedId" = ANY($${idx})))`;
     });
 
+    const robotIds = entityIdsByTable['robots'] ?? [];
+    const wiringIds = entityIdsByTable['wirings'] ?? [];
+    const hasCrossEntityTables = robotIds.length > 0 || wiringIds.length > 0;
+    const crossEntityQuery = hasCrossEntityTables
+      ? (this._dataSource.query(
+          `SELECT "id", "robotId", "wiringId", "fieldName", "isSolved" FROM cross_entity_conflicts WHERE "deletedAt" IS NULL AND ("robotId" = ANY($1) OR "wiringId" = ANY($2))`,
+          [robotIds.length > 0 ? robotIds : [''], wiringIds.length > 0 ? wiringIds : ['']],
+        ) as Promise<CrossEntityConflictRow[]>)
+      : Promise.resolve<CrossEntityConflictRow[]>([]);
+
     return Promise.all([
       this._dataSource.query(
         `SELECT "tableName", "entityId", "columnName", "isSolved", "id" FROM value_conflicts WHERE "deletedAt" IS NULL AND (${valueConditions.join(' OR ')})`,
@@ -223,6 +240,7 @@ export class TableViewService {
         `SELECT "anchorTable", "anchorId", "relatedTable", "conflictType", "oldRelatedId", "newRelatedId", "isSolved", "id" FROM relational_conflicts WHERE "deletedAt" IS NULL AND (${relatedConditions.join(' OR ')})`,
         relatedParams,
       ) as Promise<RelationalConflictRow[]>,
+      crossEntityQuery,
     ]);
   }
 

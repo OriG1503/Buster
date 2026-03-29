@@ -226,6 +226,10 @@ export class ConflictItemComponent {
     return { entityLabel: this._displayNames.getEntityName(entry.entityTable), entityId: entry.entityId };
   }
 
+  protected getSelfEntityBadge(): { entityLabel: string; entityId: string } {
+    return { entityLabel: this._displayNames.getEntityName(this.$group().tableName), entityId: this.$group().entityId };
+  }
+
   // --- Resolution submit ---
 
   public resolve(): void {
