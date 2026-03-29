@@ -26,6 +26,7 @@ export class FileService {
 
   /** Full upload pipeline: validate → convert → save locally → parse → process → generate report. */
   public async handleFile(file: Express.Multer.File, username: string): Promise<UploadSummary> {
+    file.originalname = this._fixFilename(file.originalname);
     this._logger.log(`Upload started — file: ${file?.originalname}, size: ${file?.size ?? 0} bytes, user: ${username}`);
     this._validateUsername(username);
     const csvFile = this._toCsvFile(file);
@@ -102,13 +103,32 @@ export class FileService {
   }
 
   /**
-   * Decodes a CSV buffer to a string, handling both UTF-8 (with or without BOM)
-   * and Windows-1255 (the standard encoding for Hebrew Excel exports).
+   * Decodes a CSV buffer to a string, handling three cases in priority order:
+   * 1. UTF-8 with BOM (Excel "Save as UTF-8 CSV" with BOM)
+   * 2. UTF-8 without BOM (xlsx-to-CSV conversion, or modern Excel UTF-8 CSVs)
+   * 3. Windows-1255 fallback (standard Hebrew Excel CSV exports)
    */
   private _decodeCsvBuffer(buffer: Buffer): string {
     if (buffer.slice(0, 3).equals(UTF8_BOM)) { return buffer.slice(3).toString('utf8'); }
-    // Excel exports Hebrew CSVs as Windows-1255 when saved without explicit UTF-8 encoding.
+    const asUtf8 = buffer.toString('utf8');
+    if (!asUtf8.includes('\uFFFD')) { return asUtf8; }
     return iconv.decode(buffer, 'windows-1255');
+  }
+
+  /**
+   * Fixes Hebrew filenames that arrive garbled from multer.
+   * Multer decodes multipart Content-Disposition filenames as Latin-1, so UTF-8
+   * Hebrew bytes become mojibake (e.g. "××¢××¨××ª" instead of "בעברית").
+   * Strategy: re-interpret each char as its Latin-1 byte, decode the resulting
+   * byte array as UTF-8. If the result is clean (no replacement chars), the
+   * original was Latin-1-misread UTF-8 and we return the corrected string.
+   * If the result has replacement chars the name was already correctly decoded —
+   * return it unchanged. Pure-ASCII names pass through unaffected.
+   */
+  private _fixFilename(originalname: string): string {
+    const bytes = Buffer.from(originalname, 'latin1');
+    const asUtf8 = bytes.toString('utf8');
+    return asUtf8.includes('\uFFFD') ? originalname : asUtf8;
   }
 
   /**
