@@ -10,6 +10,9 @@ export abstract class BaseEntity {
   @Column({ type: 'jsonb', nullable: true })
   public source: Record<string, string | null> | null;
 
+  @Column({ type: 'jsonb', nullable: true })
+  public sourceTime: Record<string, string | null> | null;
+
   @CreateDateColumn()
   public createdAt: Date;
 

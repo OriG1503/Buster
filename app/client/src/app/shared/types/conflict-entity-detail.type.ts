@@ -23,6 +23,7 @@ export type ConflictValueEntry = {
   value: string | null;
   source: string | null;
   notes: string | null;
+  sourceTime: string | null;
   createdAt: string;
 };
 
@@ -31,6 +32,7 @@ export type ConflictColumnDetail = {
   currentValue: string | null;
   currentSource: string | null;
   currentNotes: string | null;
+  currentSourceTime: string | null;
   currentDate: string;
   isConflicted: boolean;
   conflictValues: ConflictValueEntry[];

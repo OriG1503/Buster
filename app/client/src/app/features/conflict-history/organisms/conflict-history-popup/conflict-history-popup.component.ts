@@ -9,6 +9,7 @@ import { ToastService } from '../../../../shared/services/toast.service';
 import { DisplayNamesService } from '../../../../core/services/display-names/display-names.service';
 import { DEFAULT_USER_NAME } from '../../../../shared/consts/default-user.consts';
 import { PermissionsService } from '../../../../core/services/permissions/permissions.service';
+import { CONFLICT_HISTORY_LABEL_MAP } from '../../mapping/conflict-history.label-map';
 
 @Component({
   selector: 'app-conflict-history-popup',
@@ -38,6 +39,17 @@ export class ConflictHistoryPopupComponent {
 
   protected readonly _$isRelational = computed(() => this.$target().isRelational);
   protected readonly _$canEdit = computed(() => this._permissionsService.canEdit());
+
+  private readonly _$tableName = computed(() => {
+    const target = this.$target();
+    return target.isRelational ? target.anchorTable : target.tableName;
+  });
+
+  protected readonly _$sourceLabel = computed(() => this._displayNames.getColumnLabel(this._$tableName(), 'source'));
+  protected readonly _$sourceTimeLabel = computed(() => this._displayNames.getColumnLabel(this._$tableName(), 'sourceTime'));
+  protected readonly _$notesLabel = computed(() => this._displayNames.getColumnLabel(this._$tableName(), 'notes'));
+  protected readonly VALUE_HEADER = CONFLICT_HISTORY_LABEL_MAP.valueHeader;
+  protected readonly UPLOADED_AT_HEADER = CONFLICT_HISTORY_LABEL_MAP.uploadedAtHeader;
 
 
   protected readonly _$panelStyle = computed(() => {

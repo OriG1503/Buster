@@ -19,13 +19,16 @@ export class ValueConflictService {
     storedRecord: Record<string, EntityValue>,
     storedSources: Record<string, string | null> | null,
     storedNotes: Record<string, string | null> | null,
+    storedSourceTimes: Record<string, string | null> | null,
     incomingFields: Record<string, EntityValue>,
     incomingSource: string, conflictCreator: string, incomingNotes: string | null,
+    incomingSourceTime: string | null,
   ): ValueConflictDetectionResult {
     const conflictsToCreate: Record<string, EntityValue>[] = [];
     const fieldsToUpdate: Record<string, EntityValue> = {};
     const sourceUpdates: Record<string, string> = {};
     const notesUpdates: Record<string, string | null> = {};
+    const sourceTimeUpdates: Record<string, string | null> = {};
 
     Object.keys(incomingFields).forEach((field) => {
       const incomingValue = incomingFields[field];
@@ -40,6 +43,7 @@ export class ValueConflictService {
         fieldsToUpdate[field] = incomingValue;
         sourceUpdates[field] = incomingSource;
         notesUpdates[field] = incomingNotes;
+        sourceTimeUpdates[field] = incomingSourceTime;
         return;
       }
 
@@ -47,10 +51,11 @@ export class ValueConflictService {
         conflictsToCreate.push({
           tableName, columnName: field, entityId,
           newValue: String(incomingValue as string | number | boolean),
-          newSource: incomingSource, newNotes: incomingNotes,
+          newSource: incomingSource, newNotes: incomingNotes, newSourceTime: incomingSourceTime,
           oldValue: String(storedValue as string | number | boolean),
           oldSource: storedSources?.[field] ?? null,
           oldNotes: storedNotes?.[field] ?? null,
+          oldSourceTime: storedSourceTimes?.[field] ?? null,
           conflictCreator, isSolved: false,
         });
       }
@@ -63,6 +68,6 @@ export class ValueConflictService {
       this._logger.log(`${tableName}/${entityId}: ${Object.keys(fieldsToUpdate).length} gap-fill(s) on [${Object.keys(fieldsToUpdate).join(', ')}]`);
     }
 
-    return { conflictsToCreate, fieldsToUpdate, sourceUpdates, notesUpdates };
+    return { conflictsToCreate, fieldsToUpdate, sourceUpdates, notesUpdates, sourceTimeUpdates };
   }
 }

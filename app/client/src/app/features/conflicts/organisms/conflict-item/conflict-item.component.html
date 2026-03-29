@@ -73,7 +73,25 @@
                       <div class="conflict-item__cell-content">
                         <span class="conflict-item__pk-value">{{ $group().entityId }}</span>
                         @if (_$pkColumn()!.currentValue) {
-                          <span class="conflict-item__meta">{{ formatDate(_$pkColumn()!.currentDate) }} | {{ _$pkColumn()!.currentSource ?? 'אין מקור' }}</span>
+                          @if (_$pkColumn()!.currentSource || _$pkColumn()!.currentSourceTime) {
+                            <span class="conflict-item__source-group">
+                              <span class="conflict-item__source-label">{{ _$sourceLabel() }}</span>
+                              <span class="conflict-item__source-label-sep"></span>
+                              @if (_$pkColumn()!.currentSource) {
+                                <span class="conflict-item__source-name">{{ _$pkColumn()!.currentSource }}</span>
+                              }
+                              @if (_$pkColumn()!.currentSource && _$pkColumn()!.currentSourceTime) {
+                                <span class="conflict-item__source-divider">·</span>
+                              }
+                              @if (_$pkColumn()!.currentSourceTime) {
+                                <span class="conflict-item__source-time">{{ formatDate(_$pkColumn()!.currentSourceTime) }}</span>
+                              }
+                            </span>
+                          }
+                          <span class="conflict-item__meta">
+                            <span class="conflict-item__meta-label">{{ UPLOADED_LABEL }}</span>
+                            {{ formatDate(_$pkColumn()!.currentDate) }}
+                          </span>
                         }
                         @if (_$pkColumn()!.currentNotes) {
                           <span class="conflict-item__comment">{{ _$pkColumn()!.currentNotes }}</span>
@@ -128,7 +146,10 @@
                             [$isSelected]="isValueWinnerSelected(col.columnName, entry.value)"
                             [$isDisabled]="!_$canEdit()"
                             [$source]="entry.source ?? 'אין מקור'"
+                            [$sourceTime]="entry.sourceTime"
+                            [$sourceLabel]="_$sourceLabel()"
                             [$date]="formatDate(entry.createdAt)"
+                            [$uploadedLabel]="UPLOADED_LABEL"
                             [$notes]="entry.notes"
                             (selected)="selectValueWinner(col.columnName, entry.value)"
                           />
@@ -147,7 +168,25 @@
                           [class.conflict-item__id--yellow]="col.columnName.endsWith('Id') && col.currentValue && isIdOpen(col.currentValue)"
                         >{{ col.currentValue ?? '—' }}</span>
                         @if (col.currentValue) {
-                          <span class="conflict-item__meta">{{ formatDate(col.currentDate) }} | {{ col.currentSource ?? 'אין מקור' }}</span>
+                          @if (col.currentSource || col.currentSourceTime) {
+                            <span class="conflict-item__source-group">
+                              <span class="conflict-item__source-label">{{ _$sourceLabel() }}</span>
+                              <span class="conflict-item__source-label-sep"></span>
+                              @if (col.currentSource) {
+                                <span class="conflict-item__source-name">{{ col.currentSource }}</span>
+                              }
+                              @if (col.currentSource && col.currentSourceTime) {
+                                <span class="conflict-item__source-divider">·</span>
+                              }
+                              @if (col.currentSourceTime) {
+                                <span class="conflict-item__source-time">{{ formatDate(col.currentSourceTime) }}</span>
+                              }
+                            </span>
+                          }
+                          <span class="conflict-item__meta">
+                            <span class="conflict-item__meta-label">{{ UPLOADED_LABEL }}</span>
+                            {{ formatDate(col.currentDate) }}
+                          </span>
                         }
                         @if (col.currentNotes) {
                           <span class="conflict-item__comment">{{ col.currentNotes }}</span>

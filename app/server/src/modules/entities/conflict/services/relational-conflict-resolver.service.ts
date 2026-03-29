@@ -66,6 +66,7 @@ export class RelationalConflictResolverService {
     const { anchorId, anchorTable, oldRelatedId, newRelatedId, relatedTable } = conflict;
     const winnerSource = winnerRelatedId === oldRelatedId ? conflict.oldRelatedSource : conflict.newRelatedSource;
     const winnerNotes = winnerRelatedId === oldRelatedId ? conflict.oldRelatedNotes : conflict.newRelatedNotes;
+    const winnerSourceTime = winnerRelatedId === oldRelatedId ? conflict.oldRelatedSourceTime : conflict.newRelatedSourceTime;
 
     const anchorFkField = `${relatedTable.slice(0, -1)}Id`; // 'communications' → 'communicationId'
     const anchorService = this._registry.get(anchorTable);
@@ -85,6 +86,8 @@ export class RelationalConflictResolverService {
         anchorEntity.source,
         { [anchorFkField]: winnerNotes ?? null },
         anchorEntity.notes,
+        { [anchorFkField]: winnerSourceTime ?? null },
+        anchorEntity.sourceTime,
       );
     }
 
@@ -121,14 +124,15 @@ export class RelationalConflictResolverService {
     if (childTable) {
       const currentOwner = await winnerService.findByFkValue(winnerChildFkField, winnerChildId, winnerRelatedId);
       if (currentOwner) {
-        const currentOwnerEntity = currentOwner as unknown as Record<string, unknown>;
         await this._registry.get(relatedTable).update(
           currentOwner.id as string,
           { [winnerChildFkField]: null },
           {},
-          (currentOwnerEntity['source'] as Record<string, string | null>) ?? null,
+          currentOwner.source,
           {},
-          (currentOwnerEntity['notes'] as Record<string, string | null>) ?? null,
+          currentOwner.notes,
+          {},
+          currentOwner.sourceTime,
         );
       }
     }
@@ -140,6 +144,8 @@ export class RelationalConflictResolverService {
       winnerEntity.source,
       {},
       winnerEntity.notes,
+      {},
+      winnerEntity.sourceTime,
     );
   }
 
@@ -170,6 +176,8 @@ export class RelationalConflictResolverService {
           loserEntity.source,
           {},
           loserEntity.notes,
+          {},
+          loserEntity.sourceTime,
         );
       }
     }
@@ -179,6 +187,7 @@ export class RelationalConflictResolverService {
       if (winnerRecord[childFkField] !== anchorId) {
         const winnerSource = winnerRelatedId === oldRelatedId ? conflict.oldRelatedSource : conflict.newRelatedSource;
         const winnerNotes = winnerRelatedId === oldRelatedId ? conflict.oldRelatedNotes : conflict.newRelatedNotes;
+        const winnerSourceTime = winnerRelatedId === oldRelatedId ? conflict.oldRelatedSourceTime : conflict.newRelatedSourceTime;
 
         await relatedService.update(
           winnerRelatedId,
@@ -187,6 +196,8 @@ export class RelationalConflictResolverService {
           winnerEntity.source,
           { [childFkField]: winnerNotes ?? null },
           winnerEntity.notes,
+          { [childFkField]: winnerSourceTime ?? null },
+          winnerEntity.sourceTime,
         );
       }
     }

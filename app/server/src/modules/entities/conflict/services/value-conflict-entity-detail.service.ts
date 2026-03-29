@@ -3,7 +3,7 @@ import { ValueConflictRepository } from '../value-conflict.repository';
 import { EntityServiceRegistry } from '../../../../shared/services/entity-service-registry.service';
 import { ConflictColumnDetail } from '../types/conflict-entity-detail-response.type';
 
-const EXCLUDED_COLUMNS = new Set(['source', 'notes', 'createdAt', 'updatedAt', 'deletedAt']);
+const EXCLUDED_COLUMNS = new Set(['source', 'notes', 'sourceTime', 'createdAt', 'updatedAt', 'deletedAt']);
 
 @Injectable()
 export class ValueConflictEntityDetailService {
@@ -31,6 +31,7 @@ export class ValueConflictEntityDetailService {
     const entityRecord = entity as unknown as Record<string, unknown>;
     const source = (entityRecord['source'] as Record<string, string | null>) ?? {};
     const notes = (entityRecord['notes'] as Record<string, string | null>) ?? {};
+    const sourceTime = (entityRecord['sourceTime'] as Record<string, string | null>) ?? {};
     const currentDate = (entity.updatedAt as Date).toISOString();
 
     return entityService
@@ -45,13 +46,14 @@ export class ValueConflictEntityDetailService {
           currentValue: entityRecord[columnName] != null ? String(entityRecord[columnName]) : null,
           currentSource: source[columnName] ?? null,
           currentNotes: notes[columnName] ?? null,
+          currentSourceTime: sourceTime[columnName] ?? null,
           currentDate,
           isConflicted,
           conflictValues: isConflicted
             ? conflicts
                 .flatMap((c) => [
-                  { value: c.oldValue, source: c.oldSource, notes: c.oldNotes, createdAt: c.createdAt.toISOString() },
-                  { value: c.newValue, source: c.newSource, notes: c.newNotes, createdAt: c.createdAt.toISOString() },
+                  { value: c.oldValue, source: c.oldSource, notes: c.oldNotes, sourceTime: c.oldSourceTime, createdAt: c.createdAt.toISOString() },
+                  { value: c.newValue, source: c.newSource, notes: c.newNotes, sourceTime: c.newSourceTime, createdAt: c.createdAt.toISOString() },
                 ])
                 .filter((entry, index, arr) => arr.findIndex((e) => e.value === entry.value) === index)
             : [],

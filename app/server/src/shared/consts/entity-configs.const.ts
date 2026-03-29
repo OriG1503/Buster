@@ -16,6 +16,7 @@ export const BATTERY_CONFIG = {
     isStockRehovot: { label: 'מלאי רחובות',   csvHeader: 'מלאי רחובות סוללה',   parserFieldName: 'battery_is_stock_rehovot', valueType: 'bool'   },
     notes:          { label: 'הערה',            csvHeader: 'הערה',                 parserFieldName: 'notes',                     valueType: 'meta'   },
     source:         { label: 'מ"ד',             csvHeader: 'מ"ד',                  parserFieldName: 'source',                    valueType: 'meta'   },
+    sourceTime:     { label: 'תאריך מקור',      csvHeader: 'תאריך מקור',           parserFieldName: 'source_time',               valueType: 'meta'   },
   },
 } as const satisfies EntityConfig;
 
@@ -29,6 +30,7 @@ export const CARDBOARD_CONFIG = {
     cardboardVersion: { label: 'גרסת קרטון', csvHeader: 'גרסת קרטון',  parserFieldName: 'cardboard_version', valueType: 'string' },
     notes:            { label: 'הערה',        csvHeader: 'הערה',         parserFieldName: 'notes',             valueType: 'meta'   },
     source:           { label: 'מ"ד',         csvHeader: 'מ"ד',          parserFieldName: 'source',            valueType: 'meta'   },
+    sourceTime:       { label: 'תאריך מקור',  csvHeader: 'תאריך מקור',   parserFieldName: 'source_time',       valueType: 'meta'   },
   },
 } as const satisfies EntityConfig;
 
@@ -43,6 +45,7 @@ export const COMMUNICATION_CONFIG = {
     communicationType: { label: 'סוג תקשורת',  csvHeader: 'סוג תקשורת',  parserFieldName: 'communication_type',  valueType: 'string' },
     notes:             { label: 'הערה',          csvHeader: 'הערה',         parserFieldName: 'notes',               valueType: 'meta'   },
     source:            { label: 'מ"ד',           csvHeader: 'מ"ד',          parserFieldName: 'source',              valueType: 'meta'   },
+    sourceTime:        { label: 'תאריך מקור',    csvHeader: 'תאריך מקור',   parserFieldName: 'source_time',         valueType: 'meta'   },
   },
 } as const satisfies EntityConfig;
 
@@ -58,6 +61,7 @@ export const IRON_CONFIG = {
     isStockAshdod:   { label: 'מלאי אשדוד', csvHeader: 'מלאי אשדוד ברזל', parserFieldName: 'iron_is_stock_ashdod', valueType: 'bool'   },
     notes:           { label: 'הערה',        csvHeader: 'הערה',             parserFieldName: 'notes',                valueType: 'meta'   },
     source:          { label: 'מ"ד',         csvHeader: 'מ"ד',              parserFieldName: 'source',               valueType: 'meta'   },
+    sourceTime:      { label: 'תאריך מקור',  csvHeader: 'תאריך מקור',       parserFieldName: 'source_time',          valueType: 'meta'   },
   },
 } as const satisfies EntityConfig;
 
@@ -71,6 +75,7 @@ export const PLASTIC_CONFIG = {
     plasticType: { label: 'סוג פלסטיק',  csvHeader: 'סוג פלסטיק',  parserFieldName: 'plastic_type',  valueType: 'string' },
     notes:       { label: 'הערה',         csvHeader: 'הערה',         parserFieldName: 'notes',          valueType: 'meta'   },
     source:      { label: 'מ"ד',          csvHeader: 'מ"ד',          parserFieldName: 'source',         valueType: 'meta'   },
+    sourceTime:  { label: 'תאריך מקור',   csvHeader: 'תאריך מקור',   parserFieldName: 'source_time',    valueType: 'meta'   },
   },
 } as const satisfies EntityConfig;
 
@@ -95,6 +100,7 @@ export const ROBOT_CONFIG = {
     isStockAfula:    { label: 'מלאי עפולה',   csvHeader: 'מלאי עפולה רובוט',    parserFieldName: 'robot_is_stock_afula',    valueType: 'bool'   },
     notes:           { label: 'הערה',          csvHeader: 'הערה',                 parserFieldName: 'notes',                   valueType: 'meta'   },
     source:          { label: 'מ"ד',           csvHeader: 'מ"ד',                  parserFieldName: 'source',                  valueType: 'meta'   },
+    sourceTime:      { label: 'תאריך מקור',    csvHeader: 'תאריך מקור',           parserFieldName: 'source_time',             valueType: 'meta'   },
   },
 } as const satisfies EntityConfig;
 
@@ -108,6 +114,7 @@ export const SENSOR_CONFIG = {
     sensorVersion: { label: 'גרסת חיישן',  csvHeader: 'גרסת חיישן',  parserFieldName: 'sensor_version', valueType: 'string' },
     notes:         { label: 'הערה',         csvHeader: 'הערה',         parserFieldName: 'notes',          valueType: 'meta'   },
     source:        { label: 'מ"ד',          csvHeader: 'מ"ד',          parserFieldName: 'source',         valueType: 'meta'   },
+    sourceTime:    { label: 'תאריך מקור',   csvHeader: 'תאריך מקור',   parserFieldName: 'source_time',    valueType: 'meta'   },
   },
 } as const satisfies EntityConfig;
 
@@ -123,6 +130,7 @@ export const STORAGE_CONFIG = {
     isStockAfula:   { label: 'מלאי עפולה', csvHeader: 'מלאי עפולה אחסון',   parserFieldName: 'storage_is_stock_afula',   valueType: 'bool'   },
     notes:          { label: 'הערה',        csvHeader: 'הערה',                parserFieldName: 'notes',                    valueType: 'meta'   },
     source:         { label: 'מ"ד',         csvHeader: 'מ"ד',                 parserFieldName: 'source',                   valueType: 'meta'   },
+    sourceTime:     { label: 'תאריך מקור',  csvHeader: 'תאריך מקור',          parserFieldName: 'source_time',              valueType: 'meta'   },
   },
 } as const satisfies EntityConfig;
 
@@ -136,8 +144,9 @@ export const WIRING_CONFIG = {
     wiringType: { label: 'סוג חיווט', csvHeader: 'סוג חיווט',      parserFieldName: 'wiring_type',       valueType: 'string' },
     district:  { label: 'מחוז',       csvHeader: 'מחוז חיווט',     parserFieldName: 'wiring_district',   valueType: 'string' },
     storeName: { label: 'שם חנות',    csvHeader: 'שם חנות חיווט',  parserFieldName: 'wiring_store_name', valueType: 'string' },
-    notes:     { label: 'הערה',       csvHeader: 'הערה',            parserFieldName: 'notes',              valueType: 'meta'   },
-    source:    { label: 'מ"ד',        csvHeader: 'מ"ד',             parserFieldName: 'source',             valueType: 'meta'   },
+    notes:      { label: 'הערה',       csvHeader: 'הערה',            parserFieldName: 'notes',              valueType: 'meta'   },
+    source:     { label: 'מ"ד',        csvHeader: 'מ"ד',             parserFieldName: 'source',             valueType: 'meta'   },
+    sourceTime: { label: 'תאריך מקור', csvHeader: 'תאריך מקור',      parserFieldName: 'source_time',        valueType: 'meta'   },
   },
 } as const satisfies EntityConfig;
 

@@ -7,7 +7,7 @@ export type EntityService<TData extends { id: string }> = {
   findById(id: string): Promise<BaseEntity | null>;
   getColumnNames(): string[];
   findByFkValue(column: string, value: string, excludeId?: string): Promise<BaseEntity | null>;
-  insert(data: TData, source: string, notes: string | null): Promise<void>;
+  insert(data: TData, source: string, notes: string | null, sourceTime: string | null): Promise<void>;
   renameId(oldId: string, newId: string): Promise<void>;
   softDelete(id: string): Promise<void>;
   update(
@@ -17,5 +17,7 @@ export type EntityService<TData extends { id: string }> = {
     existingSource: Record<string, string | null> | null,
     notesUpdates: Record<string, string | null>,
     existingNotes: Record<string, string | null> | null,
+    sourceTimeUpdates: Record<string, string | null>,
+    existingSourceTime: Record<string, string | null> | null,
   ): Promise<void>;
 };

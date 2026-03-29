@@ -11,3 +11,4 @@ class Storage:
     storage_is_stock_afula: Optional[bool] = None
     notes: Optional[str] = None
     source: Optional[str] = None
+    source_time: Optional[str] = None

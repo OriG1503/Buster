@@ -76,8 +76,8 @@
                 @for (field of getGroupSubtreeFields(group); track field) {
                   <th class="history-popup__th">{{ getSubtreeFieldLabel(group.relatedTable, field) }}</th>
                 }
-                <th class="history-popup__th">מקור</th>
-                <th class="history-popup__th">הערה</th>
+                <th class="history-popup__th">{{ _$sourceLabel() }}</th>
+                <th class="history-popup__th">{{ _$notesLabel() }}</th>
               </tr>
             </thead>
             <tbody>
@@ -112,10 +112,11 @@
           <thead>
             <tr>
               <th class="history-popup__th history-popup__th--dot"></th>
-              <th class="history-popup__th">ערך</th>
-              <th class="history-popup__th">הערה</th>
-              <th class="history-popup__th">מקור</th>
-              <th class="history-popup__th">תאריך יצירה</th>
+              <th class="history-popup__th">{{ VALUE_HEADER }}</th>
+              <th class="history-popup__th">{{ _$notesLabel() }}</th>
+              <th class="history-popup__th">{{ _$sourceLabel() }}</th>
+              <th class="history-popup__th">{{ _$sourceTimeLabel() }}</th>
+              <th class="history-popup__th">{{ UPLOADED_AT_HEADER }}</th>
             </tr>
           </thead>
           <tbody>
@@ -143,6 +144,7 @@
                 <td class="history-popup__td">{{ entry.value ?? '—' }}</td>
                 <td class="history-popup__td">{{ entry.notes ?? '—' }}</td>
                 <td class="history-popup__td">{{ entry.source ?? '—' }}</td>
+                <td class="history-popup__td">{{ formatDate(entry.sourceTime) }}</td>
                 <td class="history-popup__td">{{ formatDate(entry.createdAt) }}</td>
               </tr>
             }

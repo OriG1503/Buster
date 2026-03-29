@@ -34,6 +34,8 @@ export class ValueConflictResolverService {
           entity.source,
           { [columnName]: winnerConflict.newNotes },
           entity.notes,
+          { [columnName]: winnerConflict.newSourceTime ?? null },
+          entity.sourceTime,
         );
       }
     }
