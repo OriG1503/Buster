@@ -114,7 +114,7 @@
     vertical-align: middle;
     text-align: center;
     border-left: 1px solid rgba(255, 255, 255, 0.06);
-    color: rgba(255, 255, 255, 0.45);
+    color: rgba(255, 255, 255, 0.85);
     font-size: var(--font-size-sm);
 
     &:last-child {
@@ -167,7 +167,7 @@
 
     &--fk {
       font-size: 0.7rem;
-      color: rgba(255, 255, 255, 0.6);
+      color: rgba(255, 255, 255, 0.85);
       word-break: break-all;
     }
   }
