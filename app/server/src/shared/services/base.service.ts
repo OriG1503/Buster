@@ -19,13 +19,14 @@ export abstract class BaseService<T extends BaseEntity, TInsertData extends { id
     return this._repository.findByFkValue(column, value, excludeId);
   }
 
-  public async insert(data: TInsertData, source: string, notes: string | null): Promise<void> {
+  public async insert(data: TInsertData, source: string, notes: string | null, sourceTime: string | null): Promise<void> {
     const { id, ...fields } = data;
     await this._repository.insert({
       id,
       ...fields,
       source: this._buildFieldTracking(fields, source),
       notes: this._buildFieldTracking(fields, notes),
+      sourceTime: this._buildFieldTracking(fields, sourceTime),
     });
   }
 
@@ -44,11 +45,14 @@ export abstract class BaseService<T extends BaseEntity, TInsertData extends { id
     existingSource: Record<string, string | null> | null,
     notesUpdates: Record<string, string | null>,
     existingNotes: Record<string, string | null> | null,
+    sourceTimeUpdates: Record<string, string | null>,
+    existingSourceTime: Record<string, string | null> | null,
   ): Promise<void> {
     await this._repository.update(id, {
       ...fields,
       source: { ...(existingSource ?? {}), ...sourceUpdates },
       notes: { ...(existingNotes ?? {}), ...notesUpdates },
+      sourceTime: { ...(existingSourceTime ?? {}), ...sourceTimeUpdates },
     });
   }
 

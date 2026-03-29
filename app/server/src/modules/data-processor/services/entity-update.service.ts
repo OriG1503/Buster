@@ -30,31 +30,33 @@ export class EntityUpdateService {
     fields: Record<string, EntityValue>,
     source: string,
     notes: string | null,
+    sourceTime: string | null,
     username: string,
     nonNullCount: number,
   ): Promise<EntityResult> {
     const result = this._conflictService.detectConflicts(
       service.tableName, id,
       stored as object as Record<string, EntityValue>,
-      stored.source, stored.notes,
-      fields, source, username, notes,
+      stored.source, stored.notes, stored.sourceTime,
+      fields, source, username, notes, sourceTime,
     );
 
     const conflictIds = await this._persistValueConflicts(result.conflictsToCreate);
-    const twoChildsCount = await this._fkConflictService.detectTwoChilds(service, id, stored, fields, source, notes, username);
+    const twoChildsCount = await this._fkConflictService.detectTwoChilds(service, id, stored, fields, source, notes, sourceTime, username);
     const { conflictCount: gapFillConflictCount, conflictedFkFields } = await this._fkConflictService.detectTwoFathersOnGapFill(
-      service, id, result.fieldsToUpdate, source, notes, username,
+      service, id, result.fieldsToUpdate, source, notes, sourceTime, username,
     );
 
     conflictedFkFields.forEach((fkField) => {
       delete result.fieldsToUpdate[fkField];
       delete result.sourceUpdates[fkField];
       delete result.notesUpdates[fkField];
+      delete result.sourceTimeUpdates[fkField];
     });
 
     try {
       if (Object.keys(result.fieldsToUpdate).length > 0) {
-        await service.update(id, result.fieldsToUpdate, result.sourceUpdates, stored.source, result.notesUpdates, stored.notes);
+        await service.update(id, result.fieldsToUpdate, result.sourceUpdates, stored.source, result.notesUpdates, stored.notes, result.sourceTimeUpdates, stored.sourceTime);
       }
     } catch (error) {
       const pgError = error as { code?: string };

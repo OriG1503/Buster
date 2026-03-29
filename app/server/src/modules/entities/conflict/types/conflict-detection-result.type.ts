@@ -5,4 +5,5 @@ export type ValueConflictDetectionResult = {
   fieldsToUpdate: Record<string, EntityValue>;
   sourceUpdates: Record<string, string>;
   notesUpdates: Record<string, string | null>;
+  sourceTimeUpdates: Record<string, string | null>;
 };

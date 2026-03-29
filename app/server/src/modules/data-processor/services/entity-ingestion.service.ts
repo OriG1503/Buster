@@ -27,14 +27,14 @@ export class EntityIngestionService {
     const record = mapped as MappedEntityBase & Record<string, EntityValue>;
     if (!record.id) { return this._insertService.buildMissingIdResult(service.tableName, rowIndex, record); }
 
-    const { source, notes, id, ...fields } = record;
+    const { source, notes, sourceTime, id, ...fields } = record;
     const nonNullCount = Object.keys(fields).filter((k) => fields[k] !== null).length;
 
-    if (nonNullCount === 0) { return this._insertService.insertStub(service, id, fields, source, notes, rowIndex); }
+    if (nonNullCount === 0) { return this._insertService.insertStub(service, id, fields, source, notes, sourceTime, rowIndex); }
 
     const stored = await service.findById(id);
     return stored
-      ? this._updateService.updateExisting(service, id, stored, fields, source, notes, username, nonNullCount)
-      : this._insertService.insertNew(service, id, fields, source, notes, username, nonNullCount);
+      ? this._updateService.updateExisting(service, id, stored, fields, source, notes, sourceTime, username, nonNullCount)
+      : this._insertService.insertNew(service, id, fields, source, notes, sourceTime, username, nonNullCount);
   }
 }

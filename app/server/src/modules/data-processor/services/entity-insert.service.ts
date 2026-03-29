@@ -30,11 +30,12 @@ export class EntityInsertService {
     fields: Record<string, EntityValue>,
     source: string,
     notes: string | null,
+    sourceTime: string | null,
     rowIndex: number,
   ): Promise<EntityResult> {
     const yellowFields = Object.keys(fields).filter((k) => !k.endsWith('Id'));
     try {
-      await service.insert({ id, ...fields }, source, notes);
+      await service.insert({ id, ...fields }, source, notes, sourceTime);
     } catch (error) {
       const pgError = error as { code?: string };
       if (!(error instanceof QueryFailedError) || pgError.code !== PG_UNIQUE_VIOLATION) { throw error; }
@@ -56,11 +57,12 @@ export class EntityInsertService {
     fields: Record<string, EntityValue>,
     source: string,
     notes: string | null,
+    sourceTime: string | null,
     username: string,
     nonNullCount: number,
   ): Promise<EntityResult> {
     const { conflictCount, conflictedFkFields } = await this._fkConflictService.detectTwoFathersOnInsert(
-      service, id, fields, source, notes, username,
+      service, id, fields, source, notes, sourceTime, username,
     );
 
     const cleanedFields = Object.fromEntries(
@@ -68,7 +70,7 @@ export class EntityInsertService {
     );
 
     try {
-      await service.insert({ id, ...cleanedFields }, source, notes);
+      await service.insert({ id, ...cleanedFields }, source, notes, sourceTime);
     } catch (error) {
       const pgError = error as { code?: string };
       if (!(error instanceof QueryFailedError) || pgError.code !== PG_UNIQUE_VIOLATION) { throw error; }

@@ -23,6 +23,9 @@ export class ValueConflictEntity extends GeneratedBaseEntity {
   public newNotes: string | null;
 
   @Column({ type: 'varchar', nullable: true })
+  public newSourceTime: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
   public oldValue: string | null;
 
   @Column({ type: 'varchar', nullable: true })
@@ -30,6 +33,9 @@ export class ValueConflictEntity extends GeneratedBaseEntity {
 
   @Column({ type: 'varchar', nullable: true })
   public oldNotes: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  public oldSourceTime: string | null;
 
   @Column({ type: 'varchar', nullable: true })
   public conflictCreator: string | null;

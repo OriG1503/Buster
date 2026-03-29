@@ -1,5 +1,6 @@
-/** Generic wrapper that turns any insert-data shape into a fully-tracked mapped entity (adds source + notes). */
+/** Generic wrapper that turns any insert-data shape into a fully-tracked mapped entity (adds source, notes, sourceTime). */
 export type MappedEntity<TInsertData extends { id: string }> = TInsertData & {
   source: string;
   notes: string | null;
+  sourceTime: string | null;
 };

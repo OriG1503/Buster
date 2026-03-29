@@ -33,6 +33,7 @@ export class ValueConflictHistoryService {
       value: earliest.oldValue,
       source: earliest.oldSource,
       notes: earliest.oldNotes,
+      sourceTime: earliest.oldSourceTime,
       createdAt: entity?.createdAt instanceof Date ? entity.createdAt.toISOString() : null,
       isWinner: currentValue !== null && currentValue === earliest.oldValue,
     });
@@ -45,6 +46,7 @@ export class ValueConflictHistoryService {
           value: conflict.newValue,
           source: conflict.newSource,
           notes: conflict.newNotes,
+          sourceTime: conflict.newSourceTime,
           createdAt: conflict.createdAt instanceof Date ? conflict.createdAt.toISOString() : null,
           isWinner: currentValue !== null && currentValue === conflict.newValue,
         });

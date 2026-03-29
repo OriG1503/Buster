@@ -43,6 +43,7 @@ export class RevertService {
 
     const revertSource = originalConflict.newValue === revertValue ? originalConflict.newSource : originalConflict.oldSource;
     const revertNotes = originalConflict.newValue === revertValue ? originalConflict.newNotes : originalConflict.oldNotes;
+    const revertSourceTime = originalConflict.newValue === revertValue ? originalConflict.newSourceTime : originalConflict.oldSourceTime;
 
     const mostRecentResolved = await this._valueConflictRepository.findMostRecentResolved(tableName, entityId, columnName);
     const cascadedNotes = [mostRecentResolved?.resolutionNotes, resolutionNotes].filter(Boolean).join('\n');
@@ -52,12 +53,13 @@ export class RevertService {
       oldValue: currentValue,
       oldSource: entity.source?.[columnName] ?? null,
       oldNotes: entity.notes?.[columnName] ?? null,
-      newValue: revertValue, newSource: revertSource, newNotes: revertNotes,
+      oldSourceTime: entity.sourceTime?.[columnName] ?? null,
+      newValue: revertValue, newSource: revertSource, newNotes: revertNotes, newSourceTime: revertSourceTime,
       conflictCreator: revertedBy, conflictResolver: revertedBy,
       resolutionNotes: cascadedNotes, isSolved: true,
     });
 
-    await this._applyFieldRevert(entityService, entityId, entity, columnName, revertValue, revertSource, revertNotes);
+    await this._applyFieldRevert(entityService, entityId, entity, columnName, revertValue, revertSource, revertNotes, revertSourceTime);
     this._logger.log(`Reverted: ${tableName}/${entityId}/${columnName}`);
 
     return this._fetchUpdatedEntity(entityService, entityId, tableName);
@@ -67,6 +69,7 @@ export class RevertService {
   private async _applyFieldRevert(
     entityService: EntityService<{ id: string }>, entityId: string, entity: BaseEntity,
     columnName: string, revertValue: string, revertSource: string | null, revertNotes: string | null,
+    revertSourceTime: string | null,
   ): Promise<void> {
     await entityService.update(
       entityId,
@@ -75,6 +78,8 @@ export class RevertService {
       entity.source,
       { [columnName]: revertNotes },
       entity.notes,
+      { [columnName]: revertSourceTime ?? null },
+      entity.sourceTime,
     );
   }
 

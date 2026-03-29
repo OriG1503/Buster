@@ -2,6 +2,7 @@ export type ConflictHistoryEntry = {
   value: string | null;
   source: string | null;
   notes: string | null;
+  sourceTime: string | null;
   /** ISO timestamp — when this value was uploaded (conflict createdAt for incoming values; entity createdAt for original). */
   createdAt: string | null;
   /** True for the entry that matches the current entity field value (the winning value). */
