@@ -30,9 +30,9 @@
         placeholder="חפש לפי מזהה ישות"
         (input)="onEntityIdInput($any($event.target).value)"
       />
+      <app-conflict-color-legend />
     </div>
     <span class="conflicts-layout__count">נמצאו {{ _store.openCount() }} קונפליקטים</span>
-    <app-conflict-color-legend />
   </div>
 
   <div class="conflicts-layout__list">
