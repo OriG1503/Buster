@@ -148,6 +148,74 @@
     gap: 0.2rem;
   }
 
+  &__source-group {
+    display: flex;
+    align-self: center;
+    align-items: center;
+    gap: 0.3rem;
+    background-color: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    padding: 0.15rem 0.45rem;
+  }
+
+  &__source-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #7ba7f7;
+    flex-shrink: 0;
+  }
+
+  &__source-label-sep {
+    width: 1px;
+    height: 0.75rem;
+    background-color: rgba(255, 255, 255, 0.3);
+    flex-shrink: 0;
+  }
+
+  &__source-name {
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+  }
+
+  &__source-divider {
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  &__source-time {
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  &__meta {
+    display: flex;
+    align-self: center;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 8px;
+    padding: 0.15rem 0.4rem;
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  &__meta-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: var(--color-orange);
+    flex-shrink: 0;
+  }
+
+  &__comment {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--color-navy-gray);
+    font-style: italic;
+  }
+
   &__options {
     display: flex;
     flex-direction: column;

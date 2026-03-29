@@ -10,6 +10,10 @@
     <span class="cell-info-popup__value">{{ $target().source ?? 'N/A' }}</span>
   </div>
   <div class="cell-info-popup__row">
+    <span class="cell-info-popup__label">תאריך מקור</span>
+    <span class="cell-info-popup__value">{{ _formatDate($target().sourceTime) }}</span>
+  </div>
+  <div class="cell-info-popup__row">
     <span class="cell-info-popup__label">תאריך יצירה</span>
     <span class="cell-info-popup__value">{{ _formatDate($target().uploadedAt) }}</span>
   </div>

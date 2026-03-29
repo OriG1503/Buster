@@ -24,8 +24,27 @@
     >{{ $label() }}</span>
   }
 
-  @if (_$metaLine()) {
-    <span class="conflict-item__meta">{{ _$metaLine() }}</span>
+  @if ($source() || _$formattedSourceTime()) {
+    <span class="conflict-item__source-group">
+      <span class="conflict-item__source-label">מ"ד</span>
+      <span class="conflict-item__source-label-sep"></span>
+      @if ($source()) {
+        <span class="conflict-item__source-name">{{ $source() }}</span>
+      }
+      @if ($source() && _$formattedSourceTime()) {
+        <span class="conflict-item__source-divider">·</span>
+      }
+      @if (_$formattedSourceTime()) {
+        <span class="conflict-item__source-time">{{ _$formattedSourceTime() }}</span>
+      }
+    </span>
+  }
+
+  @if ($date()) {
+    <span class="conflict-item__meta">
+      <span class="conflict-item__meta-label">הועלה</span>
+      {{ $date() }}
+    </span>
   }
 
   @if ($notes()) {

@@ -5,5 +5,6 @@ export type CellInfoTarget = {
   tableHeaderBottom: number;
   source: string | null;
   notes: string | null;
+  sourceTime: string | null;
   uploadedAt: string | null;
 };

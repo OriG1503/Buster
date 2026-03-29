@@ -110,7 +110,8 @@ export class ConflictItemComponent {
     return `מזהה ${this._displayNames.getEntityName(rc.relatedTable)}`;
   }
 
-  protected formatDate(isoDate: string): string {
+  protected formatDate(isoDate: string | null): string {
+    if (!isoDate) { return '—'; }
     return new Date(isoDate).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit' });
   }
 

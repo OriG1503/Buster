@@ -133,10 +133,11 @@ export class TableViewService {
       }
     });
 
-    // Always select source, notes, and createdAt for every involved table (cell metadata).
+    // Always select source, notes, sourceTime, and createdAt for every involved table (cell metadata).
     tablesInvolved.forEach((table) => {
       parts.push(`"${table}"."source" AS "${table}__source"`);
       parts.push(`"${table}"."notes" AS "${table}__notes"`);
+      parts.push(`"${table}"."sourceTime" AS "${table}__sourceTime"`);
       parts.push(`"${table}"."createdAt" AS "${table}__createdAt"`);
     });
 
@@ -312,6 +313,7 @@ export class TableViewService {
           status: 'raw',
           source: null,
           notes: null,
+          sourceTime: null,
           uploadedAt: createdAt instanceof Date ? createdAt.toISOString() : (createdAt as string | null) ?? null,
           conflictId: null,
           anchorTable: null,
@@ -336,11 +338,14 @@ export class TableViewService {
 
       const createdAt = row[`${table}__createdAt`];
 
+      const sourceTimeMap = row[`${table}__sourceTime`] as Record<string, string | null> | null;
+
       const cell: TableCell = {
         value: rawValue !== undefined && rawValue !== null ? String(rawValue) : null,
         status: conflictEntry?.status ?? 'raw',
         source: sourceMap?.[column] ?? null,
         notes: notesMap?.[column] ?? null,
+        sourceTime: sourceTimeMap?.[column] ?? null,
         uploadedAt: createdAt instanceof Date ? createdAt.toISOString() : (createdAt as string | null) ?? null,
         conflictId: conflictEntry?.conflictId ?? null,
         anchorTable: conflictEntry?.anchorTable ?? null,

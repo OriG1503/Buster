@@ -139,6 +139,7 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
       tableHeaderBottom,
       source: cell.source,
       notes: cell.notes,
+      sourceTime: cell.sourceTime,
       uploadedAt: cell.uploadedAt,
     });
   }

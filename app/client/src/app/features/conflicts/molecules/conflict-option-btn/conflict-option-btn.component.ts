@@ -16,14 +16,19 @@ export class ConflictOptionBtnComponent {
   /** true = render label as an ID (conflict-item__id); false = render as a value (conflict-item__value) */
   public readonly $isIdStyle = input<boolean>(true);
   public readonly $source = input<string | null>(null);
-  /** Pre-formatted date string. Combined with source as "date | source". */
+  /** ISO string of the user-entered source date. Displayed as DD/MM/YYYY (date only). */
+  public readonly $sourceTime = input<string | null>(null);
+  /** Pre-formatted date string for the upload/conflict date — shown below the source group. */
   public readonly $date = input<string | null>(null);
   public readonly $notes = input<string | null>(null);
 
   public readonly selected = output<void>();
 
-  /** Combines date and source into one meta line, omitting nulls. */
-  protected readonly _$metaLine = computed(() =>
-    [this.$date(), this.$source()].filter(Boolean).join(' | '),
-  );
+  /** Source date formatted as DD/MM/YYYY (no time). Null when sourceTime is absent. */
+  protected readonly _$formattedSourceTime = computed(() => {
+    const st = this.$sourceTime();
+    if (!st) { return null; }
+    const d = new Date(st);
+    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+  });
 }

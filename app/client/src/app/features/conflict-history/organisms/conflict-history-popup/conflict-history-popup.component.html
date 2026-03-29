@@ -115,6 +115,7 @@
               <th class="history-popup__th">ערך</th>
               <th class="history-popup__th">הערה</th>
               <th class="history-popup__th">מקור</th>
+              <th class="history-popup__th">תאריך מקור</th>
               <th class="history-popup__th">תאריך יצירה</th>
             </tr>
           </thead>
@@ -143,6 +144,7 @@
                 <td class="history-popup__td">{{ entry.value ?? '—' }}</td>
                 <td class="history-popup__td">{{ entry.notes ?? '—' }}</td>
                 <td class="history-popup__td">{{ entry.source ?? '—' }}</td>
+                <td class="history-popup__td">{{ formatDate(entry.sourceTime) }}</td>
                 <td class="history-popup__td">{{ formatDate(entry.createdAt) }}</td>
               </tr>
             }
