@@ -1,0 +1,58 @@
+.conflict-item-footer {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  direction: rtl;
+
+  &__resolve-btn {
+    flex-shrink: 0;
+    min-width: 5rem;
+    padding: 0.5rem 1.5rem;
+    background-color: var(--color-blue);
+    color: var(--color-white);
+    border: none;
+    border-radius: 6px;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      opacity: 0.85;
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  }
+
+  &__notes-wrap {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 0.25rem;
+  }
+
+  &__notes-input {
+    width: 100%;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    font-size: var(--font-size-sm);
+    color: var(--p-surface-300);
+    direction: rtl;
+    outline: none;
+
+    &::placeholder {
+      color: var(--color-navy-gray);
+    }
+
+    &:focus {
+      border-color: var(--color-blue);
+    }
+  }
+}

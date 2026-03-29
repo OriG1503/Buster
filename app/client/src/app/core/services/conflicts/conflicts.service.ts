@@ -8,6 +8,7 @@ import { API_ROUTES } from '../../../shared/consts/api-routes.consts';
 import { ConflictCountResponse } from './types/conflict-count-response.type';
 import { ResolveValueConflictParams } from './types/resolve-value-conflict-params.type';
 import { ResolveRelationalConflictParams } from './types/resolve-relational-conflict-params.type';
+import { ResolveCrossEntityConflictParams } from './types/resolve-cross-entity-conflict-params.type';
 
 @Injectable({ providedIn: 'root' })
 export class ConflictsService {
@@ -37,6 +38,10 @@ export class ConflictsService {
 
   public resolveRelationalConflict(params: ResolveRelationalConflictParams): Observable<unknown> {
     return this._http.patch(API_ROUTES.conflicts.resolveRelational, params);
+  }
+
+  public resolveCrossEntityConflict(params: ResolveCrossEntityConflictParams): Observable<unknown> {
+    return this._http.patch(API_ROUTES.conflicts.resolveCrossEntity, params);
   }
 
   public checkOpenIds(ids: string[]): Observable<string[]> {

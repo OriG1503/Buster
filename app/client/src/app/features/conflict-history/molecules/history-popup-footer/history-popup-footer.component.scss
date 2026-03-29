@@ -62,8 +62,13 @@
     font-family: inherit;
     transition: opacity 0.15s;
 
-    &:hover {
+    &:hover:not(:disabled) {
       opacity: 0.85;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
   }
 }

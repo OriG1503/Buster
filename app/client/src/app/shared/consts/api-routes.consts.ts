@@ -12,9 +12,12 @@ export const API_ROUTES = {
     openIds: `${API_BASE}/conflicts/open-ids`,
     resolveValue: `${API_BASE}/conflicts/value/resolve`,
     resolveRelational: `${API_BASE}/conflicts/relational/resolve`,
+    resolveCrossEntity: `${API_BASE}/conflicts/cross-entity/resolve`,
     history: `${API_BASE}/conflicts/history`,
     relationalHistory: `${API_BASE}/conflicts/relational-history`,
     revert: `${API_BASE}/conflicts/revert`,
+    crossEntityHistory: `${API_BASE}/conflicts/cross-entity-history`,
+    revertCrossEntity: `${API_BASE}/conflicts/cross-entity/revert`,
   },
 
   entityCatalog: {

@@ -57,6 +57,7 @@ export class ValueConflictEntityDetailService {
                 ])
                 .filter((entry, index, arr) => arr.findIndex((e) => e.value === entry.value) === index)
             : [],
+          crossEntityConflicts: [],
         };
       });
   }

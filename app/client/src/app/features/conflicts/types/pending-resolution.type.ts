@@ -12,4 +12,13 @@ export type PendingRelationalResolution = {
   subtreeLevels: Map<string, string>;
 };
 
-export type PendingResolution = PendingValueResolution | PendingRelationalResolution;
+export type PendingCrossEntityResolution = {
+  type: 'crossEntity';
+  columnName: string;
+  conflictId: number;
+  winnerValue: string;
+  /** When true, applies winner to both entities (resolving from robot's card). */
+  applyToRobot: boolean;
+};
+
+export type PendingResolution = PendingValueResolution | PendingRelationalResolution | PendingCrossEntityResolution;

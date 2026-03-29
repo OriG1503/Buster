@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 
-import { ConflictColumnDetail, ConflictEntityDetail, RelationalConflictDetail, TwoFathersConflictDetail } from '../../../../shared/types/conflict-entity-detail.type';
+import { ConflictColumnDetail, ConflictEntityDetail, CrossEntityConflictEntry, RelationalConflictDetail, TwoFathersConflictDetail } from '../../../../shared/types/conflict-entity-detail.type';
 import { ConflictGroup } from '../../../../shared/types/conflict-group.type';
 import { ConflictsService } from '../../../../core/services/conflicts/conflicts.service';
 import { ConflictsStore } from '../../../../core/store/conflicts.store';
@@ -9,16 +9,18 @@ import { DisplayNamesService } from '../../../../core/services/display-names/dis
 import { PermissionsService } from '../../../../core/services/permissions/permissions.service';
 import { ENTITY_COLUMN_TREE } from '../../../../shared/consts/entity-column-tree.consts';
 import { DEFAULT_USER_NAME } from '../../../../shared/consts/default-user.consts';
-import { PendingResolution, PendingValueResolution, PendingRelationalResolution } from '../../types/pending-resolution.type';
+import { PendingResolution, PendingValueResolution, PendingRelationalResolution, PendingCrossEntityResolution } from '../../types/pending-resolution.type';
 import { ConflictOptionBtnComponent } from '../../molecules/conflict-option-btn/conflict-option-btn.component';
 import { FloatingWarningDialogComponent } from '../../molecules/floating-warning-dialog/floating-warning-dialog.component';
+import { ConflictItemFooterComponent } from '../../molecules/conflict-item-footer/conflict-item-footer.component';
+import { ConflictCellMetaComponent } from '../../molecules/conflict-cell-meta/conflict-cell-meta.component';
 import { FADE_SLIDE_IN_ANIMATION, SLIDE_DOWN_ANIMATION } from './conflict-item.consts';
 import { CONFLICTS_LABEL_MAP } from '../../mapping/conflicts.label-map';
 
 @Component({
   selector: 'app-conflict-item',
   standalone: true,
-  imports: [ConflictOptionBtnComponent, FloatingWarningDialogComponent],
+  imports: [ConflictOptionBtnComponent, FloatingWarningDialogComponent, ConflictItemFooterComponent, ConflictCellMetaComponent],
   templateUrl: './conflict-item.component.html',
   styleUrl: './conflict-item.component.scss',
   animations: [SLIDE_DOWN_ANIMATION, FADE_SLIDE_IN_ANIMATION],
@@ -41,6 +43,7 @@ export class ConflictItemComponent {
   protected readonly _$openConflictIds = signal<Set<string>>(new Set());
   protected readonly _$showFloatingWarning = signal(false);
   protected readonly _$confirmedRelational = signal<PendingRelationalResolution | null>(null);
+  protected readonly _$isResolving = signal(false);
 
   protected readonly _$allColumns = computed<ConflictColumnDetail[]>(() => {
     const detail = this._$detail();
@@ -66,12 +69,13 @@ export class ConflictItemComponent {
     this._$allColumns().filter((col) => col.isConflicted),
   );
   protected readonly _$regularColumns = computed(() =>
-    this._$allColumns().filter((col) => !col.isConflicted && !col.relationalConflict && col.columnName !== 'id'),
+    this._$allColumns().filter((col) => !col.isConflicted && !col.relationalConflict && col.crossEntityConflicts.length === 0 && col.columnName !== 'id'),
   );
   protected readonly _$canResolve = computed(() => {
+    if (this._$isResolving()) { return false; }
     const resolution = this._$pendingResolution();
     if (!resolution || !this._$notes().trim()) { return false; }
-    if (resolution.type === 'value' || resolution.type === 'twoFathers') { return true; }
+    if (resolution.type === 'value' || resolution.type === 'twoFathers' || resolution.type === 'crossEntity') { return true; }
     return [...resolution.subtreeLevels.values()].every((v) => !!v);
   });
   protected readonly _$canEdit = computed(() => this._permissionsService.canEdit());
@@ -206,6 +210,30 @@ export class ConflictItemComponent {
     return res?.type === 'twoFathers' && (res as PendingRelationalResolution).winnerRelatedId === id;
   }
 
+  // --- Cross-entity conflict ---
+
+  protected selectCrossEntityWinner(columnName: string, entry: CrossEntityConflictEntry, value: string | null, applyToRobot: boolean): void {
+    if (!value) { return; }
+    this._$pendingResolution.update((prev) => {
+      const isCross = prev?.type === 'crossEntity';
+      if (isCross && (prev as PendingCrossEntityResolution).columnName === columnName && (prev as PendingCrossEntityResolution).winnerValue === value) { return null; }
+      return { type: 'crossEntity', columnName, conflictId: entry.conflictId, winnerValue: value, applyToRobot };
+    });
+  }
+
+  protected isCrossEntityWinnerSelected(columnName: string, value: string | null): boolean {
+    const res = this._$pendingResolution();
+    return res?.type === 'crossEntity' && (res as PendingCrossEntityResolution).columnName === columnName && (res as PendingCrossEntityResolution).winnerValue === value;
+  }
+
+  protected getCrossEntityBadge(entry: CrossEntityConflictEntry): { entityLabel: string; entityId: string } {
+    return { entityLabel: this._displayNames.getEntityName(entry.entityTable), entityId: entry.entityId };
+  }
+
+  protected getSelfEntityBadge(): { entityLabel: string; entityId: string } {
+    return { entityLabel: this._displayNames.getEntityName(this.$group().tableName), entityId: this.$group().entityId };
+  }
+
   // --- Resolution submit ---
 
   public resolve(): void {
@@ -213,6 +241,8 @@ export class ConflictItemComponent {
     const resolution = this._$pendingResolution()!;
     if (resolution.type === 'value') {
       this._submitValueResolution(resolution);
+    } else if (resolution.type === 'crossEntity') {
+      this._submitCrossEntityResolution(resolution as PendingCrossEntityResolution);
     } else {
       this._$confirmedRelational.set(resolution as PendingRelationalResolution);
       this._$showFloatingWarning.set(true);
@@ -269,13 +299,18 @@ export class ConflictItemComponent {
 
   private _submitValueResolution(resolution: PendingValueResolution): void {
     const { tableName, entityId } = this.$group();
+    this._$isResolving.set(true);
     this._conflictsService
       .resolveConflict({ tableName, entityId, columnName: resolution.columnName, winnerValue: resolution.winnerValue, conflictResolver: DEFAULT_USER_NAME, resolutionNotes: this._$notes() })
-      .subscribe({ next: () => this._afterResolve() });
+      .subscribe({
+        next: () => this._afterResolve(),
+        error: () => this._$isResolving.set(false),
+      });
   }
 
   private _submitRelationalResolution(resolution: PendingRelationalResolution): void {
     const subtreeEntries = [...resolution.subtreeLevels.entries()];
+    this._$isResolving.set(true);
     this._conflictsService
       .resolveRelationalConflict({
         conflictIds: resolution.conflictIds,
@@ -285,10 +320,14 @@ export class ConflictItemComponent {
         conflictResolver: DEFAULT_USER_NAME,
         resolutionNotes: this._$notes(),
       })
-      .subscribe({ next: () => this._afterResolve() });
+      .subscribe({
+        next: () => this._afterResolve(),
+        error: () => this._$isResolving.set(false),
+      });
   }
 
   private _afterResolve(): void {
+    this._$isResolving.set(false);
     this._$pendingResolution.set(null);
     this._$notes.set('');
     this._$detail.set(null);
@@ -296,12 +335,42 @@ export class ConflictItemComponent {
     this._reloadDetailAfterResolve();
   }
 
+  private _submitCrossEntityResolution(resolution: PendingCrossEntityResolution): void {
+    const isRobotTable = this.$group().tableName === 'robots';
+    this._$isResolving.set(true);
+    this._conflictsService
+      .resolveCrossEntityConflict({
+        conflictId: resolution.conflictId,
+        winnerValue: resolution.winnerValue,
+        conflictResolver: DEFAULT_USER_NAME,
+        resolutionNotes: this._$notes(),
+        applyToRobot: isRobotTable,
+      })
+      .subscribe({
+        next: () => this._afterCrossEntityResolve(),
+        error: () => this._$isResolving.set(false),
+      });
+  }
+
+  private _afterCrossEntityResolve(): void {
+    this._$isResolving.set(false);
+    this._$pendingResolution.set(null);
+    this._$notes.set('');
+    this._$detail.set(null);
+    this._homeStore.refresh();
+    // Reload full list — re-detection may have created new conflicts for other entities
+    const filter = this._conflictsStore.filter();
+    this._conflictsStore.loadConflicts(filter.tableName, filter.entityId, filter.conflictIds);
+    // Also reload this entity's detail in case it still has conflicts
+    this._loadDetail();
+  }
+
   private _reloadDetailAfterResolve(): void {
     const { tableName, entityId } = this.$group();
     this._conflictsService.getEntityDetail(tableName, entityId).subscribe({
       next: (detail) => {
         this._$detail.set(detail);
-        const hasConflicts = detail.columns.some((col) => col.isConflicted || col.relationalConflict) || !!detail.twoFathersConflict;
+        const hasConflicts = detail.columns.some((col) => col.isConflicted || col.relationalConflict || col.crossEntityConflicts.length > 0) || !!detail.twoFathersConflict;
         if (!hasConflicts) {
           this._conflictsStore.removeConflict(tableName, entityId);
         } else {

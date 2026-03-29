@@ -1,0 +1,56 @@
+<div class="history-table-rel__scroll-area">
+  <div class="history-table-rel__group-label history-table-rel__group-label--anchor">
+    ישות עוגן: {{ getEntityName($history().anchor.tableName) }} — {{ $history().anchor.id }}
+  </div>
+
+  @if (getAnchorFieldKeys($history().anchor).length > 0) {
+    <table class="history-table-rel__table">
+      <thead>
+        <tr>
+          @for (field of getAnchorFieldKeys($history().anchor); track field) {
+            <th class="history-table-rel__th">{{ getAnchorFieldLabel($history().anchor.tableName, field) }}</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="history-table-rel__tr history-table-rel__tr--anchor">
+          @for (field of getAnchorFieldKeys($history().anchor); track field) {
+            <td class="history-table-rel__td history-table-rel__td--id">{{ $history().anchor.fields[field] ?? '—' }}</td>
+          }
+        </tr>
+      </tbody>
+    </table>
+  }
+
+  @for (group of $history().groups; track group.relatedTable) {
+    <div class="history-table-rel__group-label">{{ getGroupLabel(group) }}</div>
+    <table class="history-table-rel__table">
+      <thead>
+        <tr>
+          <th class="history-table-rel__th history-table-rel__th--dot"></th>
+          <th class="history-table-rel__th">מזהה</th>
+          @for (field of getGroupSubtreeFields(group); track field) {
+            <th class="history-table-rel__th">{{ getSubtreeFieldLabel(group.relatedTable, field) }}</th>
+          }
+          <th class="history-table-rel__th">{{ $sourceLabel() }}</th>
+          <th class="history-table-rel__th">{{ $notesLabel() }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (opt of group.options; track opt.id) {
+          <tr class="history-table-rel__tr" [class.history-table-rel__tr--winner]="opt.isWinner">
+            <td class="history-table-rel__td history-table-rel__td--dot">
+              <span class="history-table-rel__dot" [class.history-table-rel__dot--winner]="opt.isWinner"></span>
+            </td>
+            <td class="history-table-rel__td history-table-rel__td--id">{{ opt.id }}</td>
+            @for (field of getGroupSubtreeFields(group); track field) {
+              <td class="history-table-rel__td">{{ opt.subtreeIds[field] ?? '—' }}</td>
+            }
+            <td class="history-table-rel__td">{{ opt.source ?? '—' }}</td>
+            <td class="history-table-rel__td">{{ opt.notes ?? '—' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

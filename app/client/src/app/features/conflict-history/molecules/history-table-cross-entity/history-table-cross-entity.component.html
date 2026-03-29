@@ -1,0 +1,48 @@
+<div class="history-table-cross__scroll-area">
+  <table class="history-table-cross__table">
+    <thead>
+      <tr>
+        <th class="history-table-cross__th history-table-cross__th--dot"></th>
+        <th class="history-table-cross__th">ישות</th>
+        <th class="history-table-cross__th">מזהה</th>
+        <th class="history-table-cross__th">{{ VALUE_HEADER }}</th>
+        <th class="history-table-cross__th">{{ $notesLabel() }}</th>
+        <th class="history-table-cross__th">{{ $sourceLabel() }}</th>
+        <th class="history-table-cross__th">{{ $sourceTimeLabel() }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (entry of $history().entries; track $index) {
+        <tr
+          class="history-table-cross__tr"
+          [class.history-table-cross__tr--selectable]="$isEditMode()"
+          [class.history-table-cross__tr--selected]="$isEditMode() && $pendingWinnerValue() === entry.value"
+          (click)="$isEditMode() && entrySelected.emit(entry.value)"
+        >
+          <td class="history-table-cross__td history-table-cross__td--dot">
+            <button
+              class="history-table-cross__dot-btn"
+              type="button"
+              [class.history-table-cross__dot-btn--clickable]="$isEditMode()"
+              (click)="$event.stopPropagation(); entrySelected.emit(entry.value)"
+            >
+              <span
+                class="history-table-cross__dot"
+                [class.history-table-cross__dot--winner]="!$isEditMode() && entry.isWinner"
+                [class.history-table-cross__dot--pending]="$isEditMode() && $pendingWinnerValue() === entry.value"
+              ></span>
+            </button>
+          </td>
+          <td class="history-table-cross__td">
+            <span class="history-table-cross__entity-badge">{{ getEntityBadge(entry) }}</span>
+          </td>
+          <td class="history-table-cross__td history-table-cross__td--id">{{ entry.entityId }}</td>
+          <td class="history-table-cross__td">{{ entry.value ?? '—' }}</td>
+          <td class="history-table-cross__td">{{ entry.notes ?? '—' }}</td>
+          <td class="history-table-cross__td">{{ entry.source ?? '—' }}</td>
+          <td class="history-table-cross__td">{{ formatDate(entry.sourceTime) }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

@@ -54,4 +54,12 @@
   @if ($notes()) {
     <span class="conflict-item__comment">{{ $notes() }}</span>
   }
+
+  @if ($entityBadge()) {
+    <span class="conflict-item__entity-badge">
+      <span class="conflict-item__entity-badge-label">{{ $entityBadge()!.entityLabel }}</span>
+      <span class="conflict-item__entity-badge-sep"></span>
+      <span class="conflict-item__entity-badge-id">{{ $entityBadge()!.entityId }}</span>
+    </span>
+  }
 </button>

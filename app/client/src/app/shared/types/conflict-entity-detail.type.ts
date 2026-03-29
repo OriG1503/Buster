@@ -27,6 +27,18 @@ export type ConflictValueEntry = {
   createdAt: string;
 };
 
+export type CrossEntityConflictEntry = {
+  conflictId: number;
+  /** ID of the other entity (wiring when viewing robot, robot when viewing wiring). */
+  entityId: string;
+  /** Table name of the other entity ('wirings' or 'robots'). */
+  entityTable: string;
+  value: string | null;
+  source: string | null;
+  notes: string | null;
+  sourceTime: string | null;
+};
+
 export type ConflictColumnDetail = {
   columnName: string;
   currentValue: string | null;
@@ -36,6 +48,7 @@ export type ConflictColumnDetail = {
   currentDate: string;
   isConflicted: boolean;
   conflictValues: ConflictValueEntry[];
+  crossEntityConflicts: CrossEntityConflictEntry[];
   relationalConflict?: RelationalConflictDetail;
 };
 

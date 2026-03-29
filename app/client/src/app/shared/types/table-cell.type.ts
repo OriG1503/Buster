@@ -11,4 +11,5 @@ export type TableCell = {
   anchorTable: string | null;
   anchorId: string | null;
   relatedTable: string | null;
+  isCrossEntity: boolean;
 };

@@ -17,4 +17,6 @@ export type TableCell = {
   anchorId: string | null;
   /** For relational conflicts: the related table (the competing options' table). Null for value conflicts. */
   relatedTable: string | null;
+  /** True when this conflict originated from a cross-entity (robot-wiring) conflict. */
+  isCrossEntity: boolean;
 };

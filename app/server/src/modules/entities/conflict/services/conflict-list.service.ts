@@ -13,6 +13,10 @@ export class ConflictListService {
         SELECT "tableName", "entityId" FROM value_conflicts WHERE "isSolved" = false AND "deletedAt" IS NULL
         UNION
         SELECT "anchorTable" AS "tableName", "anchorId" AS "entityId" FROM relational_conflicts WHERE "isSolved" = false AND "deletedAt" IS NULL
+        UNION
+        SELECT 'robots' AS "tableName", "robotId" AS "entityId" FROM cross_entity_conflicts WHERE "isSolved" = false AND "deletedAt" IS NULL
+        UNION
+        SELECT 'wirings' AS "tableName", "wiringId" AS "entityId" FROM cross_entity_conflicts WHERE "isSolved" = false AND "deletedAt" IS NULL
       ) combined
     `);
     return parseInt(rows[0].count, 10);
@@ -30,6 +34,9 @@ export class ConflictListService {
     const valueFilter = this._buildValueFilter(tableName, entityId, conflictIds, params);
     const relationalFilter = this._buildRelationalFilter(tableName, entityId, params);
 
+    const crossEntityRobotFilter = this._buildCrossEntityFilter(tableName, entityId, 'robot', params);
+    const crossEntityWiringFilter = this._buildCrossEntityFilter(tableName, entityId, 'wiring', params);
+
     const sql = `
       SELECT DISTINCT "tableName", "entityId"
       FROM (
@@ -40,6 +47,14 @@ export class ConflictListService {
         SELECT "anchorTable" AS "tableName", "anchorId" AS "entityId"
         FROM relational_conflicts
         WHERE "isSolved" = false AND "deletedAt" IS NULL ${relationalFilter}
+        UNION
+        SELECT 'robots' AS "tableName", "robotId" AS "entityId"
+        FROM cross_entity_conflicts
+        WHERE "isSolved" = false AND "deletedAt" IS NULL ${crossEntityRobotFilter}
+        UNION
+        SELECT 'wirings' AS "tableName", "wiringId" AS "entityId"
+        FROM cross_entity_conflicts
+        WHERE "isSolved" = false AND "deletedAt" IS NULL ${crossEntityWiringFilter}
       ) combined
       ORDER BY "tableName", "entityId"
       LIMIT $${params.length + 1} OFFSET $${params.length + 2}
@@ -81,6 +96,12 @@ export class ConflictListService {
         UNION
         SELECT "anchorId" AS "entityId" FROM relational_conflicts
         WHERE "anchorId" = ANY($1) AND "isSolved" = false AND "deletedAt" IS NULL
+        UNION
+        SELECT "robotId" AS "entityId" FROM cross_entity_conflicts
+        WHERE "robotId" = ANY($1) AND "isSolved" = false AND "deletedAt" IS NULL
+        UNION
+        SELECT "wiringId" AS "entityId" FROM cross_entity_conflicts
+        WHERE "wiringId" = ANY($1) AND "isSolved" = false AND "deletedAt" IS NULL
       ) combined
       `,
       [ids],
@@ -101,6 +122,25 @@ export class ConflictListService {
     if (entityId) {
       params.push(`%${entityId}%`);
       clauses.push(`AND "anchorId" ILIKE $${params.length}`);
+    }
+    return clauses.join(' ');
+  }
+
+  private _buildCrossEntityFilter(
+    tableName: string | undefined,
+    entityId: string | undefined,
+    side: 'robot' | 'wiring',
+    params: unknown[],
+  ): string {
+    const idColumn = side === 'robot' ? 'robotId' : 'wiringId';
+    const expectedTable = side === 'robot' ? 'robots' : 'wirings';
+    const clauses: string[] = [];
+    if (tableName && tableName !== expectedTable) {
+      return 'AND 1=0'; // filter out this branch if tableName doesn't match this side
+    }
+    if (entityId) {
+      params.push(`%${entityId}%`);
+      clauses.push(`AND "${idColumn}" ILIKE $${params.length}`);
     }
     return clauses.join(' ');
   }

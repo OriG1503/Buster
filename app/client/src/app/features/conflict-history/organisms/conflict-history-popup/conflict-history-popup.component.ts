@@ -2,18 +2,21 @@ import { Component, computed, effect, inject, input, output, signal } from '@ang
 
 import { ConflictHistoryService } from '../../../../core/services/conflicts/conflict-history.service';
 import { HistoryPopupFooterComponent } from '../../molecules/history-popup-footer/history-popup-footer.component';
+import { HistoryTableValueComponent } from '../../molecules/history-table-value/history-table-value.component';
+import { HistoryTableCrossEntityComponent } from '../../molecules/history-table-cross-entity/history-table-cross-entity.component';
+import { HistoryTableRelationalComponent } from '../../molecules/history-table-relational/history-table-relational.component';
 import { ConflictHistoryResponse } from '../../../../shared/types/conflict-history-response.type';
-import { RelationalHistoryAnchor, RelationalHistoryGroup, RelationalHistoryResponse } from '../../../../shared/types/relational-history-response.type';
+import { RelationalHistoryResponse } from '../../../../shared/types/relational-history-response.type';
+import { CrossEntityHistoryResponse } from '../../../../shared/types/cross-entity-history-response.type';
 import { HistoryTarget } from '../../../../shared/types/history-target.type';
 import { ToastService } from '../../../../shared/services/toast.service';
 import { DisplayNamesService } from '../../../../core/services/display-names/display-names.service';
 import { DEFAULT_USER_NAME } from '../../../../shared/consts/default-user.consts';
 import { PermissionsService } from '../../../../core/services/permissions/permissions.service';
-import { CONFLICT_HISTORY_LABEL_MAP } from '../../mapping/conflict-history.label-map';
 
 @Component({
   selector: 'app-conflict-history-popup',
-  imports: [HistoryPopupFooterComponent],
+  imports: [HistoryPopupFooterComponent, HistoryTableValueComponent, HistoryTableCrossEntityComponent, HistoryTableRelationalComponent],
   templateUrl: './conflict-history-popup.component.html',
   styleUrl: './conflict-history-popup.component.scss',
 })
@@ -29,6 +32,7 @@ export class ConflictHistoryPopupComponent {
 
   protected readonly _$valueHistory = signal<ConflictHistoryResponse | null>(null);
   protected readonly _$relationalHistory = signal<RelationalHistoryResponse | null>(null);
+  protected readonly _$crossEntityHistory = signal<CrossEntityHistoryResponse | null>(null);
   protected readonly _$isLoading = signal(true);
   protected readonly _$isError = signal(false);
   protected readonly _$isEditMode = signal(false);
@@ -38,6 +42,7 @@ export class ConflictHistoryPopupComponent {
   protected readonly _defaultUserName = DEFAULT_USER_NAME;
 
   protected readonly _$isRelational = computed(() => this.$target().isRelational);
+  protected readonly _$isCrossEntity = computed(() => !this.$target().isRelational && !!(this.$target() as any).isCrossEntity);
   protected readonly _$canEdit = computed(() => this._permissionsService.canEdit());
 
   private readonly _$tableName = computed(() => {
@@ -48,9 +53,6 @@ export class ConflictHistoryPopupComponent {
   protected readonly _$sourceLabel = computed(() => this._displayNames.getColumnLabel(this._$tableName(), 'source'));
   protected readonly _$sourceTimeLabel = computed(() => this._displayNames.getColumnLabel(this._$tableName(), 'sourceTime'));
   protected readonly _$notesLabel = computed(() => this._displayNames.getColumnLabel(this._$tableName(), 'notes'));
-  protected readonly VALUE_HEADER = CONFLICT_HISTORY_LABEL_MAP.valueHeader;
-  protected readonly UPLOADED_AT_HEADER = CONFLICT_HISTORY_LABEL_MAP.uploadedAtHeader;
-
 
   protected readonly _$panelStyle = computed(() => {
     const { anchorTop, anchorBottom, anchorCenterX } = this.$target();
@@ -59,7 +61,6 @@ export class ConflictHistoryPopupComponent {
     const screenMargin = 8;
     const left = Math.max(screenMargin, Math.min(anchorCenterX - popupWidth / 2, window.innerWidth - popupWidth - screenMargin));
     const spaceBelow = window.innerHeight - anchorBottom - gap;
-    // Flip above the anchor when there isn't enough space below (use a rough min-height estimate)
     const minPopupHeight = 220;
     if (spaceBelow < minPopupHeight && anchorTop > minPopupHeight) {
       return { top: 'auto', bottom: `${window.innerHeight - anchorTop + gap}px`, left: `${left}px`, width: `${popupWidth}px` };
@@ -77,28 +78,22 @@ export class ConflictHistoryPopupComponent {
       this._$editNotes.set('');
       this._$valueHistory.set(null);
       this._$relationalHistory.set(null);
+      this._$crossEntityHistory.set(null);
 
       if (target.isRelational) {
         this._historyService.getRelationalHistory(target.anchorTable, target.anchorId, target.relatedTable).subscribe({
-          next: (response) => {
-            this._$relationalHistory.set(response);
-            this._$isLoading.set(false);
-          },
-          error: () => {
-            this._$isError.set(true);
-            this._$isLoading.set(false);
-          },
+          next: (response) => { this._$relationalHistory.set(response); this._$isLoading.set(false); },
+          error: () => { this._$isError.set(true); this._$isLoading.set(false); },
+        });
+      } else if ((target as any).isCrossEntity) {
+        this._historyService.getCrossEntityHistory(target.tableName, target.entityId, target.columnName).subscribe({
+          next: (response) => { this._$crossEntityHistory.set(response); this._$isLoading.set(false); },
+          error: () => { this._$isError.set(true); this._$isLoading.set(false); },
         });
       } else {
         this._historyService.getHistory(target.tableName, target.entityId, target.columnName).subscribe({
-          next: (response) => {
-            this._$valueHistory.set(response);
-            this._$isLoading.set(false);
-          },
-          error: () => {
-            this._$isError.set(true);
-            this._$isLoading.set(false);
-          },
+          next: (response) => { this._$valueHistory.set(response); this._$isLoading.set(false); },
+          error: () => { this._$isError.set(true); this._$isLoading.set(false); },
         });
       }
     });
@@ -110,16 +105,17 @@ export class ConflictHistoryPopupComponent {
       this._$editNotes.set('');
       return;
     }
-    const currentWinner = this._$valueHistory()?.entries.find((entry) => entry.isWinner)?.value ?? null;
+    const currentWinner =
+      this._$valueHistory()?.entries.find((e) => e.isWinner)?.value ??
+      this._$crossEntityHistory()?.entries.find((e) => e.isWinner)?.value ??
+      null;
     this._$pendingWinnerValue.set(currentWinner);
     this._$editNotes.set('');
     this._$isEditMode.set(true);
   }
 
   public onEntryDotClick(value: string | null): void {
-    if (!this._$isEditMode()) {
-      return;
-    }
+    if (!this._$isEditMode()) { return; }
     this._$pendingWinnerValue.set(value);
   }
 
@@ -129,9 +125,31 @@ export class ConflictHistoryPopupComponent {
       return;
     }
 
-    const currentWinner = this._$valueHistory()?.entries.find((entry) => entry.isWinner)?.value ?? null;
+    const target = this.$target();
+    if (target.isRelational) { return; }
+
     const pendingValue = this._$pendingWinnerValue();
 
+    if (this._$isCrossEntity()) {
+      const currentWinner = this._$crossEntityHistory()?.entries.find((e) => e.isWinner)?.value ?? null;
+      if (pendingValue === null || pendingValue === currentWinner) {
+        this._$isEditMode.set(false);
+        this._$editNotes.set('');
+        this.closed.emit();
+        return;
+      }
+      const { tableName, entityId, columnName } = target as { tableName: string; entityId: string; columnName: string };
+      this._$isSaving.set(true);
+      this._historyService
+        .revertCrossEntity({ tableName, entityId, columnName, revertValue: pendingValue, revertedBy: DEFAULT_USER_NAME, resolutionNotes: this._$editNotes() })
+        .subscribe({
+          next: () => { this._$isSaving.set(false); this._$editNotes.set(''); this._toastService.show('הערך עודכן בהצלחה', 'success'); this.reverted.emit(); this.closed.emit(); },
+          error: () => { this._$isSaving.set(false); this._toastService.show('שגיאה בעדכון הערך', 'error'); },
+        });
+      return;
+    }
+
+    const currentWinner = this._$valueHistory()?.entries.find((e) => e.isWinner)?.value ?? null;
     if (pendingValue === null || pendingValue === currentWinner) {
       this._$isEditMode.set(false);
       this._$editNotes.set('');
@@ -139,67 +157,18 @@ export class ConflictHistoryPopupComponent {
       return;
     }
 
-    const target = this.$target();
-    if (target.isRelational) {
-      return;
-    }
-
-    const { tableName, entityId, columnName } = target;
+    const { tableName, entityId, columnName } = target as { tableName: string; entityId: string; columnName: string };
     this._$isSaving.set(true);
     this._historyService
-      .revert({
-        tableName,
-        entityId,
-        columnName,
-        revertValue: pendingValue,
-        revertedBy: DEFAULT_USER_NAME,
-        resolutionNotes: this._$editNotes(),
-      })
+      .revert({ tableName, entityId, columnName, revertValue: pendingValue, revertedBy: DEFAULT_USER_NAME, resolutionNotes: this._$editNotes() })
       .subscribe({
-        next: () => {
-          this._$isSaving.set(false);
-          this._$editNotes.set('');
-          this._toastService.show('הערך עודכן בהצלחה', 'success');
-          this.reverted.emit();
-          this.closed.emit();
-        },
-        error: () => {
-          this._$isSaving.set(false);
-          this._toastService.show('שגיאה בעדכון הערך', 'error');
-        },
+        next: () => { this._$isSaving.set(false); this._$editNotes.set(''); this._toastService.show('הערך עודכן בהצלחה', 'success'); this.reverted.emit(); this.closed.emit(); },
+        error: () => { this._$isSaving.set(false); this._toastService.show('שגיאה בעדכון הערך', 'error'); },
       });
   }
 
-  protected getEntityName(tableName: string): string {
-    return this._displayNames.getEntityName(tableName);
-  }
-
-  protected getAnchorFieldKeys(anchor: RelationalHistoryAnchor): string[] {
-    return Object.keys(anchor.fields);
-  }
-
-  protected getAnchorFieldLabel(tableName: string, field: string): string {
-    return this._displayNames.getColumnLabel(tableName, field);
-  }
-
-  protected getGroupLabel(group: RelationalHistoryGroup): string {
-    return `אופציות ${this._displayNames.getEntityName(group.relatedTable)}`;
-  }
-
-  protected getGroupSubtreeFields(group: RelationalHistoryGroup): string[] {
-    const fields = new Set<string>();
-    group.options.forEach((opt) => Object.keys(opt.subtreeIds).forEach((field) => fields.add(field)));
-    return [...fields];
-  }
-
-  protected getSubtreeFieldLabel(relatedTable: string, fkField: string): string {
-    return this._displayNames.getColumnLabel(relatedTable, fkField);
-  }
-
   protected formatDate(iso: string | null): string {
-    if (!iso) {
-      return '—';
-    }
+    if (!iso) { return '—'; }
     const d = new Date(iso);
     return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
   }

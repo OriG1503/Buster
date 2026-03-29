@@ -3,6 +3,7 @@ import { FK_FIELD_TO_TABLE } from '../../../shared/consts/fk-field-to-table.cons
 import { EntityValue } from '../../../shared/types/entity-value.type';
 import { EntityService } from '../../../shared/types/entity-service.type';
 import { EntityServiceRegistry } from '../../../shared/services/entity-service-registry.service';
+import { CrossEntityConflictDetectionService } from '../../entities/conflict/services/cross-entity-conflict-detection.service';
 import { ParserRowMapper } from '../mappers/parser-row.mapper';
 import { ParsedRowEnricher } from './parsed-row-enricher.service';
 import { EntityIngestionService } from './entity-ingestion.service';
@@ -22,6 +23,7 @@ export class DataProcessorService {
     private readonly _enricher: ParsedRowEnricher,
     private readonly _ingestionService: EntityIngestionService,
     private readonly _registry: EntityServiceRegistry,
+    private readonly _crossEntityDetectionService: CrossEntityConflictDetectionService,
   ) {}
 
   /**
@@ -85,16 +87,37 @@ export class DataProcessorService {
     ]);
 
     // Level 2 — Plastic (needs Battery), Wiring (needs Storage)
+    const mappedWiring = this._mapper.mapWiring(enriched);
     const [plasticResult, wiringResult] = await Promise.all([
       run(this._mapper.mapPlastic(enriched), this._registry.get('plastics')),
-      run(this._mapper.mapWiring(enriched), this._registry.get('wirings')),
+      run(mappedWiring, this._registry.get('wirings')),
     ]);
 
     // Level 3 — Communication (needs Plastic + Iron)
     const commResult = await run(this._mapper.mapCommunication(enriched), this._registry.get('communications'));
 
     // Level 4 — Robot (needs Communication, Wiring, Cardboard, Sensor)
-    const robotResult = await run(this._mapper.mapRobot(enriched), this._registry.get('robots'));
+    const mappedRobot = this._mapper.mapRobot(enriched);
+    const robotResult = await run(mappedRobot, this._registry.get('robots'));
+
+    // Cross-entity conflict detection: re-evaluate robot↔wiring alignment after both are processed.
+    // If wiring was in this row: re-detect for ALL robots attached to it (catches all impacted robots).
+    // Otherwise: if robot references an existing wiring, detect the specific pair.
+    const mappedWiringRecord = mappedWiring as unknown as Record<string, unknown> | null;
+    const processedWiringId = mappedWiringRecord?.['id'] ? String(mappedWiringRecord['id']) : null;
+    const mappedRobotRecord = mappedRobot as unknown as Record<string, unknown> | null;
+    const robotId = mappedRobotRecord?.['id'] ? String(mappedRobotRecord['id']) : null;
+    const robotWiringId = mappedRobotRecord?.['wiringId'] ? String(mappedRobotRecord['wiringId']) : null;
+
+    if (processedWiringId) {
+      await this._crossEntityDetectionService.detectForWiringRobots(processedWiringId, username).catch((err) => {
+        this._logger.warn(`Cross-entity detection failed for wiring ${processedWiringId}: ${(err as Error).message}`);
+      });
+    } else if (robotId && robotWiringId) {
+      await this._crossEntityDetectionService.detectForRobotWiringPair(robotId, robotWiringId, username).catch((err) => {
+        this._logger.warn(`Cross-entity detection failed for robot ${robotId}: ${(err as Error).message}`);
+      });
+    }
 
     const allResults: EntityResult[] = [batteryResult, storageResult, ironResult, cardboardResult, sensorResult, plasticResult, wiringResult, commResult, robotResult];
 

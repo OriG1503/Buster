@@ -5,8 +5,10 @@ import { Role } from '../../auth/types/role.type';
 import { ValueConflictHistoryService } from './value-conflict-history.service';
 import { ValueConflictResolverService } from './services/value-conflict-resolver.service';
 import { RelationalConflictResolverService } from './services/relational-conflict-resolver.service';
+import { CrossEntityConflictResolverService } from './services/cross-entity-conflict-resolver.service';
 import { ResolveValueConflictDto } from './dto/resolve-value-conflict.dto';
 import { ResolveRelationalConflictDto } from './dto/resolve-relational-conflict.dto';
+import { ResolveCrossEntityConflictDto } from './dto/resolve-cross-entity-conflict.dto';
 import { RevertService } from './services/revert.service';
 import { RevertValueConflictDto } from './dto/revert-value-conflict.dto';
 import { ConflictHistoryResponse } from './types/conflict-history-response.type';
@@ -18,6 +20,9 @@ import { CheckOpenIdsDto } from './dto/check-open-ids.dto';
 import { RelationalConflictEntity } from './entities/relational-conflict.entity';
 import { RelationalConflictHistoryService } from './relational-conflict-history.service';
 import { RelationalHistoryResponse } from './types/relational-history-response.type';
+import { CrossEntityConflictHistoryService } from './cross-entity-conflict-history.service';
+import { CrossEntityHistoryResponse } from './types/cross-entity-history-response.type';
+import { RevertCrossEntityConflictDto } from './dto/revert-cross-entity-conflict.dto';
 
 @RequireRole(Role.VIEWER)
 @Controller('conflicts')
@@ -25,11 +30,13 @@ export class ConflictController {
   public constructor(
     private readonly _valueConflictResolverService: ValueConflictResolverService,
     private readonly _relationalConflictResolverService: RelationalConflictResolverService,
+    private readonly _crossEntityConflictResolverService: CrossEntityConflictResolverService,
     private readonly _revertService: RevertService,
     private readonly _valueConflictHistoryService: ValueConflictHistoryService,
     private readonly _conflictListService: ConflictListService,
     private readonly _conflictEntityDetailService: ConflictEntityDetailService,
     private readonly _relationalConflictHistoryService: RelationalConflictHistoryService,
+    private readonly _crossEntityConflictHistoryService: CrossEntityConflictHistoryService,
   ) {}
 
   @Get()
@@ -67,6 +74,12 @@ export class ConflictController {
   }
 
   @RequireRole(Role.EDITOR)
+  @Patch('cross-entity/resolve')
+  public async resolveCrossEntity(@Body() dto: ResolveCrossEntityConflictDto): Promise<void> {
+    return this._crossEntityConflictResolverService.resolve(dto);
+  }
+
+  @RequireRole(Role.EDITOR)
   @Patch('revert')
   public async revert(@Body() revertConflictDto: RevertValueConflictDto): Promise<BaseEntity> {
     return this._revertService.revert(revertConflictDto);
@@ -96,5 +109,20 @@ export class ConflictController {
     @Query('relatedTable') relatedTable: string,
   ): Promise<RelationalHistoryResponse> {
     return this._relationalConflictHistoryService.getHistory(anchorTable, anchorId, relatedTable);
+  }
+
+  @Get('cross-entity-history')
+  public async crossEntityHistory(
+    @Query('tableName') tableName: string,
+    @Query('entityId') entityId: string,
+    @Query('columnName') columnName: string,
+  ): Promise<CrossEntityHistoryResponse> {
+    return this._crossEntityConflictHistoryService.getHistory(tableName, entityId, columnName);
+  }
+
+  @RequireRole(Role.EDITOR)
+  @Patch('cross-entity/revert')
+  public async revertCrossEntity(@Body() dto: RevertCrossEntityConflictDto): Promise<void> {
+    return this._crossEntityConflictResolverService.revert(dto);
   }
 }
