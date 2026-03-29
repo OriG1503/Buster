@@ -4,11 +4,12 @@ import { toSignal } from '@angular/core/rxjs-interop';
 
 import { ConflictsStore } from '../../store/conflicts.store';
 import { ConflictItemComponent } from '../../../features/conflicts/organisms/conflict-item/conflict-item.component';
+import { ConflictColorLegendComponent } from '../../../features/conflicts/atoms/conflict-color-legend/conflict-color-legend.component';
 import { DisplayNamesService } from '../../services/display-names/display-names.service';
 
 @Component({
   selector: 'app-conflicts-layout',
-  imports: [ConflictItemComponent],
+  imports: [ConflictItemComponent, ConflictColorLegendComponent],
   templateUrl: './conflicts-layout.component.html',
   styleUrl: './conflicts-layout.component.scss',
 })

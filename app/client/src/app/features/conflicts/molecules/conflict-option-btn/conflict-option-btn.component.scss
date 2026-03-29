@@ -106,8 +106,8 @@
 
   &__source-label {
     font-size: 0.6rem;
-    font-weight: 700;
-    color: #7ba7f7;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
     flex-shrink: 0;
   }
 
@@ -149,8 +149,8 @@
 
   &__meta-label {
     font-size: 0.6rem;
-    font-weight: 700;
-    color: var(--color-orange);
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
     flex-shrink: 0;
   }
 
