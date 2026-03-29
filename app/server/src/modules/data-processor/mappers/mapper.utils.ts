@@ -2,8 +2,10 @@ export const nullIfEmpty = (value: string | null | undefined): string | null =>
   value === '' || value === null || value === undefined ? null : value;
 
 export const parseBool = (value: string | null | undefined): boolean | null => {
-  if (value === 'True') { return true; }
-  if (value === 'False') { return false; }
+  if (value === null || value === undefined || value.trim() === '') { return null; }
+  const v = value.trim().toLowerCase();
+  if (['true', 't', '1', 'כן'].includes(v)) { return true; }
+  if (['false', 'f', '0', 'לא'].includes(v)) { return false; }
   return null;
 };
 
