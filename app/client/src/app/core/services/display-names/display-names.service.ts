@@ -27,7 +27,7 @@ export class DisplayNamesService {
 
   /** Fetches the display-names config from the server. Call once on app startup. */
   public load(): void {
-    this._http.get<DisplayNamesConfig>('/api/display-names').subscribe((config) => {
+    this._http.get<DisplayNamesConfig>('/api/entity-catalog').subscribe((config) => {
       this._$config.set(config);
     });
   }
