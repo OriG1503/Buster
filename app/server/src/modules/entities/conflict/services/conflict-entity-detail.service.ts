@@ -8,7 +8,7 @@ import {
   TwoFathersConflictDetail,
 } from '../types/conflict-entity-detail-response.type';
 import { RelationalConflictEntity } from '../entities/relational-conflict.entity';
-import { FK_FIELD_TO_TABLE } from '../../../../shared/consts/entity-relation-map.const';
+import { FK_FIELD_TO_TABLE } from '../../../../shared/consts/fk-field-to-table.const';
 import { RELATIONAL_CONFLICT_TYPE } from '../consts/relational-conflict-type.const';
 
 const FK_ID_SUFFIX = 'Id';

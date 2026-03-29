@@ -1,33 +1,75 @@
 import { Injectable } from '@nestjs/common';
+import {
+  BATTERY_CONFIG, CARDBOARD_CONFIG, COMMUNICATION_CONFIG, IRON_CONFIG,
+  PLASTIC_CONFIG, ROBOT_CONFIG, SENSOR_CONFIG, STORAGE_CONFIG, WIRING_CONFIG,
+} from '../../../shared/consts/entity-configs.const';
+import { MappedEntity } from '../../../shared/types/mapped-entity.type';
+import { BatteryInsertData } from '../../entities/battery/types/battery-insert-data.type';
+import { CardboardInsertData } from '../../entities/cardboard/types/cardboard-insert-data.type';
+import { CommunicationInsertData } from '../../entities/communication/types/communication-insert-data.type';
+import { IronInsertData } from '../../entities/iron/types/iron-insert-data.type';
+import { PlasticInsertData } from '../../entities/plastic/types/plastic-insert-data.type';
+import { RobotInsertData } from '../../entities/robot/types/robot-insert-data.type';
+import { SensorInsertData } from '../../entities/sensor/types/sensor-insert-data.type';
+import { StorageInsertData } from '../../entities/storage/types/storage-insert-data.type';
+import { WiringInsertData } from '../../entities/wiring/types/wiring-insert-data.type';
 import { ParsedRow } from '../types/parsed-row.type';
-import { MappedBattery } from '../types/mapped-battery.type';
-import { MappedStorage } from '../types/mapped-storage.type';
-import { MappedIron } from '../types/mapped-iron.type';
-import { MappedPlastic } from '../types/mapped-plastic.type';
-import { MappedWiring } from '../types/mapped-wiring.type';
-import { MappedCommunication } from '../types/mapped-communication.type';
-import { MappedCardboard } from '../types/mapped-cardboard.type';
-import { MappedSensor } from '../types/mapped-sensor.type';
-import { MappedRobot } from '../types/mapped-robot.type';
-import { mapBatteryRow } from './battery.mapper';
-import { mapStorageRow } from './storage.mapper';
-import { mapIronRow } from './iron.mapper';
-import { mapPlasticRow } from './plastic.mapper';
-import { mapWiringRow } from './wiring.mapper';
-import { mapCommunicationRow } from './communication.mapper';
-import { mapCardboardRow } from './cardboard.mapper';
-import { mapSensorRow } from './sensor.mapper';
-import { mapRobotRow } from './robot.mapper';
+import { mapEntityRow } from './entity-row-mapper.util';
+import { nullIfEmpty } from './mapper.utils';
 
 @Injectable()
 export class ParserRowMapper {
-  public mapBattery(row: ParsedRow): MappedBattery | null { return mapBatteryRow(row.communication?.plastic?.battery ?? null); }
-  public mapStorage(row: ParsedRow): MappedStorage | null { return mapStorageRow(row.wiring?.storage ?? null); }
-  public mapIron(row: ParsedRow): MappedIron | null { return mapIronRow(row.communication?.iron ?? null); }
-  public mapPlastic(row: ParsedRow): MappedPlastic | null { return mapPlasticRow(row.communication?.plastic ?? null); }
-  public mapWiring(row: ParsedRow): MappedWiring | null { return mapWiringRow(row); }
-  public mapCommunication(row: ParsedRow): MappedCommunication | null { return mapCommunicationRow(row.communication); }
-  public mapCardboard(row: ParsedRow): MappedCardboard | null { return mapCardboardRow(row); }
-  public mapSensor(row: ParsedRow): MappedSensor | null { return mapSensorRow(row); }
-  public mapRobot(row: ParsedRow): MappedRobot | null { return mapRobotRow(row); }
+  public mapBattery(row: ParsedRow): MappedEntity<BatteryInsertData> | null {
+    return mapEntityRow(BATTERY_CONFIG.columns, row.communication?.plastic?.battery ?? null);
+  }
+
+  public mapStorage(row: ParsedRow): MappedEntity<StorageInsertData> | null {
+    return mapEntityRow(STORAGE_CONFIG.columns, row.wiring?.storage ?? null);
+  }
+
+  public mapIron(row: ParsedRow): MappedEntity<IronInsertData> | null {
+    return mapEntityRow(IRON_CONFIG.columns, row.communication?.iron ?? null);
+  }
+
+  public mapCardboard(row: ParsedRow): MappedEntity<CardboardInsertData> | null {
+    return mapEntityRow(CARDBOARD_CONFIG.columns, row.cardboard ?? null);
+  }
+
+  public mapSensor(row: ParsedRow): MappedEntity<SensorInsertData> | null {
+    return mapEntityRow(SENSOR_CONFIG.columns, row.sensor ?? null);
+  }
+
+  public mapPlastic(row: ParsedRow): MappedEntity<PlasticInsertData> | null {
+    const base = mapEntityRow(PLASTIC_CONFIG.columns, row.communication?.plastic ?? null);
+    if (!base) { return null; }
+    return { ...base, batteryId: nullIfEmpty(row.communication?.plastic?.battery?.battery_UUID ?? null) };
+  }
+
+  public mapWiring(row: ParsedRow): MappedEntity<WiringInsertData> | null {
+    const base = mapEntityRow(WIRING_CONFIG.columns, row.wiring ?? null);
+    if (!base) { return null; }
+    return { ...base, storageId: nullIfEmpty(row.wiring?.storage?.storage_UUID ?? null) };
+  }
+
+  public mapCommunication(row: ParsedRow): MappedEntity<CommunicationInsertData> | null {
+    const base = mapEntityRow(COMMUNICATION_CONFIG.columns, row.communication ?? null);
+    if (!base) { return null; }
+    return {
+      ...base,
+      plasticId: nullIfEmpty(row.communication?.plastic?.plastic_UUID ?? null),
+      ironId: nullIfEmpty(row.communication?.iron?.iron_UUID ?? null),
+    };
+  }
+
+  public mapRobot(row: ParsedRow): MappedEntity<RobotInsertData> | null {
+    const base = mapEntityRow(ROBOT_CONFIG.columns, row);
+    if (!base) { return null; }
+    return {
+      ...base,
+      cardboardId: nullIfEmpty(row.cardboard?.cardboard_UUID ?? null),
+      sensorId: nullIfEmpty(row.sensor?.sensor_UUID ?? null),
+      communicationId: nullIfEmpty(row.communication?.communication_UUID ?? null),
+      wiringId: nullIfEmpty(row.wiring?.wiring_UUID ?? null),
+    };
+  }
 }

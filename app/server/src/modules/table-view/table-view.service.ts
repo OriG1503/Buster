@@ -2,42 +2,15 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 
-import { FK_FIELD_TO_TABLE } from '../../shared/consts/entity-relation-map.const';
+import { FK_FIELD_TO_TABLE } from '../../shared/consts/fk-field-to-table.const';
 import { ALLOWED_COLUMNS, ALLOWED_TABLES } from './consts/allowed-entities.consts';
 import { JOIN_ORDER, PARENT_JOIN } from './consts/join-chain.consts';
 import { TableViewQueryDto } from './dto/table-view-query.dto';
+import { ConflictEntry, ConflictMap, NullConflictMap } from './types/conflict-map.type';
+import { ConflictRow } from './types/conflict-row.type';
+import { RelationalConflictRow } from './types/relational-conflict-row.type';
 import { TableCell } from './types/table-cell.type';
 import { TableRow, TableViewResponse } from './types/table-view-response.type';
-
-type ConflictRow = {
-  tableName: string;
-  entityId: string;
-  columnName: string;
-  isSolved: boolean | null;
-  id: number;
-};
-
-type RelationalConflictRow = {
-  anchorTable: string;
-  anchorId: string;
-  relatedTable: string;
-  conflictType: string;
-  oldRelatedId: string;
-  newRelatedId: string;
-  isSolved: boolean | null;
-  id: number;
-};
-
-type ConflictEntry = { status: 'open' | 'resolved'; conflictId: number | null; anchorTable: string | null; anchorId: string | null; relatedTable: string | null };
-
-/** conflictMap[tableName][entityId][columnName] */
-type ConflictMap = Record<string, Record<string, Record<string, ConflictEntry>>>;
-
-/**
- * nullConflictMap[rootTable][rootEntityId][colKey]
- * Used when a joined entity's ID is null — the cell is colored based on the root row's entity.
- */
-type NullConflictMap = Record<string, Record<string, Record<string, ConflictEntry>>>;
 
 @Injectable()
 export class TableViewService {
@@ -97,73 +70,53 @@ export class TableViewService {
   private _computeTablesInvolved(rootTable: string, columns: string[], filterKeys: string[]): Set<string> {
     const tables = new Set<string>([rootTable]);
     [...columns, ...filterKeys].forEach((col) => tables.add(col.split('.')[0]));
+    return this._expandAncestors(tables, rootTable);
+  }
 
-    // Walk up ancestors to ensure intermediate join tables are included.
-    let changed = true;
-    while (changed) {
-      changed = false;
-      tables.forEach((table) => {
-        if (table === rootTable) {
-          return;
-        }
-        const parent = PARENT_JOIN[table];
-        if (parent && !tables.has(parent.parentTable)) {
-          tables.add(parent.parentTable);
-          changed = true;
-        }
-      });
-    }
-
-    return tables;
+  /** Recursively adds ancestor tables until the set is stable (no new parents found). */
+  private _expandAncestors(tables: Set<string>, rootTable: string): Set<string> {
+    const sizeBefore = tables.size;
+    tables.forEach((table) => {
+      if (table === rootTable) { return; }
+      const parent = PARENT_JOIN[table];
+      if (parent && !tables.has(parent.parentTable)) { tables.add(parent.parentTable); }
+    });
+    return tables.size === sizeBefore ? tables : this._expandAncestors(tables, rootTable);
   }
 
   private _buildJoinClauses(rootTable: string, tablesInvolved: Set<string>): string[] {
     const available = new Set<string>([rootTable]);
     const clauses: string[] = [];
-
-    // Tables in JOIN_ORDER first, then any remaining (e.g. 'robots' which is never in JOIN_ORDER).
     const toJoin = [
       ...JOIN_ORDER.filter((t) => tablesInvolved.has(t) && t !== rootTable),
       ...[...tablesInvolved].filter((t) => t !== rootTable && !JOIN_ORDER.includes(t)),
     ];
+    return this._resolveJoinClauses(toJoin, available, clauses);
+  }
 
-    let remaining = toJoin;
+  /** Recursively resolves join clauses, processing tables whose parent is already available each pass. */
+  private _resolveJoinClauses(remaining: string[], available: Set<string>, clauses: string[]): string[] {
+    if (remaining.length === 0) { return clauses; }
+    const nextRemaining = remaining.filter((table) => !this._tryJoinTable(table, available, clauses));
+    if (nextRemaining.length === remaining.length) { return clauses; } // No progress — stop.
+    return this._resolveJoinClauses(nextRemaining, available, clauses);
+  }
 
-    while (remaining.length > 0) {
-      const sizeBefore = remaining.length;
-      const nextRemaining: string[] = [];
-
-      remaining.forEach((table) => {
-        const joinDef = PARENT_JOIN[table];
-
-        if (joinDef && available.has(joinDef.parentTable)) {
-          // Downward join: parent is already in the FROM/JOIN set.
-          clauses.push(
-            `LEFT JOIN "${table}" ON "${joinDef.parentTable}"."${joinDef.fkColumn}" = "${table}"."id" AND "${table}"."deletedAt" IS NULL`,
-          );
-          available.add(table);
-        } else {
-          // Upward join: find a child already available whose PARENT_JOIN points to this table.
-          const child = [...available].find((t) => PARENT_JOIN[t]?.parentTable === table);
-          if (child) {
-            const childFk = PARENT_JOIN[child].fkColumn;
-            clauses.push(
-              `LEFT JOIN "${table}" ON "${table}"."${childFk}" = "${child}"."id" AND "${table}"."deletedAt" IS NULL`,
-            );
-            available.add(table);
-          } else {
-            nextRemaining.push(table);
-          }
-        }
-      });
-
-      if (nextRemaining.length === sizeBefore) {
-        break; // No progress — avoid infinite loop.
-      }
-      remaining = nextRemaining;
+  /** Tries to join a table either downward (parent → child) or upward (child → parent). Returns true if joined. */
+  private _tryJoinTable(table: string, available: Set<string>, clauses: string[]): boolean {
+    const joinDef = PARENT_JOIN[table];
+    if (joinDef && available.has(joinDef.parentTable)) {
+      clauses.push(`LEFT JOIN "${table}" ON "${joinDef.parentTable}"."${joinDef.fkColumn}" = "${table}"."id" AND "${table}"."deletedAt" IS NULL`);
+      available.add(table);
+      return true;
     }
-
-    return clauses;
+    const child = [...available].find((t) => PARENT_JOIN[t]?.parentTable === table);
+    if (child) {
+      clauses.push(`LEFT JOIN "${table}" ON "${table}"."${PARENT_JOIN[child].fkColumn}" = "${child}"."id" AND "${table}"."deletedAt" IS NULL`);
+      available.add(table);
+      return true;
+    }
+    return false;
   }
 
   private _buildSelectClauses(rootTable: string, columns: string[], tablesInvolved: Set<string>): string {
@@ -195,9 +148,7 @@ export class TableViewService {
     const whereParams: unknown[] = [];
 
     Object.entries(filters).forEach(([colKey, value]) => {
-      if (!value) {
-        return;
-      }
+      if (!value) { return; }
       const [table, column] = colKey.split('.');
       whereClauses.push(`"${table}"."${column}"::text ILIKE $${whereParams.length + 1}`);
       whereParams.push(`%${value}%`);
@@ -218,145 +169,124 @@ export class TableViewService {
       const ids = rows
         .map((row) => row[`${table}__id`])
         .filter((id): id is string => typeof id === 'string');
-      if (ids.length > 0) {
-        entityIdsByTable[table] = [...new Set(ids)];
-      }
+      if (ids.length > 0) { entityIdsByTable[table] = [...new Set(ids)]; }
     });
 
-    if (Object.keys(entityIdsByTable).length === 0) {
-      return { conflictMap, nullConflictMap };
-    }
+    if (Object.keys(entityIdsByTable).length === 0) { return { conflictMap, nullConflictMap }; }
 
-    // --- Value conflicts ---
-    const valueConditions: string[] = [];
+    const [valueConflicts, relByAnchor, relByRelated] = await this._fetchConflicts(entityIdsByTable);
+
+    valueConflicts.forEach(({ tableName, entityId, columnName, isSolved, id }) => {
+      this._markCell(conflictMap, tableName, entityId, columnName, this._toValueEntry(isSolved, id));
+    });
+
+    [...relByAnchor, ...relByRelated].forEach((rc) => {
+      this._applyRelationalConflict(rc, conflictMap, nullConflictMap);
+    });
+
+    return { conflictMap, nullConflictMap };
+  }
+
+  private async _fetchConflicts(
+    entityIdsByTable: Record<string, string[]>,
+  ): Promise<[ConflictRow[], RelationalConflictRow[], RelationalConflictRow[]]> {
     const valueParams: unknown[] = [];
-    Object.entries(entityIdsByTable).forEach(([table, ids]) => {
+    const valueConditions = Object.entries(entityIdsByTable).map(([table, ids]) => {
       valueParams.push(ids);
-      valueConditions.push(`("tableName" = '${table}' AND "entityId" = ANY($${valueParams.length}))`);
+      return `("tableName" = '${table}' AND "entityId" = ANY($${valueParams.length}))`;
     });
 
-    const valueConflictSql = `
-      SELECT "tableName", "entityId", "columnName", "isSolved", "id"
-      FROM value_conflicts
-      WHERE "deletedAt" IS NULL AND (${valueConditions.join(' OR ')})
-    `;
-
-    // --- Relational conflicts by anchor (anchorTable/anchorId in our entity set) ---
-    const anchorConditions: string[] = [];
     const anchorParams: unknown[] = [];
-    Object.entries(entityIdsByTable).forEach(([table, ids]) => {
+    const anchorConditions = Object.entries(entityIdsByTable).map(([table, ids]) => {
       anchorParams.push(ids);
-      anchorConditions.push(`("anchorTable" = '${table}' AND "anchorId" = ANY($${anchorParams.length}))`);
+      return `("anchorTable" = '${table}' AND "anchorId" = ANY($${anchorParams.length}))`;
     });
 
-    const relByAnchorSql = `
-      SELECT "anchorTable", "anchorId", "relatedTable", "conflictType", "oldRelatedId", "newRelatedId", "isSolved", "id"
-      FROM relational_conflicts
-      WHERE "deletedAt" IS NULL AND (${anchorConditions.join(' OR ')})
-    `;
-
-    // --- Relational conflicts by related (relatedTable + oldRelatedId/newRelatedId in our entity set) ---
-    const relatedConditions: string[] = [];
     const relatedParams: unknown[] = [];
-    Object.entries(entityIdsByTable).forEach(([table, ids]) => {
+    const relatedConditions = Object.entries(entityIdsByTable).map(([table, ids]) => {
       relatedParams.push(ids);
       const idx = relatedParams.length;
-      relatedConditions.push(`("relatedTable" = '${table}' AND ("oldRelatedId" = ANY($${idx}) OR "newRelatedId" = ANY($${idx})))`);
+      return `("relatedTable" = '${table}' AND ("oldRelatedId" = ANY($${idx}) OR "newRelatedId" = ANY($${idx})))`;
     });
 
-    const relByRelatedSql = `
-      SELECT "anchorTable", "anchorId", "relatedTable", "conflictType", "oldRelatedId", "newRelatedId", "isSolved", "id"
-      FROM relational_conflicts
-      WHERE "deletedAt" IS NULL AND (${relatedConditions.join(' OR ')})
-    `;
-
-    const [valueConflicts, relByAnchor, relByRelated] = await Promise.all([
-      this._dataSource.query(valueConflictSql, valueParams) as Promise<ConflictRow[]>,
-      this._dataSource.query(relByAnchorSql, anchorParams) as Promise<RelationalConflictRow[]>,
-      this._dataSource.query(relByRelatedSql, relatedParams) as Promise<RelationalConflictRow[]>,
+    return Promise.all([
+      this._dataSource.query(
+        `SELECT "tableName", "entityId", "columnName", "isSolved", "id" FROM value_conflicts WHERE "deletedAt" IS NULL AND (${valueConditions.join(' OR ')})`,
+        valueParams,
+      ) as Promise<ConflictRow[]>,
+      this._dataSource.query(
+        `SELECT "anchorTable", "anchorId", "relatedTable", "conflictType", "oldRelatedId", "newRelatedId", "isSolved", "id" FROM relational_conflicts WHERE "deletedAt" IS NULL AND (${anchorConditions.join(' OR ')})`,
+        anchorParams,
+      ) as Promise<RelationalConflictRow[]>,
+      this._dataSource.query(
+        `SELECT "anchorTable", "anchorId", "relatedTable", "conflictType", "oldRelatedId", "newRelatedId", "isSolved", "id" FROM relational_conflicts WHERE "deletedAt" IS NULL AND (${relatedConditions.join(' OR ')})`,
+        relatedParams,
+      ) as Promise<RelationalConflictRow[]>,
     ]);
+  }
 
-    const markCell = (map: ConflictMap, table: string, entityId: string, column: string, entry: ConflictEntry): void => {
-      if (!map[table]) { map[table] = {}; }
-      if (!map[table][entityId]) { map[table][entityId] = {}; }
-      const existing = map[table][entityId][column];
-      if (!existing || (entry.status === 'open' && existing.status !== 'open')) {
-        map[table][entityId][column] = entry;
-      }
-    };
+  private _applyRelationalConflict(rc: RelationalConflictRow, conflictMap: ConflictMap, nullConflictMap: NullConflictMap): void {
+    const entry = this._toRelationalEntry(rc.isSolved, rc.id, rc.anchorTable, rc.anchorId, rc.relatedTable);
 
-    const markNull = (relatedTable: string, relatedId: string, colKey: string, entry: ConflictEntry): void => {
-      if (!nullConflictMap[relatedTable]) { nullConflictMap[relatedTable] = {}; }
-      if (!nullConflictMap[relatedTable][relatedId]) { nullConflictMap[relatedTable][relatedId] = {}; }
-      const existing = nullConflictMap[relatedTable][relatedId][colKey];
-      if (!existing || (entry.status === 'open' && existing.status !== 'open')) {
-        nullConflictMap[relatedTable][relatedId][colKey] = entry;
-      }
-    };
+    if (rc.conflictType === 'TWO_CHILDS') {
+      // Anchor entity's FK column (e.g. communications/comm-test-001/ironId).
+      this._markCell(conflictMap, rc.anchorTable, rc.anchorId, `${rc.relatedTable.slice(0, -1)}Id`, entry);
+      // Both competing related entities' id cells.
+      this._markCell(conflictMap, rc.relatedTable, rc.oldRelatedId, 'id', entry);
+      this._markCell(conflictMap, rc.relatedTable, rc.newRelatedId, 'id', entry);
+      // Both null joined-anchor cells — ensures the disconnected entity still shows a conflict indicator.
+      this._markNull(nullConflictMap, rc.relatedTable, rc.oldRelatedId, `${rc.anchorTable}.id`, entry);
+      this._markNull(nullConflictMap, rc.relatedTable, rc.newRelatedId, `${rc.anchorTable}.id`, entry);
+    }
 
-    const toValueEntry = (isSolved: boolean | null, id: number): ConflictEntry => ({
+    if (rc.conflictType === 'TWO_FATHERS') {
+      // Anchor entity id cell (e.g. communications/comm-test-001/id).
+      this._markCell(conflictMap, rc.anchorTable, rc.anchorId, 'id', entry);
+      // Old related entity (first owner) id cell.
+      this._markCell(conflictMap, rc.relatedTable, rc.oldRelatedId, 'id', entry);
+      // New related entity's FK field that was nulled out.
+      const fkField = Object.keys(FK_FIELD_TO_TABLE).find((k) => FK_FIELD_TO_TABLE[k] === rc.anchorTable);
+      if (fkField) { this._markCell(conflictMap, rc.relatedTable, rc.newRelatedId, fkField, entry); }
+    }
+  }
+
+  private _markCell(map: ConflictMap, table: string, entityId: string, column: string, entry: ConflictEntry): void {
+    if (!map[table]) { map[table] = {}; }
+    if (!map[table][entityId]) { map[table][entityId] = {}; }
+    const existing = map[table][entityId][column];
+    // Open conflicts take priority over resolved — never downgrade an open conflict.
+    if (!existing || (entry.status === 'open' && existing.status !== 'open')) {
+      map[table][entityId][column] = entry;
+    }
+  }
+
+  private _markNull(nullConflictMap: NullConflictMap, relatedTable: string, relatedId: string, colKey: string, entry: ConflictEntry): void {
+    if (!nullConflictMap[relatedTable]) { nullConflictMap[relatedTable] = {}; }
+    if (!nullConflictMap[relatedTable][relatedId]) { nullConflictMap[relatedTable][relatedId] = {}; }
+    const existing = nullConflictMap[relatedTable][relatedId][colKey];
+    if (!existing || (entry.status === 'open' && existing.status !== 'open')) {
+      nullConflictMap[relatedTable][relatedId][colKey] = entry;
+    }
+  }
+
+  private _toValueEntry(isSolved: boolean | null, id: number): ConflictEntry {
+    return {
       status: isSolved === false ? 'open' : 'resolved',
       conflictId: isSolved === false ? id : null,
       anchorTable: null,
       anchorId: null,
       relatedTable: null,
-    });
+    };
+  }
 
-    const toRelationalEntry = (
-      isSolved: boolean | null,
-      id: number,
-      anchorTable: string,
-      anchorId: string,
-      relatedTable: string,
-    ): ConflictEntry => ({
+  private _toRelationalEntry(isSolved: boolean | null, id: number, anchorTable: string, anchorId: string, relatedTable: string): ConflictEntry {
+    return {
       status: isSolved === false ? 'open' : 'resolved',
       conflictId: isSolved === false ? id : null,
       anchorTable,
       anchorId,
       relatedTable,
-    });
-
-    // Process value conflicts.
-    valueConflicts.forEach(({ tableName, entityId, columnName, isSolved, id }) => {
-      markCell(conflictMap, tableName, entityId, columnName, toValueEntry(isSolved, id));
-    });
-
-    // Process relational conflicts from both queries (union via idempotent markCell).
-    [...relByAnchor, ...relByRelated].forEach((rc) => {
-      const entry = toRelationalEntry(rc.isSolved, rc.id, rc.anchorTable, rc.anchorId, rc.relatedTable);
-
-      if (rc.conflictType === 'TWO_CHILDS') {
-        // 1. Anchor entity's FK column (e.g. communications/comm-test-001/ironId).
-        const fkColumn = `${rc.relatedTable.slice(0, -1)}Id`;
-        markCell(conflictMap, rc.anchorTable, rc.anchorId, fkColumn, entry);
-
-        // 2. Both competing related entities' id cells — both turn red when open, green when resolved.
-        markCell(conflictMap, rc.relatedTable, rc.oldRelatedId, 'id', entry);
-        markCell(conflictMap, rc.relatedTable, rc.newRelatedId, 'id', entry);
-
-        // 3. Both competing entities' null joined-anchor cells.
-        //    When either entity loses and becomes disconnected, its joined-anchor column will be null.
-        //    Marking both ensures the null cell shows as green (resolved) instead of disappearing.
-        markNull(rc.relatedTable, rc.oldRelatedId, `${rc.anchorTable}.id`, entry);
-        markNull(rc.relatedTable, rc.newRelatedId, `${rc.anchorTable}.id`, entry);
-      }
-
-      if (rc.conflictType === 'TWO_FATHERS') {
-        // 1. Anchor entity id cell (e.g. communications/comm-test-001/id).
-        markCell(conflictMap, rc.anchorTable, rc.anchorId, 'id', entry);
-
-        // 2. Old related entity (first owner) id cell (e.g. robots/robot-test-001/id).
-        markCell(conflictMap, rc.relatedTable, rc.oldRelatedId, 'id', entry);
-
-        // 3. New related entity's FK field that was nulled out (e.g. robots/robot-test-002/communicationId).
-        const fkField = Object.keys(FK_FIELD_TO_TABLE).find((k) => FK_FIELD_TO_TABLE[k] === rc.anchorTable);
-        if (fkField) {
-          markCell(conflictMap, rc.relatedTable, rc.newRelatedId, fkField, entry);
-        }
-      }
-    });
-
-    return { conflictMap, nullConflictMap };
+    };
   }
 
   private _buildResponseRow(

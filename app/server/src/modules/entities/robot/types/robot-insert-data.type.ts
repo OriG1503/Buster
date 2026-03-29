@@ -1,16 +1,4 @@
-export type RobotInsertData = {
-  id: string;
-  cardboardId: string | null;
-  sensorId: string | null;
-  communicationId: string | null;
-  wiringId: string | null;
-  carrier: string | null;
-  isPurchased: boolean | null;
-  district: string | null;
-  storeName: string | null;
-  isStockAshdod: boolean | null;
-  isStockTelAviv: boolean | null;
-  isStockRehovot: boolean | null;
-  isStockNetanya: boolean | null;
-  isStockAfula: boolean | null;
-};
+import { EntityInsertData } from '../../../../shared/types/entity-config.type';
+import { ROBOT_CONFIG } from '../../../../shared/consts/entity-configs.const';
+
+export type RobotInsertData = EntityInsertData<typeof ROBOT_CONFIG['columns']>;

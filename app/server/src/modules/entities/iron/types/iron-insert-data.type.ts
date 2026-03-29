@@ -1,7 +1,4 @@
-export type IronInsertData = {
-  id: string;
-  ironType: string | null;
-  ironVersion: string | null;
-  isHeatConductor: boolean | null;
-  isStockAshdod: boolean | null;
-};
+import { EntityInsertData } from '../../../../shared/types/entity-config.type';
+import { IRON_CONFIG } from '../../../../shared/consts/entity-configs.const';
+
+export type IronInsertData = EntityInsertData<typeof IRON_CONFIG['columns']>;

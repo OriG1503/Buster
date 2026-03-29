@@ -2,7 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { GROUP_ROLE_MAP, MOCK_USER_GROUPS } from './consts/mail-groups.consts';
 import { LoginResponse } from './types/login-response.type';
-import { JwtPayload, Role, ROLE_LEVEL } from './types/role.type';
+import { JwtPayload } from './types/jwt-payload.type';
+import { Role } from './types/role.type';
+import { ROLE_LEVEL } from './consts/role-level.const';
 
 @Injectable()
 export class AuthService {

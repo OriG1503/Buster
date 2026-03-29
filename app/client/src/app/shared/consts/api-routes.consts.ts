@@ -17,8 +17,8 @@ export const API_ROUTES = {
     revert: `${API_BASE}/conflicts/revert`,
   },
 
-  displayNames: {
-    config: `${API_BASE}/display-names`,
+  entityCatalog: {
+    config: `${API_BASE}/entity-catalog`,
   },
 
   file: {

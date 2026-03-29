@@ -8,21 +8,18 @@ export class LoggingMiddleware implements NestMiddleware {
   public use(req: Request, res: Response, next: NextFunction): void {
     const { method, originalUrl } = req;
     const start = Date.now();
-
-    res.on('finish', () => {
-      const { statusCode } = res;
-      const duration = Date.now() - start;
-      const log = `${method} ${originalUrl} → ${statusCode} (${duration}ms)`;
-
-      if (statusCode >= 500) {
-        this._logger.error(log);
-      } else if (statusCode >= 400) {
-        this._logger.warn(log);
-      } else {
-        this._logger.log(log);
-      }
-    });
-
+    res.on('finish', () => this._logRequest(method, originalUrl, res.statusCode, Date.now() - start));
     next();
+  }
+
+  private _logRequest(method: string, url: string, statusCode: number, duration: number): void {
+    const message = `${method} ${url} → ${statusCode} (${duration}ms)`;
+    if (statusCode >= 500) {
+      this._logger.error(message);
+    } else if (statusCode >= 400) {
+      this._logger.warn(message);
+    } else {
+      this._logger.log(message);
+    }
   }
 }

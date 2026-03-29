@@ -1,67 +1,19 @@
 import { EntityRowBase } from './mapped-entity-base.type';
 
-export interface ParsedBatteryRow extends EntityRowBase {
-  battery_UUID: string;
-  sku: string | null;
-  battery_type: string | null;
-  battery_version: string | null;
-  lithium_version: string | null;
-  battery_name: string | null;
-  sales_person: string | null;
-  battery_is_stock_tel_aviv: string | null;
-  battery_is_stock_rehovot: string | null;
-}
+// Minimal section types — only the UUID field is explicitly typed; scalar fields are accessed generically by the mapper.
+type BatterySection = EntityRowBase & { battery_UUID: string | null };
+type StorageSection = EntityRowBase & { storage_UUID: string | null };
+type IronSection = EntityRowBase & { iron_UUID: string | null };
+type CardboardSection = EntityRowBase & { cardboard_UUID: string | null };
+type SensorSection = EntityRowBase & { sensor_UUID: string | null };
 
-export interface ParsedStorageRow extends EntityRowBase {
-  storage_UUID: string;
-  storage_type: string | null;
-  storage_version: string | null;
-  storage_is_stock_netanya: string | null;
-  storage_is_stock_afula: string | null;
-}
+/** Exported hierarchy types — used by ParsedRowEnricher and anywhere the parser hierarchy is navigated. */
+export type ParsedPlasticRow = EntityRowBase & { plastic_UUID: string | null; battery: BatterySection | null };
+export type ParsedWiringRow = EntityRowBase & { wiring_UUID: string | null; storage: StorageSection | null };
+export type ParsedCommunicationRow = EntityRowBase & { communication_UUID: string | null; plastic: ParsedPlasticRow | null; iron: IronSection | null };
 
-export interface ParsedIronRow extends EntityRowBase {
-  iron_UUID: string;
-  iron_type: string | null;
-  iron_version: string | null;
-  is_heat_conductor: string | null;
-  iron_is_stock_ashdod: string | null;
-}
-
-export interface ParsedPlasticRow extends EntityRowBase {
-  plastic_UUID: string;
-  plastic_type: string | null;
-  battery: ParsedBatteryRow | null;
-}
-
-export interface ParsedWiringRow extends EntityRowBase {
-  wiring_UUID: string;
-  wiring_type: string | null;
-  wiring_district: string | null;
-  wiring_store_name: string | null;
-  storage: ParsedStorageRow | null;
-}
-
-export interface ParsedCommunicationRow extends EntityRowBase {
-  communication_UUID: string;
-  communication_type: string | null;
-  plastic: ParsedPlasticRow | null;
-  iron: ParsedIronRow | null;
-}
-
-export interface ParsedCardboardRow extends EntityRowBase {
-  cardboard_UUID: string;
-  cardboard_type: string | null;
-  cardboard_version: string | null;
-}
-
-export interface ParsedSensorRow extends EntityRowBase {
-  sensor_UUID: string;
-  sensor_type: string | null;
-  sensor_version: string | null;
-}
-
-export interface ParsedRow extends EntityRowBase {
+/** Top-level row returned by the Python parser for a single CSV record. */
+export type ParsedRow = EntityRowBase & {
   robot_UUID: string;
   carrier: string | null;
   is_purchased: string | null;
@@ -72,8 +24,8 @@ export interface ParsedRow extends EntityRowBase {
   robot_is_stock_rehovot: string | null;
   robot_is_stock_netanya: string | null;
   robot_is_stock_afula: string | null;
-  cardboard: ParsedCardboardRow | null;
-  sensor: ParsedSensorRow | null;
+  cardboard: CardboardSection | null;
+  sensor: SensorSection | null;
   communication: ParsedCommunicationRow | null;
   wiring: ParsedWiringRow | null;
-}
+};
