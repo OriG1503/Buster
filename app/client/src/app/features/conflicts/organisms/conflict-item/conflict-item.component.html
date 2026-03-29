@@ -75,7 +75,7 @@
                         @if (_$pkColumn()!.currentValue) {
                           @if (_$pkColumn()!.currentSource || _$pkColumn()!.currentSourceTime) {
                             <span class="conflict-item__source-group">
-                              <span class="conflict-item__source-label">מ"ד</span>
+                              <span class="conflict-item__source-label">{{ _$sourceLabel() }}</span>
                               <span class="conflict-item__source-label-sep"></span>
                               @if (_$pkColumn()!.currentSource) {
                                 <span class="conflict-item__source-name">{{ _$pkColumn()!.currentSource }}</span>
@@ -89,7 +89,7 @@
                             </span>
                           }
                           <span class="conflict-item__meta">
-                            <span class="conflict-item__meta-label">הועלה</span>
+                            <span class="conflict-item__meta-label">{{ UPLOADED_LABEL }}</span>
                             {{ formatDate(_$pkColumn()!.currentDate) }}
                           </span>
                         }
@@ -147,7 +147,9 @@
                             [$isDisabled]="!_$canEdit()"
                             [$source]="entry.source ?? 'אין מקור'"
                             [$sourceTime]="entry.sourceTime"
+                            [$sourceLabel]="_$sourceLabel()"
                             [$date]="formatDate(entry.createdAt)"
+                            [$uploadedLabel]="UPLOADED_LABEL"
                             [$notes]="entry.notes"
                             (selected)="selectValueWinner(col.columnName, entry.value)"
                           />
@@ -168,7 +170,7 @@
                         @if (col.currentValue) {
                           @if (col.currentSource || col.currentSourceTime) {
                             <span class="conflict-item__source-group">
-                              <span class="conflict-item__source-label">מ"ד</span>
+                              <span class="conflict-item__source-label">{{ _$sourceLabel() }}</span>
                               <span class="conflict-item__source-label-sep"></span>
                               @if (col.currentSource) {
                                 <span class="conflict-item__source-name">{{ col.currentSource }}</span>
@@ -182,7 +184,7 @@
                             </span>
                           }
                           <span class="conflict-item__meta">
-                            <span class="conflict-item__meta-label">הועלה</span>
+                            <span class="conflict-item__meta-label">{{ UPLOADED_LABEL }}</span>
                             {{ formatDate(col.currentDate) }}
                           </span>
                         }

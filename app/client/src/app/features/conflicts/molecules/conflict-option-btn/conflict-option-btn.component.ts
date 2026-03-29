@@ -18,8 +18,12 @@ export class ConflictOptionBtnComponent {
   public readonly $source = input<string | null>(null);
   /** ISO string of the user-entered source date. Displayed as DD/MM/YYYY (date only). */
   public readonly $sourceTime = input<string | null>(null);
+  /** Label for the source group badge — supplied by the parent from entity config. */
+  public readonly $sourceLabel = input<string>('');
   /** Pre-formatted date string for the upload/conflict date — shown below the source group. */
   public readonly $date = input<string | null>(null);
+  /** Label for the upload-date badge — supplied by the parent from a label-map. */
+  public readonly $uploadedLabel = input<string>('');
   public readonly $notes = input<string | null>(null);
 
   public readonly selected = output<void>();

@@ -13,6 +13,7 @@ import { PendingResolution, PendingValueResolution, PendingRelationalResolution 
 import { ConflictOptionBtnComponent } from '../../molecules/conflict-option-btn/conflict-option-btn.component';
 import { FloatingWarningDialogComponent } from '../../molecules/floating-warning-dialog/floating-warning-dialog.component';
 import { FADE_SLIDE_IN_ANIMATION, SLIDE_DOWN_ANIMATION } from './conflict-item.consts';
+import { CONFLICTS_LABEL_MAP } from '../../mapping/conflicts.label-map';
 
 @Component({
   selector: 'app-conflict-item',
@@ -74,6 +75,9 @@ export class ConflictItemComponent {
     return [...resolution.subtreeLevels.values()].every((v) => !!v);
   });
   protected readonly _$canEdit = computed(() => this._permissionsService.canEdit());
+  protected readonly _$sourceLabel = computed(() => this._displayNames.getColumnLabel(this.$group().tableName, 'source'));
+  protected readonly _$sourceTimeLabel = computed(() => this._displayNames.getColumnLabel(this.$group().tableName, 'sourceTime'));
+  protected readonly UPLOADED_LABEL = CONFLICTS_LABEL_MAP.uploadedAtLabel;
 
   public constructor() {
     effect(() => {
