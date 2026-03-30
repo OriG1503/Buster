@@ -33,6 +33,7 @@
             <th class="history-table-rel__th">{{ getSubtreeFieldLabel(group.relatedTable, field) }}</th>
           }
           <th class="history-table-rel__th">{{ $sourceLabel() }}</th>
+          <th class="history-table-rel__th">{{ $sourceTimeLabel() }}</th>
           <th class="history-table-rel__th">{{ $notesLabel() }}</th>
         </tr>
       </thead>
@@ -47,6 +48,7 @@
               <td class="history-table-rel__td">{{ opt.subtreeIds[field] ?? '—' }}</td>
             }
             <td class="history-table-rel__td">{{ opt.source ?? '—' }}</td>
+            <td class="history-table-rel__td">{{ opt.sourceTime ?? '—' }}</td>
             <td class="history-table-rel__td">{{ opt.notes ?? '—' }}</td>
           </tr>
         }

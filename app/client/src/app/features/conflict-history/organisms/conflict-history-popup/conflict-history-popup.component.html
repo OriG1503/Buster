@@ -7,6 +7,7 @@
   [style.bottom]="_$panelStyle().bottom"
   [style.left]="_$panelStyle().left"
   [style.width]="_$panelStyle().width"
+  [style.maxHeight]="_$panelStyle().maxHeight"
 >
   <div class="history-popup__header">
     <span class="history-popup__title">היסטוריית קונפליקט מוכרע</span>
@@ -47,6 +48,7 @@
       <app-history-table-relational
         [$history]="history"
         [$sourceLabel]="_$sourceLabel()"
+        [$sourceTimeLabel]="_$sourceTimeLabel()"
         [$notesLabel]="_$notesLabel()"
       />
       <app-history-popup-footer

@@ -8,6 +8,7 @@ export type RelationalHistoryAnchor = {
 export type RelationalHistoryOption = {
   id: string;
   source: string | null;
+  sourceTime: string | null;
   notes: string | null;
   isWinner: boolean;
   subtreeIds: Record<string, string | null>;

@@ -96,6 +96,7 @@ export class RelationalConflictHistoryService {
         idToOption.set(rc.oldRelatedId, {
           id: rc.oldRelatedId,
           source: rc.oldRelatedSource,
+          sourceTime: rc.oldRelatedSourceTime,
           notes: rc.oldRelatedNotes,
           isWinner: rc.oldRelatedId === winnerRelatedId,
           subtreeIds: this._extractSubtreeIds(rc.snapshot?.oldRelated ?? null),
@@ -105,6 +106,7 @@ export class RelationalConflictHistoryService {
         idToOption.set(rc.newRelatedId, {
           id: rc.newRelatedId,
           source: rc.newRelatedSource,
+          sourceTime: rc.newRelatedSourceTime,
           notes: rc.newRelatedNotes,
           isWinner: rc.newRelatedId === winnerRelatedId,
           subtreeIds: this._extractSubtreeIds(rc.snapshot?.newRelated ?? null),

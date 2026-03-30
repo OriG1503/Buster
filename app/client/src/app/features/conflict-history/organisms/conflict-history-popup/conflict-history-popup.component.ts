@@ -61,11 +61,24 @@ export class ConflictHistoryPopupComponent {
     const screenMargin = 8;
     const left = Math.max(screenMargin, Math.min(anchorCenterX - popupWidth / 2, window.innerWidth - popupWidth - screenMargin));
     const spaceBelow = window.innerHeight - anchorBottom - gap;
+    const spaceAbove = anchorTop - gap;
     const minPopupHeight = 220;
-    if (spaceBelow < minPopupHeight && anchorTop > minPopupHeight) {
-      return { top: 'auto', bottom: `${window.innerHeight - anchorTop + gap}px`, left: `${left}px`, width: `${popupWidth}px` };
+    if (spaceBelow < minPopupHeight && spaceAbove > minPopupHeight) {
+      return {
+        top: 'auto',
+        bottom: `${window.innerHeight - anchorTop + gap}px`,
+        left: `${left}px`,
+        width: `${popupWidth}px`,
+        maxHeight: `${spaceAbove - screenMargin}px`,
+      };
     }
-    return { top: `${anchorBottom + gap}px`, bottom: 'auto', left: `${left}px`, width: `${popupWidth}px` };
+    return {
+      top: `${anchorBottom + gap}px`,
+      bottom: 'auto',
+      left: `${left}px`,
+      width: `${popupWidth}px`,
+      maxHeight: `${spaceBelow - screenMargin}px`,
+    };
   });
 
   public constructor() {

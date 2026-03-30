@@ -12,6 +12,7 @@ import { DisplayNamesService } from '../../../../core/services/display-names/dis
 export class HistoryTableRelationalComponent {
   public readonly $history = input.required<RelationalHistoryResponse>();
   public readonly $sourceLabel = input.required<string>();
+  public readonly $sourceTimeLabel = input.required<string>();
   public readonly $notesLabel = input.required<string>();
 
   private readonly _displayNames = inject(DisplayNamesService);
