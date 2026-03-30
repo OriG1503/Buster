@@ -61,7 +61,7 @@ export class DataProcessorService {
 
   /** Processes a single parsed row leaf-first. */
   private async _processRow(row: ParsedRow, username: string, rowIndex: number): Promise<RowResult> {
-    const enriched = this._enricher.enrich(row);
+    const enriched = await this._enricher.enrich(row);
 
     // Tracks skipped entity IDs so downstream entities can null out any FK references — prevents FK constraint errors.
     const skippedByTable = new Map<string, Set<string>>();

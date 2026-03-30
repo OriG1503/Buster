@@ -15,6 +15,10 @@ export abstract class BaseService<T extends BaseEntity, TInsertData extends { id
     return this._repository.getColumnNames();
   }
 
+  public findAllByFkValue(column: string, value: string): Promise<T[]> {
+    return this._repository.findAllByFkValue(column, value);
+  }
+
   public findByFkValue(column: string, value: string, excludeId?: string): Promise<T | null> {
     return this._repository.findByFkValue(column, value, excludeId);
   }

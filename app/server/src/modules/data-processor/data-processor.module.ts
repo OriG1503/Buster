@@ -1,6 +1,10 @@
 import { Module } from '@nestjs/common';
 import { EntityServiceRegistryModule } from '../../shared/modules/entity-service-registry.module';
 import { ConflictModule } from '../entities/conflict/conflict.module';
+import { RobotModule } from '../entities/robot/robot.module';
+import { CommunicationModule } from '../entities/communication/communication.module';
+import { PlasticModule } from '../entities/plastic/plastic.module';
+import { WiringModule } from '../entities/wiring/wiring.module';
 import { DataProcessorService } from './services/data-processor.service';
 import { EntityIngestionService } from './services/entity-ingestion.service';
 import { EntityInsertService } from './services/entity-insert.service';
@@ -9,9 +13,11 @@ import { FkConflictService } from './services/fk-conflict.service';
 import { ParserRowMapper } from './mappers/parser-row.mapper';
 import { ParsedRowEnricher } from './services/parsed-row-enricher.service';
 import { ProcessReportService } from './services/process-report.service';
+import { FictiveReplacementService } from './services/fictive-replacement.service';
+import { ConflictReattributionService } from './services/conflict-reattribution.service';
 
 @Module({
-  imports: [EntityServiceRegistryModule, ConflictModule],
+  imports: [EntityServiceRegistryModule, ConflictModule, RobotModule, CommunicationModule, PlasticModule, WiringModule],
   providers: [
     DataProcessorService,
     EntityIngestionService,
@@ -21,6 +27,8 @@ import { ProcessReportService } from './services/process-report.service';
     ParserRowMapper,
     ParsedRowEnricher,
     ProcessReportService,
+    FictiveReplacementService,
+    ConflictReattributionService,
   ],
   exports: [DataProcessorService, ProcessReportService],
 })

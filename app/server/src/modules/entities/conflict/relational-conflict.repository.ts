@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { BaseRepository } from '../../../shared/repositories/base.repository';
 import { EntityValue } from '../../../shared/types/entity-value.type';
 import { RelationalConflictEntity } from './entities/relational-conflict.entity';
@@ -33,6 +33,18 @@ export class RelationalConflictRepository extends BaseRepository<RelationalConfl
 
   public findSolvedByAnchor(anchorTable: string, anchorId: string, relatedTable: string): Promise<RelationalConflictEntity[]> {
     return this._repository.find({ where: { anchorTable, anchorId, relatedTable, isSolved: true } });
+  }
+
+  /**
+   * Re-attributes all open relational conflicts referencing a fictive entity ID to the replacement real entity ID.
+   * Updates anchorId, oldRelatedId, and newRelatedId where they match the fictive ID.
+   */
+  public async reattribute(fictiveId: string, realId: string): Promise<void> {
+    await Promise.all([
+      this._repository.update({ anchorId: fictiveId, isSolved: false } as FindOptionsWhere<RelationalConflictEntity>, { anchorId: realId }),
+      this._repository.update({ oldRelatedId: fictiveId, isSolved: false } as FindOptionsWhere<RelationalConflictEntity>, { oldRelatedId: realId }),
+      this._repository.update({ newRelatedId: fictiveId, isSolved: false } as FindOptionsWhere<RelationalConflictEntity>, { newRelatedId: realId }),
+    ]);
   }
 
   /** Inserts a new conflict. Returns the new conflict's ID, or null if it already existed (unique violation ignored). */

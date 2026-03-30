@@ -57,6 +57,15 @@ export abstract class BaseRepository<T extends { id: TId }, TId extends string |
     ];
   }
 
+  /** Finds all entities where the given FK column equals the given value. */
+  public findAllByFkValue(column: string, value: string): Promise<T[]> {
+    return this._repository
+      .createQueryBuilder('e')
+      .where(`e."${column}" = :value`, { value })
+      .loadAllRelationIds()
+      .getMany();
+  }
+
   /** Finds an entity where the given FK column equals the given value, optionally excluding one id. */
   public findByFkValue(column: string, value: string, excludeId?: string): Promise<T | null> {
     return this._repository

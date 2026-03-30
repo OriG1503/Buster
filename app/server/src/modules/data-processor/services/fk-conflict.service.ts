@@ -6,18 +6,28 @@ import { EntityValue } from '../../../shared/types/entity-value.type';
 import { EntityService } from '../../../shared/types/entity-service.type';
 import { EntityServiceRegistry } from '../../../shared/services/entity-service-registry.service';
 import { RelationalConflictDetectionService } from '../../entities/conflict/services/relational-conflict-detection.service';
+import { FictiveReplacementService } from './fictive-replacement.service';
+
+export type FictiveChildReplacement = { fkField: string; fictiveChildId: string; realChildId: string };
+export type TwoChildsResult = { conflictCount: number; fictiveReplacements: FictiveChildReplacement[] };
+
+type TwoChildsCheckOutcome =
+  | { kind: 'conflict' }
+  | { kind: 'fictive'; fkField: string; fictiveChildId: string; realChildId: string }
+  | null;
 
 @Injectable()
 export class FkConflictService {
   public constructor(
     private readonly _relationalConflictService: RelationalConflictDetectionService,
     private readonly _registry: EntityServiceRegistry,
+    private readonly _fictiveReplacement: FictiveReplacementService,
   ) {}
 
   /**
    * Checks all OneToOne FK fields on a new entity being inserted for TWO_FATHERS conflicts.
-   * Returns the count of conflicts found and the FK field names that were conflicted
-   * (caller must null these out before inserting).
+   * When the existing owner is a fictive entity, auto-replaces it instead of raising a conflict.
+   * Returns the FK field names that were genuinely conflicted (caller must null these before inserting).
    */
   public async detectTwoFathersOnInsert(
     service: EntityService<{ id: string }>,
@@ -51,6 +61,11 @@ export class FkConflictService {
     const existingOwner = await service.findByFkValue(fkField, childId, id);
     if (!existingOwner) { return null; }
 
+    if (this._fictiveReplacement.isFictive(String(existingOwner.id))) {
+      await this._fictiveReplacement.replaceOwner(service.tableName, String(existingOwner.id), id, source, notes, sourceTime);
+      return null;
+    }
+
     const childTable = FK_FIELD_TO_TABLE[fkField];
     const childEntity = await this._registry.get(childTable).findById(childId);
     await this._relationalConflictService.detectTwoFathers(
@@ -63,6 +78,72 @@ export class FkConflictService {
       source, notes, sourceTime, username,
     );
     return fkField;
+  }
+
+  /**
+   * Checks FK fields where both stored and incoming values are non-null and differ.
+   * When the stored value is a fictive entity, returns it as a replacement candidate instead of a conflict.
+   */
+  public async detectTwoChilds(
+    service: EntityService<{ id: string }>,
+    id: string,
+    stored: BaseEntity,
+    fields: Record<string, EntityValue>,
+    source: string,
+    notes: string | null,
+    sourceTime: string | null,
+    username: string,
+  ): Promise<TwoChildsResult> {
+    const storedRecord = stored as unknown as Record<string, EntityValue>;
+    const outcomes = await Promise.all(
+      Object.keys(fields)
+        .filter((f) => {
+          if (!f.endsWith('Id')) { return false; }
+          const storedVal = storedRecord[f];
+          const incomingVal = fields[f];
+          return storedVal != null && incomingVal != null && storedVal !== incomingVal;
+        })
+        .map((fkField) => this._checkOneTwoChilds(service, id, fkField, stored, storedRecord, fields, source, notes, sourceTime, username)),
+    );
+
+    const conflictCount = outcomes.filter((o): o is { kind: 'conflict' } => o?.kind === 'conflict').length;
+    const fictiveReplacements = outcomes
+      .filter((o): o is { kind: 'fictive'; fkField: string; fictiveChildId: string; realChildId: string } => o?.kind === 'fictive')
+      .map(({ fkField, fictiveChildId, realChildId }) => ({ fkField, fictiveChildId, realChildId }));
+
+    return { conflictCount, fictiveReplacements };
+  }
+
+  private async _checkOneTwoChilds(
+    service: EntityService<{ id: string }>,
+    id: string,
+    fkField: string,
+    stored: BaseEntity,
+    storedRecord: Record<string, EntityValue>,
+    fields: Record<string, EntityValue>,
+    source: string,
+    notes: string | null,
+    sourceTime: string | null,
+    username: string,
+  ): Promise<TwoChildsCheckOutcome> {
+    const storedFkId = String(storedRecord[fkField]);
+    const incomingFkId = String(fields[fkField]);
+
+    if (this._fictiveReplacement.isFictive(storedFkId) && !this._fictiveReplacement.isFictive(incomingFkId)) {
+      return { kind: 'fictive', fkField, fictiveChildId: storedFkId, realChildId: incomingFkId };
+    }
+
+    const relatedTable = FK_FIELD_TO_TABLE[fkField];
+    if (!relatedTable) { return null; }
+
+    await this._relationalConflictService.detectTwoChilds(
+      id, service.tableName,
+      stored.source?.[fkField] ?? null, stored.notes?.[fkField] ?? null, stored.sourceTime?.[fkField] ?? null,
+      storedFkId, incomingFkId, relatedTable,
+      stored.source?.[fkField] ?? null, stored.notes?.[fkField] ?? null, stored.sourceTime?.[fkField] ?? null,
+      source, notes, sourceTime, username,
+    );
+    return { kind: 'conflict' };
   }
 
   /**
@@ -101,6 +182,7 @@ export class FkConflictService {
     const childId = String(fieldsToUpdate[fkField]);
     const relatedTable = FK_FIELD_TO_TABLE[fkField];
     if (!relatedTable) { return null; }
+
     const existingOwner = await service.findByFkValue(fkField, childId, id);
     if (!existingOwner) { return null; }
 
@@ -115,53 +197,5 @@ export class FkConflictService {
       source, notes, sourceTime, username,
     );
     return fkField;
-  }
-
-  /** Checks FK fields where both stored and incoming values are non-null and differ — TWO_CHILDS conflicts. */
-  public async detectTwoChilds(
-    service: EntityService<{ id: string }>,
-    id: string,
-    stored: BaseEntity,
-    fields: Record<string, EntityValue>,
-    source: string,
-    notes: string | null,
-    sourceTime: string | null,
-    username: string,
-  ): Promise<number> {
-    const storedRecord = stored as unknown as Record<string, EntityValue>;
-    const results = await Promise.all(
-      Object.keys(fields)
-        .filter((f) => {
-          if (!f.endsWith('Id')) { return false; }
-          const storedVal = storedRecord[f];
-          const incomingVal = fields[f];
-          return storedVal != null && incomingVal != null && storedVal !== incomingVal;
-        })
-        .map((fkField) => this._detectOneTwoChildsConflict(service, id, fkField, stored, storedRecord, fields, source, notes, sourceTime, username)),
-    );
-    return results.filter((r): r is number => r !== null).length;
-  }
-
-  private async _detectOneTwoChildsConflict(
-    service: EntityService<{ id: string }>,
-    id: string,
-    fkField: string,
-    stored: BaseEntity,
-    storedRecord: Record<string, EntityValue>,
-    fields: Record<string, EntityValue>,
-    source: string,
-    notes: string | null,
-    sourceTime: string | null,
-    username: string,
-  ): Promise<number | null> {
-    const relatedTable = FK_FIELD_TO_TABLE[fkField];
-    if (!relatedTable) { return null; }
-    return this._relationalConflictService.detectTwoChilds(
-      id, service.tableName,
-      stored.source?.[fkField] ?? null, stored.notes?.[fkField] ?? null, stored.sourceTime?.[fkField] ?? null,
-      String(storedRecord[fkField]), String(fields[fkField]), relatedTable,
-      stored.source?.[fkField] ?? null, stored.notes?.[fkField] ?? null, stored.sourceTime?.[fkField] ?? null,
-      source, notes, sourceTime, username,
-    );
   }
 }
