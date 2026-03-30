@@ -3,24 +3,28 @@
     ישות עוגן: {{ getEntityName($history().anchor.tableName) }} — {{ $history().anchor.id }}
   </div>
 
-  @if (getAnchorFieldKeys($history().anchor).length > 0) {
-    <table class="history-table-rel__table">
-      <thead>
-        <tr>
-          @for (field of getAnchorFieldKeys($history().anchor); track field) {
-            <th class="history-table-rel__th">{{ getAnchorFieldLabel($history().anchor.tableName, field) }}</th>
-          }
-        </tr>
-      </thead>
-      <tbody>
-        <tr class="history-table-rel__tr history-table-rel__tr--anchor">
-          @for (field of getAnchorFieldKeys($history().anchor); track field) {
-            <td class="history-table-rel__td history-table-rel__td--id">{{ $history().anchor.fields[field] ?? '—' }}</td>
-          }
-        </tr>
-      </tbody>
-    </table>
-  }
+  <table class="history-table-rel__table">
+    <thead>
+      <tr>
+        @for (field of getAnchorFieldKeys($history().anchor); track field) {
+          <th class="history-table-rel__th">{{ getAnchorFieldLabel($history().anchor.tableName, field) }}</th>
+        }
+        <th class="history-table-rel__th">{{ $sourceLabel() }}</th>
+        <th class="history-table-rel__th">{{ $sourceTimeLabel() }}</th>
+        <th class="history-table-rel__th">{{ $notesLabel() }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="history-table-rel__tr history-table-rel__tr--anchor">
+        @for (field of getAnchorFieldKeys($history().anchor); track field) {
+          <td class="history-table-rel__td history-table-rel__td--id">{{ $history().anchor.fields[field] ?? '—' }}</td>
+        }
+        <td class="history-table-rel__td">{{ $history().anchor.source ?? '—' }}</td>
+        <td class="history-table-rel__td">{{ $history().anchor.sourceTime ?? '—' }}</td>
+        <td class="history-table-rel__td">{{ $history().anchor.notes ?? '—' }}</td>
+      </tr>
+    </tbody>
+  </table>
 
   @for (group of $history().groups; track group.relatedTable) {
     <div class="history-table-rel__group-label">{{ getGroupLabel(group) }}</div>

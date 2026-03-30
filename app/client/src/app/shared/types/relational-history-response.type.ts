@@ -1,6 +1,9 @@
 export type RelationalHistoryAnchor = {
   id: string;
   tableName: string;
+  source: string | null;
+  sourceTime: string | null;
+  notes: string | null;
   fields: Record<string, string | null>;
 };
 

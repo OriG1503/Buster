@@ -48,10 +48,14 @@ export class RelationalConflictHistoryService {
       (rc.updatedAt as Date) > (latest.updatedAt as Date) ? rc : latest,
     );
 
-    const anchorSnapshot = conflicts[0].snapshot?.anchor ?? {};
+    const firstConflict = conflicts[0];
+    const anchorSnapshot = firstConflict.snapshot?.anchor ?? {};
     const anchor: RelationalHistoryAnchor = {
       id: anchorId,
       tableName: anchorTable,
+      source: firstConflict.anchorSource,
+      sourceTime: firstConflict.anchorSourceTime,
+      notes: firstConflict.anchorNotes,
       fields: this._extractAnchorFields(anchorSnapshot),
     };
 

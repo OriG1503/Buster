@@ -1,6 +1,9 @@
 export type RelationalHistoryAnchor = {
   id: string;
   tableName: string;
+  source: string | null;
+  sourceTime: string | null;
+  notes: string | null;
   /** Scalar + FK fields from the snapshot at conflict time (excludes source/notes/timestamps). */
   fields: Record<string, string | null>;
 };
