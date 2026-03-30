@@ -78,7 +78,6 @@ export class TableViewService {
   private _expandAncestors(tables: Set<string>, rootTable: string): Set<string> {
     const sizeBefore = tables.size;
     tables.forEach((table) => {
-      if (table === rootTable) { return; }
       const parent = PARENT_JOIN[table];
       if (parent && !tables.has(parent.parentTable)) { tables.add(parent.parentTable); }
     });
