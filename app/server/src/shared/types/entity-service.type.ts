@@ -6,6 +6,7 @@ export type EntityService<TData extends { id: string }> = {
   tableName: string;
   findById(id: string): Promise<BaseEntity | null>;
   getColumnNames(): string[];
+  findAllByFkValue(column: string, value: string): Promise<BaseEntity[]>;
   findByFkValue(column: string, value: string, excludeId?: string): Promise<BaseEntity | null>;
   insert(data: TData, source: string, notes: string | null, sourceTime: string | null): Promise<void>;
   renameId(oldId: string, newId: string): Promise<void>;

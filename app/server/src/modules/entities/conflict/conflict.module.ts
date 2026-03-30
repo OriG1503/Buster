@@ -50,6 +50,6 @@ import { CrossEntityConflictHistoryService } from './cross-entity-conflict-histo
     RelationalConflictHistoryService,
     CrossEntityConflictHistoryService,
   ],
-  exports: [ValueConflictRepository, ValueConflictService, RelationalConflictDetectionService, CrossEntityConflictDetectionService],
+  exports: [ValueConflictRepository, RelationalConflictRepository, ValueConflictService, RelationalConflictDetectionService, CrossEntityConflictDetectionService],
 })
 export class ConflictModule {}

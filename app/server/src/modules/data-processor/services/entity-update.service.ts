@@ -8,6 +8,7 @@ import { ValueConflictRepository } from '../../entities/conflict/value-conflict.
 import { ValueConflictService } from '../../entities/conflict/services/value-conflict.service';
 import { EntityResult } from '../types/entity-result.type';
 import { FkConflictService } from './fk-conflict.service';
+import { FictiveReplacementService } from './fictive-replacement.service';
 
 @Injectable()
 export class EntityUpdateService {
@@ -17,11 +18,13 @@ export class EntityUpdateService {
     private readonly _conflictService: ValueConflictService,
     private readonly _valueConflictRepository: ValueConflictRepository,
     private readonly _fkConflictService: FkConflictService,
+    private readonly _fictiveReplacement: FictiveReplacementService,
   ) {}
 
   /**
    * Detects value and relational conflicts against the stored record,
    * then applies gap-fills (stored null → incoming value) for all non-conflicting fields.
+   * Fictive FK values are auto-replaced rather than raised as conflicts.
    */
   public async updateExisting(
     service: EntityService<{ id: string }>,
@@ -42,7 +45,17 @@ export class EntityUpdateService {
     );
 
     const conflictIds = await this._persistValueConflicts(result.conflictsToCreate);
-    const twoChildsCount = await this._fkConflictService.detectTwoChilds(service, id, stored, fields, source, notes, sourceTime, username);
+
+    const { conflictCount: twoChildsCount, fictiveReplacements } = await this._fkConflictService.detectTwoChilds(
+      service, id, stored, fields, source, notes, sourceTime, username,
+    );
+
+    await Promise.all(
+      fictiveReplacements.map(({ fkField, fictiveChildId, realChildId }) =>
+        this._fictiveReplacement.replaceChild(service, fkField, fictiveChildId, realChildId, source, notes, sourceTime),
+      ),
+    );
+
     const { conflictCount: gapFillConflictCount, conflictedFkFields } = await this._fkConflictService.detectTwoFathersOnGapFill(
       service, id, result.fieldsToUpdate, source, notes, sourceTime, username,
     );
@@ -70,7 +83,6 @@ export class EntityUpdateService {
     };
   }
 
-  /** Persists value conflicts to DB and returns their IDs. */
   private async _persistValueConflicts(conflictsToCreate: Record<string, EntityValue>[]): Promise<number[]> {
     if (conflictsToCreate.length === 0) { return []; }
     await this._valueConflictRepository.insertMany(conflictsToCreate, true);

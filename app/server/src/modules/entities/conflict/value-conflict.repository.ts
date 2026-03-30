@@ -105,6 +105,14 @@ export class ValueConflictRepository extends BaseRepository<ValueConflictEntity,
     return rows.map((r) => r.id);
   }
 
+  /** Re-attributes all open conflicts referencing a fictive entity ID to the replacement real entity ID. */
+  public async reattribute(fictiveId: string, realId: string): Promise<void> {
+    await this._repository.update(
+      { entityId: fictiveId, isSolved: false } as FindOptionsWhere<ValueConflictEntity>,
+      { entityId: realId },
+    );
+  }
+
   public async insertRevertConflict(data: Partial<ValueConflictEntity>): Promise<void> {
     await this.insert(data as Record<string, EntityValue>);
   }
