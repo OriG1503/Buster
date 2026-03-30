@@ -11,6 +11,7 @@ with the same filenames. Unmapped headers are left unchanged.
 
 Output files are written as UTF-8 with BOM (utf-8-sig) for Excel compatibility.
 """
+#python test-data/translate_csv.py test-data test-data/translated
 
 import csv
 import json
@@ -34,9 +35,6 @@ def translate_file(input_path: Path, output_path: Path, mapping: dict[str, str])
 
     original_headers = rows[0]
     translated_headers = [mapping.get(h, h) for h in original_headers]
-
-    with open(output_path, encoding="utf-8-sig", newline="") as _:
-        pass  # ensure file is writable before starting
 
     with open(output_path, "w", encoding="utf-8-sig", newline="") as outfile:
         writer = csv.writer(outfile)
