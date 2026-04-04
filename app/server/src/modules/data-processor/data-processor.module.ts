@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
 import { EntityServiceRegistryModule } from '../../shared/modules/entity-service-registry.module';
 import { EntityCatalogModule } from '../entity-catalog/entity-catalog.module';
-import { ConflictModule } from '../entities/conflict/conflict.module';
+import { ValueConflictModule } from '../entities/conflict/value-conflict/value-conflict.module';
+import { RelationalConflictModule } from '../entities/conflict/relational-conflict/relational-conflict.module';
+import { CrossEntityConflictModule } from '../entities/conflict/cross-entity-conflict/cross-entity-conflict.module';
 import { RobotModule } from '../entities/robot/robot.module';
 import { CommunicationModule } from '../entities/communication/communication.module';
 import { PlasticModule } from '../entities/plastic/plastic.module';
@@ -17,7 +19,7 @@ import { ParsedRowEnricher } from './services/parsed-row-enricher.service';
 import { ProcessReportService } from './services/process-report.service';
 
 @Module({
-  imports: [EntityServiceRegistryModule, EntityCatalogModule, ConflictModule, FictiveModule, RobotModule, CommunicationModule, PlasticModule, WiringModule],
+  imports: [EntityServiceRegistryModule, EntityCatalogModule, ValueConflictModule, RelationalConflictModule, CrossEntityConflictModule, FictiveModule, RobotModule, CommunicationModule, PlasticModule, WiringModule],
   providers: [
     DataProcessorService,
     EntityIngestionService,

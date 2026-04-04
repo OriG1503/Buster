@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { ValueConflictEntityDetailService } from './value-conflict-entity-detail.service';
-import { RelationalConflictRepository } from '../relational-conflict.repository';
-import { CrossEntityConflictRepository } from '../cross-entity-conflict.repository';
+import { ValueConflictEntityDetailService } from '../value-conflict/services/value-conflict-entity-detail.service';
+import { RelationalConflictRepository } from '../relational-conflict/relational-conflict.repository';
+import { CrossEntityConflictRepository } from '../cross-entity-conflict/cross-entity-conflict.repository';
 import {
   ConflictColumnDetail,
   ConflictEntityDetailResponse,
@@ -10,11 +10,11 @@ import {
   RelationalConflictOption,
   TwoFathersConflictDetail,
 } from '../types/conflict-entity-detail-response.type';
-import { RelationalConflictEntity } from '../entities/relational-conflict.entity';
-import { CrossEntityConflictEntity } from '../entities/cross-entity-conflict.entity';
+import { RelationalConflictEntity } from '../relational-conflict/entities/relational-conflict.entity';
+import { CrossEntityConflictEntity } from '../cross-entity-conflict/entities/cross-entity-conflict.entity';
 import { FK_FIELD_TO_TABLE } from '../../../../shared/consts/fk-field-to-table.const';
-import { RELATIONAL_CONFLICT_TYPE } from '../consts/relational-conflict-type.const';
-import { CROSS_ENTITY_FIELDS } from '../consts/cross-entity-fields.const';
+import { RELATIONAL_CONFLICT_TYPE } from '../relational-conflict/consts/relational-conflict-type.const';
+import { CROSS_ENTITY_FIELDS } from '../cross-entity-conflict/consts/cross-entity-fields.const';
 
 const FK_ID_SUFFIX = 'Id';
 

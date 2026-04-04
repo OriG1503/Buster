@@ -5,7 +5,7 @@ import { BaseEntity } from '../../../shared/entities/base.entity';
 import { EntityValue } from '../../../shared/types/entity-value.type';
 import { EntityService } from '../../../shared/types/entity-service.type';
 import { EntityServiceRegistry } from '../../../shared/services/entity-service-registry.service';
-import { RelationalConflictDetectionService } from '../../entities/conflict/services/relational-conflict-detection.service';
+import { RelationalConflictDetectionService } from '../../entities/conflict/relational-conflict/services/relational-conflict-detection.service';
 import { FictiveReplacementService } from '../../fictive/services/fictive-replacement.service';
 import { FictiveIdService } from '../../fictive/services/fictive-id.service';
 

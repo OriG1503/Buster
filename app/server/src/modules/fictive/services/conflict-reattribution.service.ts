@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { ValueConflictRepository } from '../../entities/conflict/value-conflict.repository';
-import { RelationalConflictRepository } from '../../entities/conflict/relational-conflict.repository';
+import { ValueConflictRepository } from '../../entities/conflict/value-conflict/value-conflict.repository';
+import { RelationalConflictRepository } from '../../entities/conflict/relational-conflict/relational-conflict.repository';
 
 @Injectable()
 export class ConflictReattributionService {

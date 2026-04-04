@@ -3,7 +3,7 @@ import { FK_FIELD_TO_TABLE } from '../../../shared/consts/fk-field-to-table.cons
 import { EntityValue } from '../../../shared/types/entity-value.type';
 import { EntityService } from '../../../shared/types/entity-service.type';
 import { EntityServiceRegistry } from '../../../shared/services/entity-service-registry.service';
-import { CrossEntityConflictDetectionService } from '../../entities/conflict/services/cross-entity-conflict-detection.service';
+import { CrossEntityConflictDetectionService } from '../../entities/conflict/cross-entity-conflict/services/cross-entity-conflict-detection.service';
 import { ParserRowMapper } from '../mappers/parser-row.mapper';
 import { ParsedRowEnricher } from './parsed-row-enricher.service';
 import { EntityIngestionService } from './entity-ingestion.service';
