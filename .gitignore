@@ -36,3 +36,4 @@ venv/
 # NestJS
 /dist
 /coverage
+files/
