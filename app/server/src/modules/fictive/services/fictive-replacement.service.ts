@@ -17,10 +17,6 @@ export class FictiveReplacementService {
     private readonly _parentRedirect: FictiveParentRedirectService,
   ) {}
 
-  public isFictive(id: string): boolean {
-    return id.startsWith('auto-');
-  }
-
   /**
    * Path B — triggered when inserting a new real entity that wants to own a FK child
    * already owned by a fictive entity in the same table.

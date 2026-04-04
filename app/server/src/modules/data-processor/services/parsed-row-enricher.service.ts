@@ -3,6 +3,8 @@ import { RobotRepository } from '../../entities/robot/robot.repository';
 import { CommunicationRepository } from '../../entities/communication/communication.repository';
 import { PlasticRepository } from '../../entities/plastic/plastic.repository';
 import { WiringRepository } from '../../entities/wiring/wiring.repository';
+import { FictiveIdService } from '../../fictive/services/fictive-id.service';
+import { COMMUNICATION_CONFIG, PLASTIC_CONFIG, WIRING_CONFIG } from '../../../shared/consts/entity-configs.const';
 import { ParsedCommunicationRow, ParsedPlasticRow, ParsedRow, ParsedWiringRow } from '../types/parsed-row.type';
 import { nullIfEmpty } from '../mappers/mapper.utils';
 
@@ -19,6 +21,7 @@ export class ParsedRowEnricher {
     private readonly _communicationRepository: CommunicationRepository,
     private readonly _plasticRepository: PlasticRepository,
     private readonly _wiringRepository: WiringRepository,
+    private readonly _fictiveId: FictiveIdService,
   ) {}
 
   /**
@@ -93,7 +96,7 @@ export class ParsedRowEnricher {
     const hasParentContext = !!robotId || !!commId || !!dbState.existingCommId;
     if (!hasParentContext) { return plastic; }
 
-    const plasticId = dbState.existingPlasticId ?? `auto-plastic-for-${batteryId}`;
+    const plasticId = dbState.existingPlasticId ?? this._fictiveId.generate(PLASTIC_CONFIG.displayName, batteryId);
     return { ...plastic, plastic_UUID: plasticId, source: rowSource, notes: rowNotes };
   }
 
@@ -118,7 +121,7 @@ export class ParsedRowEnricher {
     const hasChildData = !!nullIfEmpty(enrichedPlastic?.plastic_UUID) || !!nullIfEmpty(comm.iron?.iron_UUID);
     if (!hasChildData || !robotId) { return updated; }
 
-    const commId = dbState.existingCommId ?? `auto-comm-for-${robotId}`;
+    const commId = dbState.existingCommId ?? this._fictiveId.generate(COMMUNICATION_CONFIG.displayName, robotId);
     return { ...updated, communication_UUID: commId, source: rowSource, notes: rowNotes };
   }
 
@@ -139,7 +142,7 @@ export class ParsedRowEnricher {
     const storageId = nullIfEmpty(wiring.storage?.storage_UUID);
     if (!storageId || !robotId) { return wiring; }
 
-    const wiringId = dbState.existingWiringId ?? `auto-wiring-for-${storageId}`;
+    const wiringId = dbState.existingWiringId ?? this._fictiveId.generate(WIRING_CONFIG.displayName, storageId);
     return { ...wiring, wiring_UUID: wiringId, source: rowSource, notes: rowNotes };
   }
 }
