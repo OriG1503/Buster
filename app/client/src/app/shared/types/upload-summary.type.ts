@@ -5,4 +5,5 @@ export type UploadSummary = {
   flyingFieldCount: number;
   reportFileName: string;
   unknownColumns: string[];
+  totalColumnCount: number;
 };

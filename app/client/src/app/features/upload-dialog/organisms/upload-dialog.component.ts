@@ -83,14 +83,19 @@ export class UploadDialogComponent {
   }
 
   private _onUploadSuccess(id: string, name: string, summary: UploadSummary): void {
+    const recognizedColumnCount = summary.totalColumnCount - summary.unknownColumns.length;
+    const successRate = summary.totalColumnCount > 0
+      ? Math.round(summary.uploadPercentage * (recognizedColumnCount / summary.totalColumnCount))
+      : summary.uploadPercentage;
+
     this._$uploadedFiles.update((prev) =>
       prev.map((f) => f.id !== id ? f : {
         id,
         name,
-        successRate: summary.uploadPercentage,
+        successRate,
         newConflictsCount: summary.conflictCount,
         conflictIds: summary.conflictIds,
-        status: (summary.conflictCount > 0 || summary.uploadPercentage < 100) ? 'warning' : 'success',
+        status: (summary.conflictCount > 0 || successRate < 100) ? 'warning' : 'success',
         reportFileName: summary.reportFileName,
         unknownColumns: summary.unknownColumns.length > 0 ? summary.unknownColumns : undefined,
       }),

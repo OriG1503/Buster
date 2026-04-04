@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { EntityServiceRegistryModule } from '../../shared/modules/entity-service-registry.module';
+import { EntityCatalogModule } from '../entity-catalog/entity-catalog.module';
 import { ConflictModule } from '../entities/conflict/conflict.module';
 import { RobotModule } from '../entities/robot/robot.module';
 import { CommunicationModule } from '../entities/communication/communication.module';
@@ -17,7 +18,7 @@ import { FictiveReplacementService } from './services/fictive-replacement.servic
 import { ConflictReattributionService } from './services/conflict-reattribution.service';
 
 @Module({
-  imports: [EntityServiceRegistryModule, ConflictModule, RobotModule, CommunicationModule, PlasticModule, WiringModule],
+  imports: [EntityServiceRegistryModule, EntityCatalogModule, ConflictModule, RobotModule, CommunicationModule, PlasticModule, WiringModule],
   providers: [
     DataProcessorService,
     EntityIngestionService,
