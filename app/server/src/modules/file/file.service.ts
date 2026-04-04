@@ -30,12 +30,13 @@ export class FileService {
     this._logger.log(`Upload started — file: ${file?.originalname}, size: ${file?.size ?? 0} bytes, user: ${username}`);
     this._validateUsername(username);
     const csvFile = this._toCsvFile(file);
+    const uploadedFileName = `${UPLOADS_DIR}/${csvFile.originalname}`;
 
     await mkdir(UPLOADS_DIR, { recursive: true });
-    await writeFile(`${UPLOADS_DIR}/${csvFile.originalname}`, csvFile.buffer);
+    await writeFile(uploadedFileName, csvFile.buffer);
 
     // Translate display-name column headers → parser snake_case names before sending to parser.
-    const { buffer: translatedBuffer, unknownColumns } = this._translateCsvHeaders(csvFile.buffer);
+    const { buffer: translatedBuffer, unknownColumns, totalColumnCount } = this._translateCsvHeaders(csvFile.buffer);
 
     await mkdir(TMP_DIR, { recursive: true });
     const tmpPath = `${TMP_DIR}/${csvFile.originalname}`;
@@ -46,11 +47,11 @@ export class FileService {
     const result = await this._dataProcessorService.process(parsedRows, username);
 
     const reportName = `${basename(csvFile.originalname, '.csv')}_report.xlsx`;
-    const reportBuffer = await this._reportService.generate(tmpPath, result);
+    const reportBuffer = await this._reportService.generate(uploadedFileName, result, unknownColumns);
     await mkdir(REPORTS_DIR, { recursive: true });
     await writeFile(`${REPORTS_DIR}/${reportName}`, reportBuffer);
 
-    return this._buildUploadSummary(result, reportName, unknownColumns);
+    return this._buildUploadSummary(result, reportName, unknownColumns, totalColumnCount);
   }
 
   /** Returns the report buffer for the given filename from local storage. */
@@ -64,6 +65,7 @@ export class FileService {
     result: Awaited<ReturnType<DataProcessorService['process']>>,
     reportName: string,
     unknownColumns: string[],
+    totalColumnCount: number,
   ): UploadSummary {
     const flyingFieldCount = result.flyingFields.reduce((sum, f) => sum + f.redFields.length, 0);
     this._logger.log(`Upload complete — ${result.uploadPercentage}% uploaded, ${result.conflictCount} conflicts, ${flyingFieldCount} flying fields`);
@@ -74,6 +76,7 @@ export class FileService {
       flyingFieldCount,
       reportFileName: reportName,
       unknownColumns,
+      totalColumnCount,
     };
   }
 
@@ -135,22 +138,22 @@ export class FileService {
    * Translates display-name column headers in a CSV buffer to the snake_case parser field names.
    * Returns the translated buffer (always UTF-8) and the list of unrecognised column labels.
    */
-  private _translateCsvHeaders(buffer: Buffer): { buffer: Buffer; unknownColumns: string[] } {
+  private _translateCsvHeaders(buffer: Buffer): { buffer: Buffer; unknownColumns: string[]; totalColumnCount: number } {
     const csv = this._decodeCsvBuffer(buffer);
     const newlineIndex = csv.indexOf('\n');
-    if (newlineIndex === -1) { return { buffer: Buffer.from(csv, 'utf8'), unknownColumns: [] }; }
+    if (newlineIndex === -1) { return { buffer: Buffer.from(csv, 'utf8'), unknownColumns: [], totalColumnCount: 0 }; }
 
     const labelMap = this._entityCatalogService.buildCsvHeaderToParserFieldMap();
     const headerLine = csv.slice(0, newlineIndex).replace(/\r$/, '');
     const rest = csv.slice(newlineIndex);
     const unknownColumns: string[] = [];
+    const headers = headerLine.split(',');
 
-    const translatedHeaders = headerLine
-      .split(',')
+    const translatedHeaders = headers
       .map((header, index) => this._translateHeader(header, index, labelMap, unknownColumns))
       .join(',');
 
-    return { buffer: Buffer.from(translatedHeaders + rest, 'utf8'), unknownColumns };
+    return { buffer: Buffer.from(translatedHeaders + rest, 'utf8'), unknownColumns, totalColumnCount: headers.length };
   }
 
   private _translateHeader(header: string, index: number, labelMap: Map<string, string>, unknownColumns: string[]): string {

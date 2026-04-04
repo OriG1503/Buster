@@ -20,7 +20,7 @@
             </a>
           }
         </span>
-        @if ($file().reportFileName) {
+        @if ($file().reportFileName && $file().successRate < 100) {
           <span class="upload-dialog__meta-sep">|</span>
           <a class="upload-dialog__report-link" (click)="downloadReport.emit($file().reportFileName!)">
             {{ _labelMap.downloadReport }}
@@ -29,8 +29,7 @@
       </div>
       @if ($file().unknownColumns && $file().unknownColumns!.length > 0) {
         <div class="upload-dialog__unknown-cols">
-          <i class="pi pi-exclamation-triangle upload-dialog__unknown-icon"></i>
-          <span class="upload-dialog__unknown-label">{{ _labelMap.unknownColumnsSuffix }}</span>
+            <span class="upload-dialog__unknown-label">{{ _labelMap.unknownColumnsSuffix }}</span>
           <span class="upload-dialog__unknown-list">{{ $file().unknownColumns!.join(', ') }}</span>
         </div>
       }
