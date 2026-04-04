@@ -1,4 +1,4 @@
-﻿sensor_UUID,sensor_type,sensor_version,cardboard_UUID,cardboard_type,cardboard_version,notes,source,source_time
+﻿מזהה חיישן,סוג חיישן,גרסת חיישן,מזהה קרטון,סוג קרטון,גרסת קרטון,הערה,"מ""ד",תאריך מקור
 sens-050,Radar,v2.0,cb-050,Triple Wall,2026,,Sensor Supplier,2026-04-01T07:00:00Z
 sens-051,Radar,v1.0,cb-051,Micro Flute,rev-B,,Sensor Supplier,2025-11-01T08:00:00Z
 sens-052,Ultrasonic,v1.0,cb-052,Triple Wall,2024,Manual correction applied,Sensor Supplier,2026-02-20T08:45:00Z

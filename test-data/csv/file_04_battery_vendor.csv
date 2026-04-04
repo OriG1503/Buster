@@ -1,4 +1,4 @@
-﻿battery_UUID,sku,battery_type,battery_version,lithium_version,battery_name,sales_person,battery_is_stock_tel_aviv,battery_is_stock_rehovot,notes,source,source_time
+﻿מזהה סוללה,"מק""ט",סוג סוללה,גרסת סוללה,גרסת ליתיום,שם סוללה,איש מכירות,מלאי תל אביב סוללה,מלאי רחובות סוללה,הערה,"מ""ד",תאריך מקור
 batt-050,BV-SKU-0050,LiFePO4,gen3,LiV1,InduCell,Dana Mizrahi,False,True,Updated after site visit,Battery Vendor,2025-11-15T10:30:00Z
 batt-051,BV-SKU-0051,Li-Ion,2024-A,NMC-1,MegaCell,Eran Peretz,True,True,Automated sync — not verified,Battery Vendor,2026-03-15T09:30:00Z
 batt-052,BV-SKU-0052,NiMH,gen3,LFP-1,PowerCell B,Eran Peretz,True,False,Manual correction applied,Battery Vendor,2025-11-01T08:00:00Z

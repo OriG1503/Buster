@@ -15,6 +15,55 @@ import random
 OUT_DIR = Path(__file__).parent / "csv"
 OUT_DIR.mkdir(exist_ok=True)
 
+PARSER_TO_HEBREW = {
+    "robot_UUID":               "מזהה רובוט",
+    "cardboard_UUID":           "מזהה קרטון",
+    "sensor_UUID":              "מזהה חיישן",
+    "communication_UUID":       "מזהה תקשורת",
+    "wiring_UUID":              "מזהה כבל",
+    "carrier":                  "ספק שילוח",
+    "is_purchased":             "נרכש",
+    "robot_district":           "מחוז רובוט",
+    "robot_store_name":         "שם חנות רובוט",
+    "robot_is_stock_ashdod":    "מלאי אשדוד רובוט",
+    "robot_is_stock_tel_aviv":  "מלאי תל אביב רובוט",
+    "robot_is_stock_rehovot":   "מלאי רחובות רובוט",
+    "robot_is_stock_netanya":   "מלאי נתניה רובוט",
+    "robot_is_stock_afula":     "מלאי עפולה רובוט",
+    "cardboard_type":           "סוג קרטון",
+    "cardboard_version":        "גרסת קרטון",
+    "sensor_type":              "סוג חיישן",
+    "sensor_version":           "גרסת חיישן",
+    "communication_type":       "סוג תקשורת",
+    "plastic_UUID":             "מזהה פלסטיק",
+    "iron_UUID":                "מזהה ברזל",
+    "plastic_type":             "סוג פלסטיק",
+    "battery_UUID":             "מזהה סוללה",
+    "sku":                      'מק"ט',
+    "battery_type":             "סוג סוללה",
+    "battery_version":          "גרסת סוללה",
+    "lithium_version":          "גרסת ליתיום",
+    "battery_name":             "שם סוללה",
+    "sales_person":             "איש מכירות",
+    "battery_is_stock_tel_aviv": "מלאי תל אביב סוללה",
+    "battery_is_stock_rehovot":  "מלאי רחובות סוללה",
+    "iron_type":                "סוג ברזל",
+    "iron_version":             "גרסת ברזל",
+    "heat_conductor":           "מוליך חום",
+    "iron_is_stock_ashdod":     "מלאי אשדוד ברזל",
+    "wiring_type":              "סוג חיווט",
+    "wiring_district":          "מחוז חיווט",
+    "wiring_store_name":        "שם חנות חיווט",
+    "storage_UUID":             "מזהה אחסון",
+    "storage_type":             "סוג אחסון",
+    "storage_version":          "גרסת אחסון",
+    "storage_is_stock_netanya": "מלאי נתניה אחסון",
+    "storage_is_stock_afula":   "מלאי עפולה אחסון",
+    "notes":                    "הערה",
+    "source":                   'מ"ד',
+    "source_time":              "תאריך מקור",
+}
+
 # ─── Shared ID pools ─────────────────────────────────────────────────────────
 
 def rid(n): return f"robot-alpha-{n:03d}"
@@ -146,10 +195,12 @@ WIRING_STORAGE_COLS = [
 
 def write_xlsx(filename: str, cols: list, rows: list[dict]):
     path = OUT_DIR / filename.replace('.xlsx', '.csv')
+    hebrew_headers = [PARSER_TO_HEBREW[col] for col in cols]
     with open(path, 'w', newline='', encoding='utf-8-sig') as f:
-        writer = csv.DictWriter(f, fieldnames=cols, extrasaction='ignore')
-        writer.writeheader()
-        writer.writerows([{col: row.get(col) for col in cols} for row in rows])
+        writer = csv.writer(f)
+        writer.writerow(hebrew_headers)
+        for row in rows:
+            writer.writerow([row.get(col) for col in cols])
     print(f"  Saved: {path.name}  ({len(rows)} rows)")
 
 

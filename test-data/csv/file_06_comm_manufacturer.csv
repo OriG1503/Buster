@@ -1,4 +1,4 @@
-﻿communication_UUID,communication_type,plastic_UUID,iron_UUID,plastic_type,battery_UUID,iron_type,iron_version,heat_conductor,iron_is_stock_ashdod,notes,source,source_time
+﻿מזהה תקשורת,סוג תקשורת,מזהה פלסטיק,מזהה ברזל,סוג פלסטיק,מזהה סוללה,סוג ברזל,גרסת ברזל,מוליך חום,מלאי אשדוד ברזל,הערה,"מ""ד",תאריך מקור
 comm-050,CAN Bus,plast-050,iron-050,PEEK,batt-100,Cast Iron,2024,Silver,True,Verified by QA team,Comm Manufacturer,2025-12-01T09:00:00Z
 comm-051,Ethernet,plast-051,iron-051,PEEK,batt-101,Stainless,B-grade,None,False,Approved by field engineer,Comm Manufacturer,2025-11-01T08:00:00Z
 comm-052,Bluetooth 5.2,plast-052,iron-052,Nylon,batt-102,Wrought Iron,A-grade,Graphene,True,Manual correction applied,Comm Manufacturer,2026-03-25T12:00:00Z
