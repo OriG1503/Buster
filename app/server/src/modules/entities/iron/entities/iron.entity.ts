@@ -10,8 +10,8 @@ export class IronEntity extends BaseEntity {
   @Column({ type: 'varchar', nullable: true })
   public ironVersion: string | null;
 
-  @Column({ type: 'boolean', nullable: true })
-  public isHeatConductor: boolean | null;
+  @Column({ type: 'varchar', nullable: true })
+  public heatConductor: string | null;
 
   @Column({ type: 'boolean', nullable: true })
   public isStockAshdod: boolean | null;

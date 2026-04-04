@@ -64,7 +64,7 @@ const BASE_ROW: ParsedRow = {
       notes: null,
       iron_type: 'Cast',
       iron_version: 'v1',
-      is_heat_conductor: 'true',
+      heat_conductor: 'true',
     },
   },
   wiring: {
@@ -116,7 +116,7 @@ const TWO_CHILDS_ROW: ParsedRow = {
       notes: null,
       iron_type: 'Alloy',
       iron_version: 'v2',
-      is_heat_conductor: 'false',
+      heat_conductor: 'false',
     },
   },
 };
