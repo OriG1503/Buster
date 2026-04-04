@@ -70,7 +70,13 @@ export class TableViewService {
 
   private _computeTablesInvolved(rootTable: string, columns: string[], filterKeys: string[]): Set<string> {
     const tables = new Set<string>([rootTable]);
-    [...columns, ...filterKeys].forEach((col) => tables.add(col.split('.')[0]));
+    [...columns, ...filterKeys].forEach((col) => {
+      const [table, column] = col.split('.');
+      tables.add(table);
+      // Also include the FK target table so conflicts on the referenced entity are fetched.
+      const fkTargetTable = FK_FIELD_TO_TABLE[column];
+      if (fkTargetTable) { tables.add(fkTargetTable); }
+    });
     return this._expandAncestors(tables, rootTable);
   }
 
@@ -247,8 +253,11 @@ export class TableViewService {
     const entry = this._toRelationalEntry(rc.isSolved, rc.id, rc.anchorTable, rc.anchorId, rc.relatedTable);
 
     if (rc.conflictType === 'TWO_CHILDS') {
-      // Anchor entity's FK column (e.g. communications/comm-test-001/ironId).
-      this._markCell(conflictMap, rc.anchorTable, rc.anchorId, `${rc.relatedTable.slice(0, -1)}Id`, entry);
+      // Anchor entity's FK column (e.g. plastics/plastic-001/batteryId).
+      // Use PARENT_JOIN to get the exact FK column name — avoids the naive slice approach
+      // which breaks for irregular plurals like 'batteries' → 'batterieId' instead of 'batteryId'.
+      const fkColumn = PARENT_JOIN[rc.relatedTable]?.fkColumn;
+      if (fkColumn) { this._markCell(conflictMap, rc.anchorTable, rc.anchorId, fkColumn, entry); }
       // Both competing related entities' id cells.
       this._markCell(conflictMap, rc.relatedTable, rc.oldRelatedId, 'id', entry);
       this._markCell(conflictMap, rc.relatedTable, rc.newRelatedId, 'id', entry);
@@ -337,18 +346,21 @@ export class TableViewService {
       if (!columns.includes(idKey)) {
         const entityId = row[`${table}__id`] as string | null;
         const createdAt = row[`${table}__createdAt`];
+        const idConflictEntry = entityId
+          ? conflictMap[table]?.[entityId]?.['id']
+          : (rootEntityId ? nullConflictMap[rootTableName]?.[rootEntityId]?.[idKey] : undefined);
         result[idKey] = {
           value: entityId,
-          status: 'raw',
+          status: idConflictEntry?.status ?? 'raw',
           source: null,
           notes: null,
           sourceTime: null,
           uploadedAt: createdAt instanceof Date ? createdAt.toISOString() : (createdAt as string | null) ?? null,
-          conflictId: null,
-          anchorTable: null,
-          anchorId: null,
-          relatedTable: null,
-          isCrossEntity: false,
+          conflictId: idConflictEntry?.conflictId ?? null,
+          anchorTable: idConflictEntry?.anchorTable ?? null,
+          anchorId: idConflictEntry?.anchorId ?? null,
+          relatedTable: idConflictEntry?.relatedTable ?? null,
+          isCrossEntity: idConflictEntry?.isCrossEntity ?? false,
         };
       }
     });
@@ -362,9 +374,26 @@ export class TableViewService {
 
       // Primary lookup: by (table, entityId, column).
       // Fallback for null joined entity: by (rootTable, rootEntityId, colKey) in nullConflictMap.
-      const conflictEntry = entityId
+      let conflictEntry = entityId
         ? conflictMap[table]?.[entityId]?.[column]
         : (rootEntityId ? nullConflictMap[rootTableName]?.[rootEntityId]?.[colKey] : undefined);
+
+      // For FK columns, also check if the pointed-to entity has any conflict (e.g. a value conflict
+      // on the battery fields should color the plastics.batteryId cell red too).
+      if (!conflictEntry && column.endsWith('Id') && rawValue !== null && rawValue !== undefined) {
+        const fkTargetTable = FK_FIELD_TO_TABLE[column];
+        if (fkTargetTable) {
+          const targetEntityId = String(rawValue);
+          const targetConflicts = conflictMap[fkTargetTable]?.[targetEntityId];
+          if (targetConflicts) {
+            const entries = Object.values(targetConflicts);
+            const bestEntry = entries.find((e) => e.status === 'open') ?? entries[0];
+            if (bestEntry) {
+              conflictEntry = { ...bestEntry, anchorTable: fkTargetTable, anchorId: targetEntityId };
+            }
+          }
+        }
+      }
 
       const createdAt = row[`${table}__createdAt`];
 
