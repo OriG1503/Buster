@@ -21,7 +21,7 @@ const BATTERY_GROUP: ColumnGroupStructure = {
 
 const IRON_GROUP: ColumnGroupStructure = {
   entityTable: 'irons',
-  columns: ['irons.id', 'irons.ironType', 'irons.ironVersion', 'irons.isHeatConductor', 'irons.isStockAshdod'],
+  columns: ['irons.id', 'irons.ironType', 'irons.ironVersion', 'irons.heatConductor', 'irons.isStockAshdod'],
 };
 
 const PLASTIC_GROUP: ColumnGroupStructure = {

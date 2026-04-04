@@ -57,7 +57,7 @@ export const IRON_CONFIG = {
     id:              { label: 'מזהה ברזל',  csvHeader: 'מזהה ברזל',       parserFieldName: 'iron_UUID',            valueType: 'id'     },
     ironType:        { label: 'סוג ברזל',   csvHeader: 'סוג ברזל',        parserFieldName: 'iron_type',            valueType: 'string' },
     ironVersion:     { label: 'גרסת ברזל',  csvHeader: 'גרסת ברזל',       parserFieldName: 'iron_version',         valueType: 'string' },
-    isHeatConductor: { label: 'מוליך חום',  csvHeader: 'מוליך חום',       parserFieldName: 'is_heat_conductor',    valueType: 'bool'   },
+    heatConductor:   { label: 'מוליך חום',  csvHeader: 'מוליך חום',       parserFieldName: 'heat_conductor',       valueType: 'string' },
     isStockAshdod:   { label: 'מלאי אשדוד ברזל', csvHeader: 'מלאי אשדוד ברזל', parserFieldName: 'iron_is_stock_ashdod', valueType: 'bool'   },
     notes:           { label: 'הערה',        csvHeader: 'הערה',             parserFieldName: 'notes',                valueType: 'meta'   },
     source:          { label: 'מ"ד',         csvHeader: 'מ"ד',              parserFieldName: 'source',               valueType: 'meta'   },

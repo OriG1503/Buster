@@ -17,7 +17,7 @@ export const ALLOWED_COLUMNS: Record<string, Set<string>> = {
   communications: new Set(['id', 'communicationType', 'plasticId', 'ironId']),
   batteries: new Set(['id', 'sku', 'batteryType', 'batteryVersion', 'lithiumVersion', 'batteryName', 'salesPerson', 'isStockTelAviv', 'isStockRehovot']),
   storages: new Set(['id', 'storageType', 'storageVersion', 'isStockNetanya', 'isStockAfula']),
-  irons: new Set(['id', 'ironType', 'ironVersion', 'isHeatConductor', 'isStockAshdod']),
+  irons: new Set(['id', 'ironType', 'ironVersion', 'heatConductor', 'isStockAshdod']),
   plastics: new Set(['id', 'plasticType', 'batteryId']),
   cardboards: new Set(['id', 'cardboardType', 'cardboardVersion']),
 };

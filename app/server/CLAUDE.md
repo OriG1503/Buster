@@ -150,7 +150,7 @@ All entities extend `BaseEntity` (user-provided string `id`, `source` jsonb) exc
 | `CommunicationEntity` | `communications` | communicationType | OneToOne → Plastic, Iron; OneToOne ← Robot |
 | `PlasticEntity` | `plastics` | plasticType | OneToOne → Battery; OneToOne ← Communication |
 | `BatteryEntity` | `batteries` | sku, batteryType, batteryVersion, lithiumVersion | OneToOne ← Plastic |
-| `IronEntity` | `irons` | ironType, ironVersion, isHeatConductor | OneToOne ← Communication |
+| `IronEntity` | `irons` | ironType, ironVersion, heatConductor | OneToOne ← Communication |
 | `CardboardEntity` | `cardboards` | cardboardType, cardboardVersion | OneToOne ← Robot |
 | `ConflictEntity` | `conflicts` | tableName, columnName, entityId, newValue, newSource, newNotes, oldValue, oldSource, oldNotes, conflictCreator, conflictResolver, resolutionNotes, isSolved | standalone |
 

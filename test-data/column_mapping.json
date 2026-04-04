@@ -32,7 +32,7 @@
   "iron_UUID": "מזהה ברזל",
   "iron_type": "סוג ברזל",
   "iron_version": "גרסת ברזל",
-  "is_heat_conductor": "מוליך חום",
+  "heat_conductor": "מוליך חום",
   "iron_is_stock_ashdod": "מלאי אשדוד ברזל",
   "wiring_UUID": "מזהה כבל",
   "wiring_type": "סוג חיווט",
