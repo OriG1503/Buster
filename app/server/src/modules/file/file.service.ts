@@ -8,6 +8,7 @@ import * as XLSX from 'xlsx';
 import { DataProcessorService } from '../data-processor/services/data-processor.service';
 import { ProcessReportService } from '../data-processor/services/process-report.service';
 import { ParsedRow } from '../data-processor/types/parsed-row.type';
+import { ProcessResult } from '../data-processor/types/process-result.type';
 import { EntityCatalogService } from '../entity-catalog/entity-catalog.service';
 import { ACCEPTED_EXTENSIONS, UTF8_BOM } from './consts/accepted-extensions.const';
 import { TMP_DIR, UPLOADS_DIR, REPORTS_DIR } from './consts/file-storage-paths.const';
@@ -37,6 +38,18 @@ export class FileService {
 
     // Translate display-name column headers → parser snake_case names before sending to parser.
     const { buffer: translatedBuffer, unknownColumns, totalColumnCount } = this._translateCsvHeaders(csvFile.buffer);
+
+    // Reject early if any column headers are unrecognised — generate a report highlighting them
+    // in orange but skip the parser and DB entirely.
+    if (unknownColumns.length > 0) {
+      this._logger.warn(`Upload rejected — ${unknownColumns.length} unknown columns in ${csvFile.originalname}`);
+      const reportName = `${basename(csvFile.originalname, '.csv')}_report.xlsx`;
+      const emptyResult: ProcessResult = { conflictCount: 0, conflictIds: [], flyingFields: [], uploadPercentage: 0 };
+      const reportBuffer = await this._reportService.generate(uploadedFileName, emptyResult, unknownColumns);
+      await mkdir(REPORTS_DIR, { recursive: true });
+      await writeFile(`${REPORTS_DIR}/${reportName}`, reportBuffer);
+      return this._buildUploadSummary(emptyResult, reportName, unknownColumns, totalColumnCount);
+    }
 
     await mkdir(TMP_DIR, { recursive: true });
     const tmpPath = `${TMP_DIR}/${csvFile.originalname}`;

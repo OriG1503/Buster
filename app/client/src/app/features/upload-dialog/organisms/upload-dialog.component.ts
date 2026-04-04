@@ -103,9 +103,26 @@ export class UploadDialogComponent {
   }
 
   private _onUploadError(id: string, err: HttpErrorResponse): void {
-    const errorMessage = err.error?.message ?? err.message ?? 'שגיאה בהעלאת הקובץ';
+    const errorMessage = this._extractErrorMessage(err);
     this._$uploadedFiles.update((prev) =>
       prev.map((f) => f.id !== id ? f : { ...f, status: 'error', errorMessage }),
     );
+  }
+
+  private _extractErrorMessage(err: HttpErrorResponse): string {
+    const body = err.error;
+    if (typeof body === 'string') { return body; }
+    // GlobalExceptionFilter wraps HttpException.getResponse() inside body.message,
+    // so body.message may itself be an object like { message: "...", statusCode, error }.
+    const msg = body?.message;
+    if (!msg) { return 'שגיאה בהעלאת הקובץ'; }
+    if (typeof msg === 'string') { return msg; }
+    if (Array.isArray(msg)) { return msg.join(', '); }
+    if (typeof msg === 'object') {
+      const inner = (msg as Record<string, unknown>)['message'];
+      if (typeof inner === 'string') { return inner; }
+      if (Array.isArray(inner)) { return inner.join(', '); }
+    }
+    return 'שגיאה בהעלאת הקובץ';
   }
 }
