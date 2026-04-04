@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { BaseEntity } from '../../../../shared/entities/base.entity';
-import { EntityService } from '../../../../shared/types/entity-service.type';
-import { EntityServiceRegistry } from '../../../../shared/services/entity-service-registry.service';
+import { BaseEntity } from '../../../../../shared/entities/base.entity';
+import { EntityService } from '../../../../../shared/types/entity-service.type';
+import { EntityServiceRegistry } from '../../../../../shared/services/entity-service-registry.service';
 import { ValueConflictRepository } from '../value-conflict.repository';
-import { RevertValueConflictDto } from '../value-conflict/dto/revert-value-conflict.dto';
+import { RevertValueConflictDto } from '../dto/revert-value-conflict.dto';
 
 @Injectable()
 export class RevertService {
@@ -48,7 +48,7 @@ export class RevertService {
     const mostRecentResolved = await this._valueConflictRepository.findMostRecentResolved(tableName, entityId, columnName);
     const cascadedNotes = [mostRecentResolved?.resolutionNotes, resolutionNotes].filter(Boolean).join('\n');
 
-    await this._valueConflictRepository.insertRevertConflict({
+    await this._valueConflictRepository.insert({
       tableName, entityId, columnName,
       oldValue: currentValue,
       oldSource: entity.source?.[columnName] ?? null,
@@ -59,18 +59,6 @@ export class RevertService {
       resolutionNotes: cascadedNotes, isSolved: true,
     });
 
-    await this._applyFieldRevert(entityService, entityId, entity, columnName, revertValue, revertSource, revertNotes, revertSourceTime);
-    this._logger.log(`Reverted: ${tableName}/${entityId}/${columnName}`);
-
-    return this._fetchUpdatedEntity(entityService, entityId, tableName);
-  }
-
-  /** Reverts a plain field value on the entity. */
-  private async _applyFieldRevert(
-    entityService: EntityService<{ id: string }>, entityId: string, entity: BaseEntity,
-    columnName: string, revertValue: string, revertSource: string | null, revertNotes: string | null,
-    revertSourceTime: string | null,
-  ): Promise<void> {
     await entityService.update(
       entityId,
       { [columnName]: revertValue },
@@ -81,10 +69,9 @@ export class RevertService {
       { [columnName]: revertSourceTime ?? null },
       entity.sourceTime,
     );
-  }
 
-  /** Fetches the entity after the revert is applied and throws if it is missing. */
-  private async _fetchUpdatedEntity(entityService: EntityService<{ id: string }>, entityId: string, tableName: string): Promise<BaseEntity> {
+    this._logger.log(`Reverted: ${tableName}/${entityId}/${columnName}`);
+
     const updatedEntity = await entityService.findById(entityId);
 
     if (!updatedEntity) {

@@ -1,4 +1,4 @@
-import { RelationalConflictType } from '../consts/relational-conflict-type.const';
+import { RelationalConflictType } from '../relational-conflict/consts/relational-conflict-type.const';
 
 type ConflictValueEntry = {
   value: string | null;

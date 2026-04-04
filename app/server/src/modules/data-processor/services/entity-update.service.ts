@@ -4,8 +4,8 @@ import { PG_UNIQUE_VIOLATION } from '../../../shared/consts/pg-error-codes.const
 import { BaseEntity } from '../../../shared/entities/base.entity';
 import { EntityValue } from '../../../shared/types/entity-value.type';
 import { EntityService } from '../../../shared/types/entity-service.type';
-import { ValueConflictRepository } from '../../entities/conflict/value-conflict.repository';
-import { ValueConflictService } from '../../entities/conflict/services/value-conflict.service';
+import { ValueConflictRepository } from '../../entities/conflict/value-conflict/value-conflict.repository';
+import { ValueConflictService } from '../../entities/conflict/value-conflict/services/value-conflict.service';
 import { EntityResult } from '../types/entity-result.type';
 import { FkConflictService } from './fk-conflict.service';
 import { FictiveReplacementService } from '../../fictive/services/fictive-replacement.service';
