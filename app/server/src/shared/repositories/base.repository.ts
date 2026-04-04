@@ -10,7 +10,7 @@ export abstract class BaseRepository<T extends { id: TId }, TId extends string |
   }
 
   public findById(id: TId): Promise<T | null> {
-    return this._repository.findOne({ where: { id } as FindOptionsWhere<T>, loadRelationIds: true });
+    return this._repository.findOne({ where: { id } as FindOptionsWhere<T>, loadRelationIds: { relations: this._owningRelationNames() } });
   }
 
   public async insert(entity: Record<string, EntityValue>, orIgnore = false): Promise<void> {
@@ -59,21 +59,30 @@ export abstract class BaseRepository<T extends { id: TId }, TId extends string |
 
   /** Finds all entities where the given FK column equals the given value. */
   public findAllByFkValue(column: string, value: string): Promise<T[]> {
+    const owningRelations = this._owningRelationNames();
     return this._repository
       .createQueryBuilder('e')
       .where(`e."${column}" = :value`, { value })
-      .loadAllRelationIds()
+      .loadAllRelationIds({ relations: owningRelations })
       .getMany();
   }
 
   /** Finds an entity where the given FK column equals the given value, optionally excluding one id. */
   public findByFkValue(column: string, value: string, excludeId?: string): Promise<T | null> {
+    const owningRelations = this._owningRelationNames();
     return this._repository
       .createQueryBuilder('e')
       .where(`e."${column}" = :value`, { value })
       .andWhere(excludeId ? `e.id != :excludeId` : '1=1', { excludeId })
-      .loadAllRelationIds()
+      .loadAllRelationIds({ relations: owningRelations })
       .getOne();
+  }
+
+  /** Returns property names of owning-side relations (those with a physical FK column on this table). */
+  private _owningRelationNames(): string[] {
+    return this._repository.metadata.relations
+      .filter((r) => r.isOwning)
+      .map((r) => r.propertyName);
   }
 
   /**
