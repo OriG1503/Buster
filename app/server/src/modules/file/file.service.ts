@@ -36,7 +36,13 @@ export class FileService {
     await writeFile(uploadedFileName, csvFile.buffer);
 
     // Translate display-name column headers → parser snake_case names before sending to parser.
+    // Reject the file entirely if any column header is unrecognised — avoids silent 0% uploads.
     const { buffer: translatedBuffer, unknownColumns, totalColumnCount } = this._translateCsvHeaders(csvFile.buffer);
+    if (unknownColumns.length > 0) {
+      throw new BadRequestException(
+        `הקובץ נדחה — ${unknownColumns.length} עמודות לא מזוהות. יש להשתמש בתבנית הרשמית בלבד.`,
+      );
+    }
 
     await mkdir(TMP_DIR, { recursive: true });
     const tmpPath = `${TMP_DIR}/${csvFile.originalname}`;
