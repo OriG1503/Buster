@@ -8,7 +8,7 @@ import { ValueConflictRepository } from '../../entities/conflict/value-conflict.
 import { ValueConflictService } from '../../entities/conflict/services/value-conflict.service';
 import { EntityResult } from '../types/entity-result.type';
 import { FkConflictService } from './fk-conflict.service';
-import { FictiveReplacementService } from './fictive-replacement.service';
+import { FictiveReplacementService } from '../../fictive/services/fictive-replacement.service';
 
 @Injectable()
 export class EntityUpdateService {
@@ -52,7 +52,7 @@ export class EntityUpdateService {
 
     await Promise.all(
       fictiveReplacements.map(({ fkField, fictiveChildId, realChildId }) =>
-        this._fictiveReplacement.replaceChild(service, fkField, fictiveChildId, realChildId, source, notes, sourceTime),
+        this._fictiveReplacement.replaceChild(service, fkField, fictiveChildId, realChildId, { source, notes, sourceTime }),
       ),
     );
 

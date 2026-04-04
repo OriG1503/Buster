@@ -6,7 +6,7 @@ import { EntityValue } from '../../../shared/types/entity-value.type';
 import { EntityService } from '../../../shared/types/entity-service.type';
 import { EntityServiceRegistry } from '../../../shared/services/entity-service-registry.service';
 import { RelationalConflictDetectionService } from '../../entities/conflict/services/relational-conflict-detection.service';
-import { FictiveReplacementService } from './fictive-replacement.service';
+import { FictiveReplacementService } from '../../fictive/services/fictive-replacement.service';
 
 export type FictiveChildReplacement = { fkField: string; fictiveChildId: string; realChildId: string };
 export type TwoChildsResult = { conflictCount: number; fictiveReplacements: FictiveChildReplacement[] };
@@ -62,7 +62,7 @@ export class FkConflictService {
     if (!existingOwner) { return null; }
 
     if (this._fictiveReplacement.isFictive(String(existingOwner.id))) {
-      await this._fictiveReplacement.replaceOwner(service.tableName, String(existingOwner.id), id, source, notes, sourceTime);
+      await this._fictiveReplacement.replaceOwner(service.tableName, String(existingOwner.id), id, { source, notes, sourceTime });
       return null;
     }
 
