@@ -4,12 +4,11 @@ Every row uses ALL_COLS (all entity fields in one row).
 Files are designed to be uploaded sequentially to maximize conflict density.
 """
 
-import openpyxl
-from openpyxl.styles import Font, PatternFill, Alignment
+import csv
 from pathlib import Path
 import random
 
-OUT_DIR = Path(__file__).parent / "xlsx"
+OUT_DIR = Path(__file__).parent / "csv"
 OUT_DIR.mkdir(exist_ok=True)
 
 # ─── ID helpers ──────────────────────────────────────────────────────────────
@@ -217,27 +216,12 @@ def conflict_row(robot_n: int, source: str, base_row: dict, fields_to_conflict: 
 # ─── XLSX writer ─────────────────────────────────────────────────────────────
 
 def write_xlsx(filename: str, rows: list[dict]):
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = "Data"
-
-    header_fill = PatternFill("solid", fgColor="1F3864")
-    header_font = Font(bold=True, color="FFFFFF")
-
-    for ci, col in enumerate(ALL_COLS, 1):
-        cell = ws.cell(row=1, column=ci, value=col)
-        cell.fill = header_fill
-        cell.font = header_font
-        cell.alignment = Alignment(horizontal="center")
-        ws.column_dimensions[cell.column_letter].width = max(len(col) + 4, 18)
-
-    for ri, row in enumerate(rows, 2):
-        for ci, col in enumerate(ALL_COLS, 1):
-            ws.cell(row=ri, column=ci, value=row.get(col))
-
-    path = OUT_DIR / filename
-    wb.save(path)
-    print(f"  {filename}  ({len(rows)} rows)")
+    path = OUT_DIR / filename.replace('.xlsx', '.csv')
+    with open(path, 'w', newline='', encoding='utf-8-sig') as f:
+        writer = csv.DictWriter(f, fieldnames=ALL_COLS, extrasaction='ignore')
+        writer.writeheader()
+        writer.writerows([{col: row.get(col) for col in ALL_COLS} for row in rows])
+    print(f"  {path.name}  ({len(rows)} rows)")
 
 
 # ─── FILE A: Base — 200 robots, CRM source, fully populated ──────────────────

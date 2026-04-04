@@ -1,0 +1,28 @@
+﻿communication_UUID,communication_type,plastic_UUID,iron_UUID,plastic_type,battery_UUID,iron_type,iron_version,heat_conductor,iron_is_stock_ashdod,notes,source,source_time
+comm-050,CAN Bus,plast-050,iron-050,PEEK,batt-100,Cast Iron,2024,Silver,True,Verified by QA team,Comm Manufacturer,2025-12-01T09:00:00Z
+comm-051,Ethernet,plast-051,iron-051,PEEK,batt-101,Stainless,B-grade,None,False,Approved by field engineer,Comm Manufacturer,2025-11-01T08:00:00Z
+comm-052,Bluetooth 5.2,plast-052,iron-052,Nylon,batt-102,Wrought Iron,A-grade,Graphene,True,Manual correction applied,Comm Manufacturer,2026-03-25T12:00:00Z
+comm-053,LoRa,plast-053,iron-053,HDPE,batt-103,Carbon Steel,v3,None,True,Cross-referenced with supplier invoice,Comm Manufacturer,2026-02-05T16:30:00Z
+comm-054,WiFi 6,plast-054,iron-054,Polycarbonate,batt-104,Stainless,B-grade,Silver,False,,Comm Manufacturer,2025-11-15T10:30:00Z
+comm-055,CAN Bus,plast-055,iron-055,PVC,batt-105,Carbon Steel,A-grade,Silver,True,Verified by QA team,Comm Manufacturer,2026-03-25T12:00:00Z
+comm-056,5G,plast-056,iron-056,Polypropylene,batt-106,Carbon Steel,v3,Graphene,True,Automated sync — not verified,Comm Manufacturer,2026-03-25T12:00:00Z
+comm-057,Ethernet,plast-057,iron-057,HDPE,batt-107,Galvanized,v1,None,False,Manual correction applied,Comm Manufacturer,2026-03-25T12:00:00Z
+comm-058,Zigbee,plast-058,iron-058,Polycarbonate,batt-108,Steel Alloy,2025,Copper,True,Automated sync — not verified,Comm Manufacturer,2026-04-01T07:00:00Z
+comm-059,LoRa,plast-059,iron-059,PVC,batt-109,Cast Iron,2025,None,False,Pending physical verification,Comm Manufacturer,2026-04-03T15:00:00Z
+comm-060,5G,plast-060,iron-060,Nylon,batt-110,Stainless,v2,Aluminum,True,,Comm Manufacturer,2026-03-15T09:30:00Z
+comm-061,WiFi 6,plast-061,iron-061,PVC,batt-111,Wrought Iron,v1,None,False,Automated sync — not verified,Comm Manufacturer,2026-04-01T07:00:00Z
+comm-062,LoRa,plast-062,iron-062,PEEK,batt-112,Steel Alloy,v3,Graphene,False,Pending physical verification,Comm Manufacturer,2025-12-01T09:00:00Z
+comm-063,Ethernet,plast-063,iron-063,Nylon,batt-113,Cast Iron,v2,Graphene,False,Updated after site visit,Comm Manufacturer,2026-03-01T13:00:00Z
+comm-064,5G,plast-064,iron-064,Polypropylene,batt-114,Cast Iron,2025,None,False,Data from quarterly audit,Comm Manufacturer,2026-02-20T08:45:00Z
+comm-065,CAN Bus,plast-065,iron-065,ABS,batt-115,Galvanized,2024,Graphene,False,,Comm Manufacturer,2026-02-20T08:45:00Z
+comm-066,WiFi 6,plast-066,iron-066,PVC,batt-116,Carbon Steel,A-grade,Silver,False,Data from quarterly audit,Comm Manufacturer,2026-04-03T15:00:00Z
+comm-067,CAN Bus,plast-067,iron-067,PVC,batt-117,Cast Iron,v1,Thermal Paste,True,Pending physical verification,Comm Manufacturer,2026-03-25T12:00:00Z
+comm-068,CAN Bus,plast-068,iron-068,Polycarbonate,batt-118,Wrought Iron,v3,Thermal Paste,False,Approved by field engineer,Comm Manufacturer,2026-03-15T09:30:00Z
+comm-069,Bluetooth 5.2,plast-069,iron-069,Nylon,batt-119,Stainless,2025,Graphene,False,Priority item — fast track,Comm Manufacturer,2026-03-01T13:00:00Z
+comm-070,Ethernet,plast-070,iron-070,Nylon,batt-120,Stainless,v2,None,False,Data from quarterly audit,Comm Manufacturer,2026-01-20T11:00:00Z
+comm-071,Ethernet,plast-071,iron-071,Polypropylene,batt-121,Stainless,v3,Silver,True,Priority item — fast track,Comm Manufacturer,2026-02-20T08:45:00Z
+comm-072,Ethernet,plast-072,iron-072,PEEK,batt-122,Steel Alloy,v3,None,False,Data from quarterly audit,Comm Manufacturer,2026-04-03T15:00:00Z
+comm-073,CAN Bus,plast-073,iron-073,PVC,batt-123,Steel Alloy,2025,Copper,False,Verified by QA team,Comm Manufacturer,2025-12-01T09:00:00Z
+comm-074,WiFi 6,plast-074,iron-074,PEEK,batt-124,Galvanized,v1,None,False,Approved by field engineer,Comm Manufacturer,2026-03-01T13:00:00Z
+comm-075,CAN Bus,plast-075,iron-075,PEEK,batt-125,Cast Iron,v2,Aluminum,False,Priority item — fast track,Comm Manufacturer,2025-11-01T08:00:00Z
+comm-076,Zigbee,plast-076,iron-076,Polypropylene,batt-126,Galvanized,2024,Copper,False,Manual correction applied,Comm Manufacturer,2025-11-15T10:30:00Z

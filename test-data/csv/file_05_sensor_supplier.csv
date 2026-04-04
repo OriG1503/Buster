@@ -1,0 +1,27 @@
+﻿sensor_UUID,sensor_type,sensor_version,cardboard_UUID,cardboard_type,cardboard_version,notes,source,source_time
+sens-050,Radar,v2.0,cb-050,Triple Wall,2026,,Sensor Supplier,2026-04-01T07:00:00Z
+sens-051,Radar,v1.0,cb-051,Micro Flute,rev-B,,Sensor Supplier,2025-11-01T08:00:00Z
+sens-052,Ultrasonic,v1.0,cb-052,Triple Wall,2024,Manual correction applied,Sensor Supplier,2026-02-20T08:45:00Z
+sens-053,Radar,v1.0,cb-053,Kraft Brown,rev-B,Verified by QA team,Sensor Supplier,2026-04-03T15:00:00Z
+sens-054,Ultrasonic,v2.1,cb-054,Triple Wall,rev-B,,Sensor Supplier,2026-02-20T08:45:00Z
+sens-055,Ultrasonic,v4.0,cb-055,Single Wall,rev-B,Priority item — fast track,Sensor Supplier,2026-03-25T12:00:00Z
+sens-056,Camera,v1.1,cb-056,Double Wall,rev-A,Verified by QA team,Sensor Supplier,2026-01-10T14:00:00Z
+sens-057,Proximity,v1.1,cb-057,Double Wall,rev-B,Pending physical verification,Sensor Supplier,2026-02-05T16:30:00Z
+sens-058,Ultrasonic,v3.0,cb-058,Double Wall,rev-B,,Sensor Supplier,2026-01-10T14:00:00Z
+sens-059,Camera,v2.0,cb-059,Single Wall,rev-C,Cross-referenced with supplier invoice,Sensor Supplier,2025-12-01T09:00:00Z
+sens-060,Ultrasonic,v2.0,cb-060,Single Wall,rev-C,Pending physical verification,Sensor Supplier,2026-03-25T12:00:00Z
+sens-061,Radar,v1.0,cb-061,Kraft Brown,2026,,Sensor Supplier,2026-02-05T16:30:00Z
+sens-062,LiDAR,v2.0,cb-062,Triple Wall,rev-C,Data from quarterly audit,Sensor Supplier,2026-04-03T15:00:00Z
+sens-063,Infrared,v1.1,cb-063,Micro Flute,2024,,Sensor Supplier,2025-12-01T09:00:00Z
+sens-064,LiDAR,v2.0,cb-064,Single Wall,2026,Approved by field engineer,Sensor Supplier,2026-02-20T08:45:00Z
+sens-065,LiDAR,v3.0,cb-065,Micro Flute,rev-C,Cross-referenced with supplier invoice,Sensor Supplier,2026-03-25T12:00:00Z
+sens-066,Proximity,v1.0,cb-066,Micro Flute,rev-A,,Sensor Supplier,2025-12-01T09:00:00Z
+sens-067,Radar,v1.1,cb-067,Single Wall,rev-B,Data from quarterly audit,Sensor Supplier,2026-02-05T16:30:00Z
+sens-068,Radar,v2.0,cb-068,Kraft Brown,rev-C,,Sensor Supplier,2026-03-01T13:00:00Z
+sens-069,LiDAR,v3.0,cb-069,Triple Wall,rev-C,Verified by QA team,Sensor Supplier,2026-02-20T08:45:00Z
+sens-070,LiDAR,v1.1,cb-070,Triple Wall,2025,Priority item — fast track,Sensor Supplier,2026-02-05T16:30:00Z
+sens-071,Ultrasonic,v2.0,cb-071,Triple Wall,2026,Automated sync — not verified,Sensor Supplier,2025-11-15T10:30:00Z
+sens-072,Infrared,v3.1,cb-072,Triple Wall,rev-C,Imported from legacy system,Sensor Supplier,2025-11-15T10:30:00Z
+sens-073,Thermal,v1.1,cb-073,Triple Wall,2024,Imported from legacy system,Sensor Supplier,2026-04-03T15:00:00Z
+sens-074,LiDAR,v1.0,cb-074,Kraft Brown,2025,Cross-referenced with supplier invoice,Sensor Supplier,2025-11-01T08:00:00Z
+sens-075,Ultrasonic,v3.1,cb-075,Kraft Brown,rev-C,Pending physical verification,Sensor Supplier,2026-03-01T13:00:00Z

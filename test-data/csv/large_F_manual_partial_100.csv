@@ -1,0 +1,101 @@
+﻿robot_UUID,cardboard_UUID,sensor_UUID,communication_UUID,wiring_UUID,carrier,is_purchased,robot_district,robot_store_name,robot_is_stock_ashdod,robot_is_stock_tel_aviv,robot_is_stock_rehovot,robot_is_stock_netanya,robot_is_stock_afula,cardboard_type,cardboard_version,sensor_type,sensor_version,communication_type,plastic_UUID,iron_UUID,plastic_type,battery_UUID,sku,battery_type,battery_version,lithium_version,battery_name,sales_person,battery_is_stock_tel_aviv,battery_is_stock_rehovot,iron_type,iron_version,heat_conductor,iron_is_stock_ashdod,wiring_type,wiring_district,wiring_store_name,storage_UUID,storage_type,storage_version,storage_is_stock_netanya,storage_is_stock_afula,notes,source,source_time
+robot-0301,cb-0301,sens-0301,comm-0301,wir-0301,DSV,False,Sharon,Branch A,True,False,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Manual,2026-03-15T14:00:00Z
+robot-0302,cb-0302,sens-0302,comm-0302,wir-0302,ZIM,False,Center,Depot South,True,True,True,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Stock count differs from system — recount ordered,Manual,2026-03-15T14:00:00Z
+robot-0303,cb-0303,sens-0303,comm-0303,wir-0303,ZIM,True,Negev,Field Store,False,False,False,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Data from quarterly audit,Manual,2026-03-15T14:00:00Z
+robot-0304,cb-0304,sens-0304,comm-0304,wir-0304,UPS,False,Jezreel Valley,Depot North,True,False,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Manual correction applied by field engineer,Manual,2026-03-15T14:00:00Z
+robot-0305,cb-0305,sens-0305,comm-0305,wir-0305,ZIM,True,Negev,Logistics Hub,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Manual,2026-03-15T14:00:00Z
+robot-0306,cb-0306,sens-0306,comm-0306,wir-0306,DSV,False,Sharon,Depot North,,,True,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Manual,2026-03-15T14:00:00Z
+robot-0307,cb-0307,sens-0307,comm-0307,wir-0307,DB Schenker,False,Jerusalem,Depot North,,True,True,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Manual,2026-03-15T14:00:00Z
+robot-0308,cb-0308,sens-0308,comm-0308,wir-0308,TNT,False,Tel Aviv,Field Store,True,,True,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Cross-referenced with supplier invoice,Manual,2026-03-15T14:00:00Z
+robot-0309,cb-0309,sens-0309,comm-0309,wir-0309,DHL,True,Tel Aviv,HQ Store,False,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Approved by field inspector,Manual,2026-03-15T14:00:00Z
+robot-0310,cb-0310,sens-0310,comm-0310,wir-0310,DHL,True,South,Depot South,,False,False,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Data from quarterly audit,Manual,2026-03-15T14:00:00Z
+robot-0311,cb-0311,sens-0311,comm-0311,wir-0311,ZIM,False,Jerusalem,Branch A,True,True,False,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Approved by field inspector,Manual,2026-03-15T14:00:00Z
+robot-0312,cb-0312,sens-0312,comm-0312,wir-0312,DB Schenker,False,South,Factory Floor,True,False,True,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Data from quarterly audit,Manual,2026-03-15T14:00:00Z
+robot-0313,cb-0313,sens-0313,comm-0313,wir-0313,FedEx,False,Center,Logistics Hub,True,,False,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Automated sync — not yet verified,Manual,2026-03-15T14:00:00Z
+robot-0314,cb-0314,sens-0314,comm-0314,wir-0314,FedEx,False,Jezreel Valley,Logistics Hub,False,True,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Approved by field inspector,Manual,2026-03-15T14:00:00Z
+robot-0315,cb-0315,sens-0315,comm-0315,wir-0315,UPS,True,Sharon,Main Warehouse,,,False,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Discrepancy noted — awaiting supplier confirmation,Manual,2026-03-15T14:00:00Z
+robot-0316,cb-0316,sens-0316,comm-0316,wir-0316,Israel Post,False,Tel Aviv,Depot South,True,True,False,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Stock count differs from system — recount ordered,Manual,2026-03-15T14:00:00Z
+robot-0317,cb-0317,sens-0317,comm-0317,wir-0317,ZIM,True,Haifa Bay,Factory Floor,False,True,False,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Imported from legacy system — cross-check pending,Manual,2026-03-15T14:00:00Z
+robot-0318,cb-0318,sens-0318,comm-0318,wir-0318,Israel Post,True,North,Logistics Hub,True,False,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Imported from legacy system — cross-check pending,Manual,2026-03-15T14:00:00Z
+robot-0319,cb-0319,sens-0319,comm-0319,wir-0319,ZIM,False,Galilee,Sub-Depot East,,False,True,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Manual,2026-03-15T14:00:00Z
+robot-0320,cb-0320,sens-0320,comm-0320,wir-0320,DHL,True,Center,Depot North,False,,True,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Approved by field inspector,Manual,2026-03-15T14:00:00Z
+robot-0321,cb-0321,sens-0321,comm-0321,wir-0321,DSV,True,South,Main Warehouse,False,True,False,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Updated after site visit,Manual,2026-03-15T14:00:00Z
+robot-0322,cb-0322,sens-0322,comm-0322,wir-0322,DB Schenker,True,Jezreel Valley,Sub-Depot East,,,False,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Manual,2026-03-15T14:00:00Z
+robot-0323,cb-0323,sens-0323,comm-0323,wir-0323,FedEx,False,North,Field Store,False,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Manual,2026-03-15T14:00:00Z
+robot-0324,cb-0324,sens-0324,comm-0324,wir-0324,TNT,True,Center,Main Warehouse,True,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Manual,2026-03-15T14:00:00Z
+robot-0325,cb-0325,sens-0325,comm-0325,wir-0325,FedEx,True,Galilee,Sub-Depot East,False,,False,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Automated sync — not yet verified,Manual,2026-03-15T14:00:00Z
+robot-0326,cb-0326,sens-0326,comm-0326,wir-0326,Kuehne+Nagel,False,Tel Aviv,Branch A,False,,True,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Manual,2026-03-15T14:00:00Z
+robot-0327,cb-0327,sens-0327,comm-0327,wir-0327,Maersk,True,Negev,Depot South,False,False,True,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Discrepancy noted — awaiting supplier confirmation,Manual,2026-03-15T14:00:00Z
+robot-0328,cb-0328,sens-0328,comm-0328,wir-0328,Israel Post,False,Jerusalem,Field Store,False,False,False,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Updated after production line change,Manual,2026-03-15T14:00:00Z
+robot-0329,cb-0329,sens-0329,comm-0329,wir-0329,Kuehne+Nagel,False,Tel Aviv,Branch A,,True,True,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Imported from legacy system — cross-check pending,Manual,2026-03-15T14:00:00Z
+robot-0330,cb-0330,sens-0330,comm-0330,wir-0330,Maersk,False,Negev,Sub-Depot East,False,False,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Updated after production line change,Manual,2026-03-15T14:00:00Z
+,,,,wir-0331,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Ethernet Cat6,Assembly Hall,Main Store,stor-0331,SSD,v2.0,False,True,,Manual,2026-03-15T14:00:00Z
+,,,,wir-0332,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Fiber Optic,QA Zone,Wiring Hub,stor-0332,RAID Array,v3.0,False,False,Updated after production line change,Manual,2026-03-15T14:00:00Z
+,,,,wir-0333,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,AC 220V,Industrial Zone B,Main Store,stor-0333,eMMC,v3.0,False,True,Stock count differs from system — recount ordered,Manual,2026-03-15T14:00:00Z
+,,,,wir-0334,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,DeviceNet,Industrial Zone A,Panel Shop,stor-0334,Flash,Lite,True,False,Manual correction applied by field engineer,Manual,2026-03-15T14:00:00Z
+,,,,wir-0335,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,12V DC,QA Zone,Cable Depot,stor-0335,SSD,Pro,False,False,Updated after site visit,Manual,2026-03-15T14:00:00Z
+,,,,wir-0336,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,CAN Bus,Factory District,Assembly Line Store,stor-0336,Flash,v3.0,True,False,Emergency patch — revert if invalid,Manual,2026-03-15T14:00:00Z
+,,,,wir-0337,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,CAN Bus,Port Area,Electrical Room,stor-0337,SD Card,Lite,False,False,Emergency patch — revert if invalid,Manual,2026-03-15T14:00:00Z
+,,,,wir-0338,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,48V DC,Test Floor,Component Store,stor-0338,RAID Array,Pro,False,True,Data validated against shipment manifest,Manual,2026-03-15T14:00:00Z
+,,,,wir-0339,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,CAN Bus,Industrial Zone B,Component Store,stor-0339,SD Card,Enterprise,False,True,Approved by field inspector,Manual,2026-03-15T14:00:00Z
+,,,,wir-0340,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,48V DC,Assembly Hall,Wiring Hub,stor-0340,Industrial SSD,Pro,True,True,Stock count differs from system — recount ordered,Manual,2026-03-15T14:00:00Z
+,,,,wir-0341,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,48V DC,Test Floor,Component Store,stor-0341,eMMC,Standard,True,True,Pending physical verification,Manual,2026-03-15T14:00:00Z
+,,,,wir-0342,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Ethernet Cat6,Port Area,Cable Depot,stor-0342,Tape Archive,v2.0,False,False,,Manual,2026-03-15T14:00:00Z
+,,,,wir-0343,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,24V DC,Industrial Zone B,Cable Depot,stor-0343,SD Card,v1.0,True,True,,Manual,2026-03-15T14:00:00Z
+,,,,wir-0344,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,AC 220V,Industrial Zone B,Electrical Room,stor-0344,Flash,Lite,False,True,,Manual,2026-03-15T14:00:00Z
+,,,,wir-0345,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Fiber Optic,Factory District,Wiring Hub,stor-0345,Tape Archive,Lite,False,True,,Manual,2026-03-15T14:00:00Z
+,,,,wir-0346,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,AC 220V,Port Area,Wiring Hub,stor-0346,NVMe,2025,True,True,Emergency patch — revert if invalid,Manual,2026-03-15T14:00:00Z
+,,,,wir-0347,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,RS-485,Port Area,Component Store,stor-0347,NVMe,2024,False,False,Automated sync — not yet verified,Manual,2026-03-15T14:00:00Z
+,,,,wir-0348,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,12V DC,Industrial Zone B,Main Store,stor-0348,Industrial SSD,Lite,True,False,Updated after site visit,Manual,2026-03-15T14:00:00Z
+,,,,wir-0349,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,24V DC,Industrial Zone B,Main Store,stor-0349,SD Card,v1.0,True,False,Discrepancy noted — awaiting supplier confirmation,Manual,2026-03-15T14:00:00Z
+,,,,wir-0350,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,48V DC,Factory District,Main Store,stor-0350,eMMC,Enterprise,True,True,Priority item — fast tracked,Manual,2026-03-15T14:00:00Z
+,,,comm-0351,,,,,,,,,,,,,,,Zigbee,plast-0351,,Ultem,batt-0351,MAN-00351,Solid State,gen2,NCA-1,RoboPower,Yossi Bar,False,False,,,,,,,,,,,,,Approved by field inspector,Manual,2026-03-15T14:00:00Z
+,,,comm-0352,,,,,,,,,,,,,,,Zigbee,plast-0352,,Polypropylene,batt-0352,MAN-00352,Zinc-Air,gen3,LFP-1,HeavyDuty,Roi Shapiro,True,True,,,,,,,,,,,,,Updated after site visit,Manual,2026-03-15T14:00:00Z
+,,,comm-0353,,,,,,,,,,,,,,,Ethernet,plast-0353,,PTFE,batt-0353,MAN-00353,Li-Ion,2024-A,LFP-2,SlimPack,Benny Ziv,True,True,,,,,,,,,,,,,Verified by QA team,Manual,2026-03-15T14:00:00Z
+,,,comm-0354,,,,,,,,,,,,,,,CAN Bus,plast-0354,,Nylon,batt-0354,MAN-00354,LiFePO4,gen3,NMC-2,MegaCell,Roi Shapiro,False,True,,,,,,,,,,,,,Automated sync — not yet verified,Manual,2026-03-15T14:00:00Z
+,,,comm-0355,,,,,,,,,,,,,,,Profinet,plast-0355,,Nylon,batt-0355,MAN-00355,NiMH,2024-A,LiV3,FlexCell,Maya Dar,False,True,,,,,,,,,,,,,Updated after site visit,Manual,2026-03-15T14:00:00Z
+,,,comm-0356,,,,,,,,,,,,,,,CAN Bus,plast-0356,,Nylon,batt-0356,MAN-00356,Solid State,2026-A,NCA-1,RoboPower,Eran Peretz,False,True,,,,,,,,,,,,,Updated after production line change,Manual,2026-03-15T14:00:00Z
+,,,comm-0357,,,,,,,,,,,,,,,5G,plast-0357,,Polypropylene,batt-0357,MAN-00357,Li-Polymer,gen1,LFP-1,UltraCell,Dana Mizrahi,False,False,,,,,,,,,,,,,Automated sync — not yet verified,Manual,2026-03-15T14:00:00Z
+,,,comm-0358,,,,,,,,,,,,,,,Profinet,plast-0358,,POM,batt-0358,MAN-00358,Sodium-Ion,2024-B,LiV4,DuraPack,Hila Gross,False,False,,,,,,,,,,,,,Discrepancy noted — awaiting supplier confirmation,Manual,2026-03-15T14:00:00Z
+,,,comm-0359,,,,,,,,,,,,,,,Profinet,plast-0359,,Nylon,batt-0359,MAN-00359,Li-Polymer,2024-B,NCA-1,InduCell,Yossi Bar,True,False,,,,,,,,,,,,,,Manual,2026-03-15T14:00:00Z
+,,,comm-0360,,,,,,,,,,,,,,,CAN Bus,plast-0360,,PVC,batt-0360,MAN-00360,Li-Polymer,2024-B,LiV3,RoboPower,Eran Peretz,False,True,,,,,,,,,,,,,Approved by field inspector,Manual,2026-03-15T14:00:00Z
+,,,comm-0361,,,,,,,,,,,,,,,Profinet,plast-0361,,Polypropylene,batt-0361,MAN-00361,Li-Polymer,gen1,NCA-1,UltraCell,Noa Klein,False,True,,,,,,,,,,,,,Manual correction applied by field engineer,Manual,2026-03-15T14:00:00Z
+,,,comm-0362,,,,,,,,,,,,,,,LoRa,plast-0362,,PVC,batt-0362,MAN-00362,Zinc-Air,gen3,LiV2,FlexCell,Hila Gross,True,True,,,,,,,,,,,,,Updated after production line change,Manual,2026-03-15T14:00:00Z
+,,,comm-0363,,,,,,,,,,,,,,,CAN Bus,plast-0363,,POM,batt-0363,MAN-00363,Lead Acid,gen3,LiV4,InduCell,Eran Peretz,True,True,,,,,,,,,,,,,Imported from legacy system — cross-check pending,Manual,2026-03-15T14:00:00Z
+,,,comm-0364,,,,,,,,,,,,,,,Ethernet,plast-0364,,PEEK,batt-0364,MAN-00364,Li-Polymer,2024-B,NMC-1,InduCell,Yossi Bar,False,False,,,,,,,,,,,,,Data from quarterly audit,Manual,2026-03-15T14:00:00Z
+,,,comm-0365,,,,,,,,,,,,,,,Ethernet,plast-0365,,Polycarbonate,batt-0365,MAN-00365,NiMH,2026-A,LFP-1,HeavyDuty,Yossi Bar,False,True,,,,,,,,,,,,,Approved by field inspector,Manual,2026-03-15T14:00:00Z
+,,,comm-0366,,,,,,,,,,,,,,,Ethernet,plast-0366,,PEEK,batt-0366,MAN-00366,NiMH,2025-B,LFP-2,DuraPack,Noa Klein,False,True,,,,,,,,,,,,,Stock count differs from system — recount ordered,Manual,2026-03-15T14:00:00Z
+,,,comm-0367,,,,,,,,,,,,,,,Zigbee,plast-0367,,Polypropylene,batt-0367,MAN-00367,Li-Ion,2025-A,LiV2,DuraPack,Yossi Bar,True,False,,,,,,,,,,,,,,Manual,2026-03-15T14:00:00Z
+,,,comm-0368,,,,,,,,,,,,,,,Zigbee,plast-0368,,Nylon,batt-0368,MAN-00368,Li-Polymer,gen3,LiV1,RoboPower,Roi Shapiro,False,False,,,,,,,,,,,,,Imported from legacy system — cross-check pending,Manual,2026-03-15T14:00:00Z
+,,,comm-0369,,,,,,,,,,,,,,,Modbus,plast-0369,,Nylon,batt-0369,MAN-00369,Sodium-Ion,2025-B,LiV2,FlexCell,Benny Ziv,True,False,,,,,,,,,,,,,,Manual,2026-03-15T14:00:00Z
+,,,comm-0370,,,,,,,,,,,,,,,OPC-UA,plast-0370,,PTFE,batt-0370,MAN-00370,Li-Polymer,gen2,LiV1,MegaCell,Benny Ziv,False,False,,,,,,,,,,,,,,Manual,2026-03-15T14:00:00Z
+,cb-0371,sens-0371,,,,,,,,,,,,Double Wall,rev-A,Ultrasonic,v3.1,,,,,,,,,,,,,,,,,,,,,,,,,,Cross-referenced with supplier invoice,Manual,2026-03-15T14:00:00Z
+,cb-0372,sens-0372,,,,,,,,,,,,Triple Wall,2026,Magnetometer,v2.0,,,,,,,,,,,,,,,,,,,,,,,,,,Manual correction applied by field engineer,Manual,2026-03-15T14:00:00Z
+,cb-0373,sens-0373,,,,,,,,,,,,Triple Wall,2024,Accelerometer,v2.0,,,,,,,,,,,,,,,,,,,,,,,,,,Pending physical verification,Manual,2026-03-15T14:00:00Z
+,cb-0374,sens-0374,,,,,,,,,,,,Micro Flute,2026,LiDAR,v4.1,,,,,,,,,,,,,,,,,,,,,,,,,,Priority item — fast tracked,Manual,2026-03-15T14:00:00Z
+,cb-0375,sens-0375,,,,,,,,,,,,Micro Flute,rev-B,Thermal,v2.1,,,,,,,,,,,,,,,,,,,,,,,,,,Imported from legacy system — cross-check pending,Manual,2026-03-15T14:00:00Z
+,cb-0376,sens-0376,,,,,,,,,,,,White Coated,2025,Infrared,v2.0,,,,,,,,,,,,,,,,,,,,,,,,,,Verified by QA team,Manual,2026-03-15T14:00:00Z
+,cb-0377,sens-0377,,,,,,,,,,,,White Coated,2024,Ultrasonic,v4.0,,,,,,,,,,,,,,,,,,,,,,,,,,Priority item — fast tracked,Manual,2026-03-15T14:00:00Z
+,cb-0378,sens-0378,,,,,,,,,,,,Triple Wall,rev-C,Magnetometer,v2.1,,,,,,,,,,,,,,,,,,,,,,,,,,Updated after production line change,Manual,2026-03-15T14:00:00Z
+,cb-0379,sens-0379,,,,,,,,,,,,Micro Flute,2025,Camera,v4.0,,,,,,,,,,,,,,,,,,,,,,,,,,Discrepancy noted — awaiting supplier confirmation,Manual,2026-03-15T14:00:00Z
+,cb-0380,sens-0380,,,,,,,,,,,,Kraft Brown,2026-Q1,Thermal,v3.1,,,,,,,,,,,,,,,,,,,,,,,,,,Discrepancy noted — awaiting supplier confirmation,Manual,2026-03-15T14:00:00Z
+,cb-0381,sens-0381,,,,,,,,,,,,Double Wall,rev-C,Proximity,v4.1,,,,,,,,,,,,,,,,,,,,,,,,,,Updated after site visit,Manual,2026-03-15T14:00:00Z
+,cb-0382,sens-0382,,,,,,,,,,,,Kraft Brown,2026-Q1,LiDAR,v5.0,,,,,,,,,,,,,,,,,,,,,,,,,,Verified by QA team,Manual,2026-03-15T14:00:00Z
+,cb-0383,sens-0383,,,,,,,,,,,,Recycled,rev-B,Proximity,v3.0,,,,,,,,,,,,,,,,,,,,,,,,,,Imported from legacy system — cross-check pending,Manual,2026-03-15T14:00:00Z
+,cb-0384,sens-0384,,,,,,,,,,,,Kraft Brown,rev-C,Gyroscope,v2.1,,,,,,,,,,,,,,,,,,,,,,,,,,,Manual,2026-03-15T14:00:00Z
+,cb-0385,sens-0385,,,,,,,,,,,,White Coated,2026-Q1,LiDAR,v5.0,,,,,,,,,,,,,,,,,,,,,,,,,,Updated after site visit,Manual,2026-03-15T14:00:00Z
+,cb-0386,sens-0386,,,,,,,,,,,,Micro Flute,rev-B,Infrared,v2.1,,,,,,,,,,,,,,,,,,,,,,,,,,Manual correction applied by field engineer,Manual,2026-03-15T14:00:00Z
+,cb-0387,sens-0387,,,,,,,,,,,,Double Wall,2026,LiDAR,v5.0,,,,,,,,,,,,,,,,,,,,,,,,,,Discrepancy noted — awaiting supplier confirmation,Manual,2026-03-15T14:00:00Z
+,cb-0388,sens-0388,,,,,,,,,,,,Triple Wall,rev-B,Camera,v1.0,,,,,,,,,,,,,,,,,,,,,,,,,,Imported from legacy system — cross-check pending,Manual,2026-03-15T14:00:00Z
+,cb-0389,sens-0389,,,,,,,,,,,,Double Wall,2025,Camera,v5.0,,,,,,,,,,,,,,,,,,,,,,,,,,Data from quarterly audit,Manual,2026-03-15T14:00:00Z
+,cb-0390,sens-0390,,,,,,,,,,,,White Coated,2025,Infrared,v4.1,,,,,,,,,,,,,,,,,,,,,,,,,,Stock count differs from system — recount ordered,Manual,2026-03-15T14:00:00Z
+,,,,,Maersk,,Negev,,,,,,,,,Proximity,v4.0,,,,,,,Sodium-Ion,,,,,,,,,,,,,,,NVMe,,,,Flying entity — no UUID provided,Manual,2026-03-15T14:00:00Z
+,,,,,ZIM,,Center,,,,,,,,,Ultrasonic,v4.1,,,,,,,Lead Acid,,,,,,,,,,,,,,,Industrial SSD,,,,Flying entity — no UUID provided,Manual,2026-03-15T14:00:00Z
+,,,,,ZIM,,North,,,,,,,,,Magnetometer,v2.0,,,,,,,Sodium-Ion,,,,,,,,,,,,,,,Industrial SSD,,,,Flying entity — no UUID provided,Manual,2026-03-15T14:00:00Z
+,,,,,UPS,,South,,,,,,,,,Accelerometer,v3.1,,,,,,,Li-Ion,,,,,,,,,,,,,,,Tape Archive,,,,Flying entity — no UUID provided,Manual,2026-03-15T14:00:00Z
+,,,,,Israel Post,,Tel Aviv,,,,,,,,,Radar,v1.1,,,,,,,Li-Polymer,,,,,,,,,,,,,,,RAID Array,,,,Flying entity — no UUID provided,Manual,2026-03-15T14:00:00Z
+,,,,,ZIM,,Galilee,,,,,,,,,Gyroscope,v2.0,,,,,,,Li-Ion,,,,,,,,,,,,,,,RAID Array,,,,Flying entity — no UUID provided,Manual,2026-03-15T14:00:00Z
+,,,,,FedEx,,Jezreel Valley,,,,,,,,,Gyroscope,v3.0,,,,,,,Li-Polymer,,,,,,,,,,,,,,,Industrial SSD,,,,Flying entity — no UUID provided,Manual,2026-03-15T14:00:00Z
+,,,,,DB Schenker,,Haifa Bay,,,,,,,,,Camera,v3.0,,,,,,,LiFePO4,,,,,,,,,,,,,,,Flash,,,,Flying entity — no UUID provided,Manual,2026-03-15T14:00:00Z
+,,,,,TNT,,Tel Aviv,,,,,,,,,Gyroscope,v4.1,,,,,,,Sodium-Ion,,,,,,,,,,,,,,,RAID Array,,,,Flying entity — no UUID provided,Manual,2026-03-15T14:00:00Z
+,,,,,DHL,,North,,,,,,,,,Camera,v3.1,,,,,,,Li-Ion,,,,,,,,,,,,,,,SD Card,,,,Flying entity — no UUID provided,Manual,2026-03-15T14:00:00Z

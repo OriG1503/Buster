@@ -7,13 +7,12 @@ Generates 10 test xlsx files for the Buster app covering:
 - Varying sources, sourceTimes, notes
 """
 
-import openpyxl
-from openpyxl.styles import Font, PatternFill, Alignment
+import csv
 from pathlib import Path
 from typing import Optional
 import random
 
-OUT_DIR = Path(__file__).parent / "xlsx"
+OUT_DIR = Path(__file__).parent / "csv"
 OUT_DIR.mkdir(exist_ok=True)
 
 # ─── Shared ID pools ─────────────────────────────────────────────────────────
@@ -146,27 +145,11 @@ WIRING_STORAGE_COLS = [
 # ─── Writer helper ────────────────────────────────────────────────────────────
 
 def write_xlsx(filename: str, cols: list, rows: list[dict]):
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = "Data"
-
-    header_fill = PatternFill("solid", fgColor="1F3864")
-    header_font = Font(bold=True, color="FFFFFF")
-
-    for ci, col in enumerate(cols, 1):
-        cell = ws.cell(row=1, column=ci, value=col)
-        cell.fill = header_fill
-        cell.font = header_font
-        cell.alignment = Alignment(horizontal="center")
-        ws.column_dimensions[cell.column_letter].width = max(len(col) + 4, 16)
-
-    for ri, row in enumerate(rows, 2):
-        for ci, col in enumerate(cols, 1):
-            val = row.get(col)
-            ws.cell(row=ri, column=ci, value=val)
-
-    path = OUT_DIR / filename
-    wb.save(path)
+    path = OUT_DIR / filename.replace('.xlsx', '.csv')
+    with open(path, 'w', newline='', encoding='utf-8-sig') as f:
+        writer = csv.DictWriter(f, fieldnames=cols, extrasaction='ignore')
+        writer.writeheader()
+        writer.writerows([{col: row.get(col) for col in cols} for row in rows])
     print(f"  Saved: {path.name}  ({len(rows)} rows)")
 
 

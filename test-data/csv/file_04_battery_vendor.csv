@@ -1,0 +1,29 @@
+﻿battery_UUID,sku,battery_type,battery_version,lithium_version,battery_name,sales_person,battery_is_stock_tel_aviv,battery_is_stock_rehovot,notes,source,source_time
+batt-050,BV-SKU-0050,LiFePO4,gen3,LiV1,InduCell,Dana Mizrahi,False,True,Updated after site visit,Battery Vendor,2025-11-15T10:30:00Z
+batt-051,BV-SKU-0051,Li-Ion,2024-A,NMC-1,MegaCell,Eran Peretz,True,True,Automated sync — not verified,Battery Vendor,2026-03-15T09:30:00Z
+batt-052,BV-SKU-0052,NiMH,gen3,LFP-1,PowerCell B,Eran Peretz,True,False,Manual correction applied,Battery Vendor,2025-11-01T08:00:00Z
+batt-053,BV-SKU-0053,Lead Acid,gen3,LFP-1,MegaCell,Tamar Levi,True,False,Pending physical verification,Battery Vendor,2026-04-01T07:00:00Z
+batt-054,BV-SKU-0054,Lead Acid,gen3,LiV1,HeavyDuty,Roi Shapiro,False,False,Automated sync — not verified,Battery Vendor,2026-01-10T14:00:00Z
+batt-055,BV-SKU-0055,LiFePO4,gen2,LiV4,MegaCell,Avi Cohen,False,True,Pending physical verification,Battery Vendor,2026-03-25T12:00:00Z
+batt-056,BV-SKU-0056,Lead Acid,gen3,LFP-1,HeavyDuty,Roi Shapiro,True,False,Cross-referenced with supplier invoice,Battery Vendor,2026-03-25T12:00:00Z
+batt-057,BV-SKU-0057,NiMH,2024-A,LiV4,PowerCell B,Tamar Levi,False,False,,Battery Vendor,2025-11-01T08:00:00Z
+batt-058,BV-SKU-0058,Li-Ion,gen1,LiV4,InduCell,Yossi Bar,False,False,Imported from legacy system,Battery Vendor,2026-04-01T07:00:00Z
+batt-059,BV-SKU-0059,LiFePO4,gen1,LiV4,PowerCell B,Noa Klein,False,False,Imported from legacy system,Battery Vendor,2026-02-05T16:30:00Z
+batt-060,BV-SKU-0060,Solid State,2025-A,NMC-1,MegaCell,Noa Klein,True,False,Updated after site visit,Battery Vendor,2025-11-01T08:00:00Z
+batt-061,BV-SKU-0061,Lead Acid,gen2,LiV3,HeavyDuty,Roi Shapiro,True,True,Approved by field engineer,Battery Vendor,2025-12-01T09:00:00Z
+batt-062,BV-SKU-0062,NiMH,2024-A,LiV1,PowerCell A,Yossi Bar,True,False,,Battery Vendor,2026-04-01T07:00:00Z
+batt-063,BV-SKU-0063,NiMH,gen1,LiV3,MegaCell,Yossi Bar,True,False,Priority item — fast track,Battery Vendor,2026-04-01T07:00:00Z
+batt-064,BV-SKU-0064,Li-Ion,gen3,NMC-1,PowerCell B,Dana Mizrahi,False,True,Pending physical verification,Battery Vendor,2026-02-20T08:45:00Z
+batt-065,BV-SKU-0065,Li-Polymer,gen2,LiV3,RoboPower,Avi Cohen,False,True,Data from quarterly audit,Battery Vendor,2025-12-01T09:00:00Z
+batt-066,BV-SKU-0066,NiMH,gen3,LiV3,RoboPower,Avi Cohen,False,True,Cross-referenced with supplier invoice,Battery Vendor,2026-01-10T14:00:00Z
+batt-067,BV-SKU-0067,Li-Ion,gen1,LiV1,PowerCell A,Noa Klein,True,True,Priority item — fast track,Battery Vendor,2025-11-01T08:00:00Z
+batt-068,BV-SKU-0068,Li-Polymer,2024-A,NMC-1,PowerCell B,Yossi Bar,True,True,Automated sync — not verified,Battery Vendor,2026-01-20T11:00:00Z
+batt-069,BV-SKU-0069,Solid State,2025-A,LiV2,UltraCell,Tamar Levi,True,False,Cross-referenced with supplier invoice,Battery Vendor,2026-03-01T13:00:00Z
+batt-070,BV-SKU-0070,Li-Ion,gen2,LiV4,UltraCell,Tamar Levi,False,True,Data from quarterly audit,Battery Vendor,2026-01-10T14:00:00Z
+batt-071,BV-SKU-0071,Li-Ion,gen1,LiV3,MegaCell,Tamar Levi,True,True,Cross-referenced with supplier invoice,Battery Vendor,2026-01-20T11:00:00Z
+batt-072,BV-SKU-0072,LiFePO4,gen3,LiV1,MegaCell,Roi Shapiro,True,False,,Battery Vendor,2026-04-01T07:00:00Z
+batt-073,BV-SKU-0073,Lead Acid,2025-A,LiV1,UltraCell,Dana Mizrahi,True,False,Manual correction applied,Battery Vendor,2026-03-25T12:00:00Z
+batt-074,BV-SKU-0074,LiFePO4,gen3,LiV3,InduCell,Dana Mizrahi,False,False,Automated sync — not verified,Battery Vendor,2026-01-10T14:00:00Z
+batt-075,BV-SKU-0075,Lead Acid,2025-A,LFP-1,MegaCell,Yossi Bar,False,False,Updated after site visit,Battery Vendor,2026-01-20T11:00:00Z
+batt-076,BV-SKU-0076,Lead Acid,2025-A,LiV2,PowerCell A,Dana Mizrahi,True,False,,Battery Vendor,2025-11-01T08:00:00Z
+batt-077,BV-SKU-0077,LiFePO4,2025-A,NMC-2,UltraCell,Roi Shapiro,False,False,Cross-referenced with supplier invoice,Battery Vendor,2026-01-10T14:00:00Z
