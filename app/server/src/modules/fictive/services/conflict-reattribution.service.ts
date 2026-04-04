@@ -1,9 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { FindOptionsWhere } from 'typeorm';
 import { ValueConflictRepository } from '../../entities/conflict/value-conflict.repository';
 import { RelationalConflictRepository } from '../../entities/conflict/relational-conflict.repository';
-import { ValueConflictEntity } from '../../entities/conflict/entities/value-conflict.entity';
-import { RelationalConflictEntity } from '../../entities/conflict/entities/relational-conflict.entity';
 
 @Injectable()
 export class ConflictReattributionService {
