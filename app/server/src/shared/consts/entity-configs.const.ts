@@ -88,7 +88,7 @@ export const ROBOT_CONFIG = {
     cardboardId:     { label: 'מזהה קרטון',    csvHeader: 'מזהה קרטון',           parserFieldName: 'cardboard_UUID',          valueType: 'fk'     },
     sensorId:        { label: 'מזהה חיישן',    csvHeader: 'מזהה חיישן',           parserFieldName: 'sensor_UUID',             valueType: 'fk'     },
     communicationId: { label: 'מזהה תקשורת',   csvHeader: 'מזהה תקשורת',          parserFieldName: 'communication_UUID',      valueType: 'fk'     },
-    wiringId:        { label: 'מזהה כבל',      csvHeader: 'מזהה כבל',             parserFieldName: 'wiring_UUID',             valueType: 'fk'     },
+    wiringId:        { label: 'מזהה חיווט',      csvHeader: 'מזהה חיווט',             parserFieldName: 'wiring_UUID',             valueType: 'fk'     },
     carrier:         { label: 'ספק שילוח',     csvHeader: 'ספק שילוח',            parserFieldName: 'carrier',                 valueType: 'string' },
     district:        { label: 'מחוז רובוט',          csvHeader: 'מחוז רובוט',           parserFieldName: 'robot_district',          valueType: 'string' },
     storeName:       { label: 'שם חנות רובוט',       csvHeader: 'שם חנות רובוט',        parserFieldName: 'robot_store_name',        valueType: 'string' },
