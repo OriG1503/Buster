@@ -109,20 +109,27 @@ export class DataProcessorService {
     const robotId = mappedRobotRecord?.['id'] ? String(mappedRobotRecord['id']) : null;
     const robotWiringId = mappedRobotRecord?.['wiringId'] ? String(mappedRobotRecord['wiringId']) : null;
 
+    let crossEntityCount = 0;
     if (processedWiringId) {
-      await this._crossEntityDetectionService.detectForWiringRobots(processedWiringId, username).catch((err) => {
-        this._logger.warn(`Cross-entity detection failed for wiring ${processedWiringId}: ${(err as Error).message}`);
-      });
+      crossEntityCount = await this._crossEntityDetectionService.detectForWiringRobots(processedWiringId, username)
+        .then((r) => r.count)
+        .catch((err) => {
+          this._logger.warn(`Cross-entity detection failed for wiring ${processedWiringId}: ${(err as Error).message}`);
+          return 0;
+        });
     } else if (robotId && robotWiringId) {
-      await this._crossEntityDetectionService.detectForRobotWiringPair(robotId, robotWiringId, username).catch((err) => {
-        this._logger.warn(`Cross-entity detection failed for robot ${robotId}: ${(err as Error).message}`);
-      });
+      crossEntityCount = await this._crossEntityDetectionService.detectForRobotWiringPair(robotId, robotWiringId, username)
+        .then((r) => r.count)
+        .catch((err) => {
+          this._logger.warn(`Cross-entity detection failed for robot ${robotId}: ${(err as Error).message}`);
+          return 0;
+        });
     }
 
     const allResults: EntityResult[] = [batteryResult, storageResult, ironResult, cardboardResult, sensorResult, plasticResult, wiringResult, commResult, robotResult];
 
     return {
-      conflictCount: allResults.reduce((sum, r) => sum + r.count, 0),
+      conflictCount: allResults.reduce((sum, r) => sum + r.count, 0) + crossEntityCount,
       conflictIds: allResults.flatMap((r) => r.conflictIds),
       flyingFields: allResults.filter((r) => r.flyingField !== null).map((r) => r.flyingField as FlyingField),
       totalFields: allResults.reduce((sum, r) => sum + r.totalFields, 0),
