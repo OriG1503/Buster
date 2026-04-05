@@ -80,7 +80,8 @@
       "Bash(gh pr:*)",
       "Bash(grep:*)",
       "Bash(find /c/Users/Ori/Desktop/Coding/buster -name *.csv)",
-      "Bash(grep -E \"\\\\.\\(ts\\)$\")"
+      "Bash(grep -E \"\\\\.\\(ts\\)$\")",
+      "Bash(sed:*)"
     ]
   }
 }
