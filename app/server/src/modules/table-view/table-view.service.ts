@@ -386,7 +386,9 @@ export class TableViewService {
           const targetEntityId = String(rawValue);
           const targetConflicts = conflictMap[fkTargetTable]?.[targetEntityId];
           if (targetConflicts) {
-            const entries = Object.values(targetConflicts);
+            // Exclude cross-entity entries — they belong to specific shared fields (e.g. district, storeName)
+            // and must not bleed into the FK cell, which would cause the wrong history path on click.
+            const entries = Object.values(targetConflicts).filter((e) => !e.isCrossEntity);
             const bestEntry = entries.find((e) => e.status === 'open') ?? entries[0];
             if (bestEntry) {
               conflictEntry = { ...bestEntry, anchorTable: fkTargetTable, anchorId: targetEntityId };
