@@ -20,38 +20,41 @@ export class CrossEntityConflictDetectionService {
    * Re-detects cross-entity conflicts for a single robot/wiring pair.
    * Called after a robot is inserted or updated (if it has a wiringId).
    */
-  public async detectForRobotWiringPair(robotId: string, wiringId: string, conflictCreator: string): Promise<void> {
+  public async detectForRobotWiringPair(robotId: string, wiringId: string, conflictCreator: string): Promise<{ count: number }> {
     const [robot, wiring] = await Promise.all([
       this._registry.get('robots').findById(robotId),
       this._registry.get('wirings').findById(wiringId),
     ]);
 
-    if (!robot || !wiring) { return; }
+    if (!robot || !wiring) { return { count: 0 }; }
 
-    await Promise.all(
+    const results = await Promise.all(
       CROSS_ENTITY_FIELDS.map((field) => this._detectForField(robot as unknown as RobotEntity, wiring as unknown as WiringEntity, field, conflictCreator)),
     );
+    return { count: results.filter(Boolean).length };
   }
 
   /**
    * Re-detects cross-entity conflicts for ALL robots attached to a wiring.
    * Called after wiring values change (via upload or conflict resolution).
+   * Returns the number of new cross-entity conflicts created.
    */
-  public async detectForWiringRobots(wiringId: string, conflictCreator: string): Promise<void> {
+  public async detectForWiringRobots(wiringId: string, conflictCreator: string): Promise<{ count: number }> {
     const [wiring, robots] = await Promise.all([
       this._registry.get('wirings').findById(wiringId),
       this._getRobotsByWiringId(wiringId),
     ]);
 
-    if (!wiring || robots.length === 0) { return; }
+    if (!wiring || robots.length === 0) { return { count: 0 }; }
 
-    await Promise.all(
+    const results = await Promise.all(
       robots.flatMap((robot) =>
         CROSS_ENTITY_FIELDS.map((field) =>
           this._detectForField(robot as unknown as RobotEntity, wiring as unknown as WiringEntity, field, conflictCreator),
         ),
       ),
     );
+    return { count: results.filter(Boolean).length };
   }
 
   private async _detectForField(
@@ -59,7 +62,7 @@ export class CrossEntityConflictDetectionService {
     wiring: WiringEntity,
     field: CrossEntityField,
     conflictCreator: string,
-  ): Promise<void> {
+  ): Promise<boolean> {
     const robotRecord = robot as unknown as Record<string, unknown>;
     const wiringRecord = wiring as unknown as Record<string, unknown>;
 
@@ -69,7 +72,7 @@ export class CrossEntityConflictDetectionService {
     // Soft-delete any existing open conflict for this pair+field before re-evaluating
     await this._crossEntityConflictRepository.softDeleteOpenByRobotField(robot.id, field);
 
-    if (robotValue === null || wiringValue === null || robotValue === wiringValue) { return; }
+    if (robotValue === null || wiringValue === null || robotValue === wiringValue) { return false; }
 
     const robotSourceMap = (robotRecord['source'] as FieldTrackingMap) ?? {};
     const wiringSourceMap = (wiringRecord['source'] as FieldTrackingMap) ?? {};
@@ -95,6 +98,7 @@ export class CrossEntityConflictDetectionService {
     });
 
     this._logger.warn(`Cross-entity conflict: robots/${robot.id} ↔ wirings/${wiring.id} on [${field}] — robot="${robotValue}" wiring="${wiringValue}"`);
+    return true;
   }
 
   private async _getRobotsByWiringId(wiringId: string): Promise<RobotEntity[]> {
