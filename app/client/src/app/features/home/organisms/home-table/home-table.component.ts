@@ -98,16 +98,21 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
     }
     if (cell.status === 'resolved') {
       const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-      if (cell.anchorTable && cell.anchorId) {
+      if (cell.anchorTable && cell.anchorId && cell.relatedTable) {
         this._$historyTarget.set({
           isRelational: true,
           anchorTable: cell.anchorTable,
           anchorId: cell.anchorId,
-          relatedTable: cell.relatedTable ?? '',
+          relatedTable: cell.relatedTable,
           anchorTop: rect.top,
           anchorBottom: rect.bottom,
           anchorCenterX: rect.left + rect.width / 2,
         });
+      } else if (cell.anchorTable && cell.anchorId && !cell.relatedTable) {
+        const url = this._router.serializeUrl(
+          this._router.createUrlTree(['/'], { queryParams: { table: cell.anchorTable, [`f_${cell.anchorTable}.id`]: cell.anchorId } }),
+        );
+        window.open(url, '_blank');
       } else {
         const [tableName, columnName] = col.split('.');
         const entityId = row[`${tableName}.id`]?.value ?? '';
