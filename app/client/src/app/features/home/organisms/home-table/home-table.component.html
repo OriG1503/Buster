@@ -83,6 +83,14 @@
   </div>
 </div>
 
+@if (_$historyTarget(); as target) {
+  <app-conflict-history-popup
+    [$target]="target"
+    (closed)="onHistoryPopupClose()"
+    (reverted)="onHistoryPopupReverted()"
+  />
+}
+
 @if (_$cellInfoTarget(); as target) {
   <app-cell-info-popup
     [$target]="target"

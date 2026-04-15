@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, computed, effect, inject, input, output, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { ConflictHistoryPopupComponent } from '../../../conflict-history/organisms/conflict-history-popup/conflict-history-popup.component';
 import { CellInfoPopupComponent } from '../cell-info-popup/cell-info-popup.component';
 import { TableColumnHeaderComponent } from '../../molecules/table-column-header/table-column-header.component';
 import { TableDataCellComponent } from '../../molecules/table-data-cell/table-data-cell.component';
@@ -9,11 +10,12 @@ import { DisplayNamesService } from '../../../../core/services/display-names/dis
 import { FK_TO_ENTITY_ID } from '../../../../shared/consts/fk-to-entity-id.consts';
 import { TableCell } from '../../../../shared/types/table-cell.type';
 import { TableRow } from '../../../../shared/types/table-view-response.type';
+import { HistoryTarget } from '../../../../shared/types/history-target.type';
 import { CellInfoTarget } from '../../types/cell-info-target.type';
 
 @Component({
   selector: 'app-home-table',
-  imports: [CellInfoPopupComponent, TableColumnHeaderComponent, TableDataCellComponent],
+  imports: [ConflictHistoryPopupComponent, CellInfoPopupComponent, TableColumnHeaderComponent, TableDataCellComponent],
   templateUrl: './home-table.component.html',
   styleUrl: './home-table.component.scss',
 })
@@ -22,6 +24,7 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
 
   protected readonly _store = inject(HomeStore);
   private readonly _router = inject(Router);
+  protected readonly _$historyTarget = signal<HistoryTarget | null>(null);
   protected readonly _$cellInfoTarget = signal<CellInfoTarget | null>(null);
 
   public readonly $isExportMode = input<boolean>(false);
@@ -94,13 +97,35 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
       return;
     }
     if (cell.status === 'resolved') {
-      const [colTable] = col.split('.');
-      const tableName = cell.anchorTable ?? colTable;
-      const entityId = cell.anchorId ?? row[`${colTable}.id`]?.value ?? '';
-      const url = this._router.serializeUrl(
-        this._router.createUrlTree(['/conflicts'], { queryParams: { tableName, entityId } }),
-      );
-      window.open(url, '_blank');
+      if (FK_TO_ENTITY_ID[col]) {
+        const [colTable] = col.split('.');
+        const url = this._router.serializeUrl(
+          this._router.createUrlTree(['/conflicts'], { queryParams: { tableName: colTable, entityId: row[`${colTable}.id`]?.value ?? '' } }),
+        );
+        window.open(url, '_blank');
+      } else {
+        const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+        if (cell.anchorTable && cell.anchorId) {
+          this._$historyTarget.set({
+            isRelational: true,
+            anchorTable: cell.anchorTable,
+            anchorId: cell.anchorId,
+            relatedTable: cell.relatedTable ?? '',
+            anchorTop: rect.top,
+            anchorBottom: rect.bottom,
+            anchorCenterX: rect.left + rect.width / 2,
+          });
+        } else {
+          const [tableName, columnName] = col.split('.');
+          const entityId = row[`${tableName}.id`]?.value ?? '';
+          const base = { tableName, entityId, columnName, anchorTop: rect.top, anchorBottom: rect.bottom, anchorCenterX: rect.left + rect.width / 2 };
+          if (cell.isCrossEntity) {
+            this._$historyTarget.set({ isRelational: false, isCrossEntity: true, ...base });
+          } else {
+            this._$historyTarget.set({ isRelational: false, ...base });
+          }
+        }
+      }
     }
   }
 
@@ -126,6 +151,15 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
 
   public onCellMouseLeave(): void {
     this._$cellInfoTarget.set(null);
+  }
+
+  public onHistoryPopupClose(): void {
+    this._$historyTarget.set(null);
+  }
+
+  public onHistoryPopupReverted(): void {
+    this._$historyTarget.set(null);
+    this._store.refresh();
   }
 
   public onCellInfoPopupClose(): void {
@@ -157,16 +191,16 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
       return null;
     }
     const [colTable] = col.split('.');
-    const tableName = cell.anchorTable ?? colTable;
-    const entityId = cell.anchorId ?? row[`${colTable}.id`]?.value ?? '';
     if (cell.status === 'open' && cell.conflictId !== null) {
+      const tableName = cell.anchorTable ?? colTable;
+      const entityId = cell.anchorId ?? row[`${colTable}.id`]?.value ?? '';
       return this._router.serializeUrl(
         this._router.createUrlTree(['/conflicts'], { queryParams: { tableName, open: entityId } }),
       );
     }
-    if (cell.status === 'resolved') {
+    if (cell.status === 'resolved' && FK_TO_ENTITY_ID[col]) {
       return this._router.serializeUrl(
-        this._router.createUrlTree(['/conflicts'], { queryParams: { tableName, entityId } }),
+        this._router.createUrlTree(['/conflicts'], { queryParams: { tableName: colTable, entityId: row[`${colTable}.id`]?.value ?? '' } }),
       );
     }
     return null;
