@@ -98,11 +98,7 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
     }
     if (cell.status === 'resolved') {
       if (FK_TO_ENTITY_ID[col]) {
-        const [colTable] = col.split('.');
-        const url = this._router.serializeUrl(
-          this._router.createUrlTree(['/conflicts'], { queryParams: { tableName: colTable, entityId: row[`${colTable}.id`]?.value ?? '' } }),
-        );
-        window.open(url, '_blank');
+        window.open(this._buildFkHomeUrl(col, cell.value ?? ''), '_blank');
       } else {
         const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
         if (cell.anchorTable && cell.anchorId) {
@@ -185,6 +181,18 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
     return cell?.status ?? 'raw';
   }
 
+  private _buildFkHomeUrl(col: string, entityId: string): string {
+    const fkTarget = FK_TO_ENTITY_ID[col];
+    // Use the '.id' side of the FK pair as the filter column.
+    // e.g. col='robots.wiringId' → fkTarget='wirings.id' → idCol='wirings.id'
+    //      col='wirings.id'      → fkTarget='robots.wiringId' → idCol='wirings.id' (col itself)
+    const idCol = fkTarget.endsWith('.id') ? fkTarget : col;
+    const [targetTable] = idCol.split('.');
+    return this._router.serializeUrl(
+      this._router.createUrlTree(['/'], { queryParams: { table: targetTable, [`f_${idCol}`]: entityId } }),
+    );
+  }
+
   public getCellHref(row: TableRow, col: string): string | null {
     const cell = row[col];
     if (!cell) {
@@ -199,9 +207,7 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
       );
     }
     if (cell.status === 'resolved' && FK_TO_ENTITY_ID[col]) {
-      return this._router.serializeUrl(
-        this._router.createUrlTree(['/conflicts'], { queryParams: { tableName: colTable, entityId: row[`${colTable}.id`]?.value ?? '' } }),
-      );
+      return this._buildFkHomeUrl(col, cell.value ?? '');
     }
     return null;
   }
