@@ -1,4 +1,6 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { from, of } from 'rxjs';
+import { catchError, concatMap, map } from 'rxjs/operators';
 
 import { ConflictColumnDetail, ConflictEntityDetail, CrossEntityConflictEntry, RelationalConflictDetail, TwoFathersConflictDetail } from '../../../../shared/types/conflict-entity-detail.type';
 import { ConflictGroup } from '../../../../shared/types/conflict-group.type';
@@ -9,7 +11,7 @@ import { DisplayNamesService } from '../../../../core/services/display-names/dis
 import { PermissionsService } from '../../../../core/services/permissions/permissions.service';
 import { ENTITY_COLUMN_TREE } from '../../../../shared/consts/entity-column-tree.consts';
 import { DEFAULT_USER_NAME } from '../../../../shared/consts/default-user.consts';
-import { PendingResolution, PendingValueResolution, PendingRelationalResolution, PendingCrossEntityResolution } from '../../types/pending-resolution.type';
+import { PendingResolution, PendingRelationalResolution, PendingCrossEntityResolution } from '../../types/pending-resolution.type';
 import { ConflictOptionBtnComponent } from '../../molecules/conflict-option-btn/conflict-option-btn.component';
 import { FloatingWarningDialogComponent } from '../../molecules/floating-warning-dialog/floating-warning-dialog.component';
 import { ConflictItemFooterComponent } from '../../molecules/conflict-item-footer/conflict-item-footer.component';
@@ -39,10 +41,10 @@ export class ConflictItemComponent {
   protected readonly _isExpanded = signal(false);
   protected readonly _$detail = signal<ConflictEntityDetail | null>(null);
   protected readonly _$notes = signal('');
-  protected readonly _$pendingResolution = signal<PendingResolution | null>(null);
+  protected readonly _$pendingResolutions = signal<Map<string, PendingResolution>>(new Map());
+  protected readonly _$failedResolutionKeys = signal<Set<string>>(new Set());
   protected readonly _$openConflictIds = signal<Set<string>>(new Set());
   protected readonly _$showFloatingWarning = signal(false);
-  protected readonly _$confirmedRelational = signal<PendingRelationalResolution | null>(null);
   protected readonly _$isResolving = signal(false);
 
   protected readonly _$allColumns = computed<ConflictColumnDetail[]>(() => {
@@ -73,10 +75,12 @@ export class ConflictItemComponent {
   );
   protected readonly _$canResolve = computed(() => {
     if (this._$isResolving()) { return false; }
-    const resolution = this._$pendingResolution();
-    if (!resolution || !this._$notes().trim()) { return false; }
-    if (resolution.type === 'value' || resolution.type === 'twoFathers' || resolution.type === 'crossEntity') { return true; }
-    return [...resolution.subtreeLevels.values()].every((v) => !!v);
+    const resolutions = this._$pendingResolutions();
+    if (resolutions.size === 0 || !this._$notes().trim()) { return false; }
+    return [...resolutions.values()].every((r) => {
+      if (r.type !== 'twoChilds') { return true; }
+      return [...(r as PendingRelationalResolution).subtreeLevels.values()].every((v) => !!v);
+    });
   });
   protected readonly _$canEdit = computed(() => this._permissionsService.canEdit());
   protected readonly _$sourceLabel = computed(() => this._displayNames.getColumnLabel(this.$group().tableName, 'source'));
@@ -145,85 +149,133 @@ export class ConflictItemComponent {
 
   protected selectValueWinner(columnName: string, value: string | null): void {
     if (!value) { return; }
-    this._$pendingResolution.update((prev) => {
-      if (prev?.type === 'value' && prev.columnName === columnName && prev.winnerValue === value) { return null; }
-      return { type: 'value', columnName, winnerValue: value };
+    const key = `value:${columnName}`;
+    this._$pendingResolutions.update((prev) => {
+      const next = new Map(prev);
+      const existing = next.get(key);
+      if (existing?.type === 'value' && existing.winnerValue === value) {
+        next.delete(key);
+      } else {
+        next.set(key, { type: 'value', columnName, winnerValue: value });
+      }
+      return next;
     });
+    this._clearFailedKey(`value:${columnName}`);
   }
 
   protected isValueWinnerSelected(columnName: string, value: string | null): boolean {
-    const res = this._$pendingResolution();
-    return res?.type === 'value' && res.columnName === columnName && res.winnerValue === value;
+    if (!value) { return false; }
+    const res = this._$pendingResolutions().get(`value:${columnName}`);
+    return res?.type === 'value' && res.winnerValue === value;
+  }
+
+  protected isValueResolutionFailed(columnName: string): boolean {
+    return this._$failedResolutionKeys().has(`value:${columnName}`);
   }
 
   // --- TWO_CHILDS ---
 
   protected selectTwoChildsWinner(columnName: string, rc: RelationalConflictDetail, winnerId: string): void {
-    this._$pendingResolution.update((prev) => {
-      const relPrev = prev as PendingRelationalResolution | null;
-      if (relPrev?.type === 'twoChilds' && relPrev.columnName === columnName && relPrev.winnerRelatedId === winnerId) { return null; }
-      const subtreeFields = this.getSubtreeFkFields(rc);
-      return {
-        type: 'twoChilds',
-        columnName,
-        conflictIds: rc.conflictIds,
-        winnerRelatedId: winnerId,
-        subtreeLevels: new Map(subtreeFields.map((f) => [f, ''] as [string, string])),
-      };
+    const key = `twoChilds:${columnName}`;
+    this._$pendingResolutions.update((prev) => {
+      const next = new Map(prev);
+      const existing = next.get(key) as PendingRelationalResolution | undefined;
+      if (existing?.type === 'twoChilds' && existing.winnerRelatedId === winnerId) {
+        next.delete(key);
+      } else {
+        const subtreeFields = this.getSubtreeFkFields(rc);
+        next.set(key, {
+          type: 'twoChilds',
+          columnName,
+          conflictIds: rc.conflictIds,
+          winnerRelatedId: winnerId,
+          subtreeLevels: new Map(subtreeFields.map((f) => [f, ''] as [string, string])),
+        });
+      }
+      return next;
     });
+    this._clearFailedKey(key);
   }
 
   protected isTwoChildsWinnerSelected(columnName: string, id: string): boolean {
-    const res = this._$pendingResolution();
-    return res?.type === 'twoChilds' && (res as PendingRelationalResolution).columnName === columnName &&
-      (res as PendingRelationalResolution).winnerRelatedId === id;
+    const res = this._$pendingResolutions().get(`twoChilds:${columnName}`) as PendingRelationalResolution | undefined;
+    return res?.type === 'twoChilds' && res.winnerRelatedId === id;
+  }
+
+  protected isTwoChildsResolutionFailed(columnName: string): boolean {
+    return this._$failedResolutionKeys().has(`twoChilds:${columnName}`);
   }
 
   protected selectSubtreeLevel(columnName: string, fkField: string, childId: string): void {
-    this._$pendingResolution.update((prev) => {
-      const relPrev = prev as PendingRelationalResolution | null;
-      if (!relPrev || relPrev.type !== 'twoChilds' || relPrev.columnName !== columnName) { return prev; }
-      const newLevels = new Map(relPrev.subtreeLevels);
+    const key = `twoChilds:${columnName}`;
+    this._$pendingResolutions.update((prev) => {
+      const existing = prev.get(key) as PendingRelationalResolution | undefined;
+      if (!existing || existing.type !== 'twoChilds') { return prev; }
+      const newLevels = new Map(existing.subtreeLevels);
       newLevels.set(fkField, newLevels.get(fkField) === childId ? '' : childId);
-      return { ...relPrev, subtreeLevels: newLevels };
+      return new Map(prev).set(key, { ...existing, subtreeLevels: newLevels });
     });
   }
 
   protected isSubtreeLevelSelected(columnName: string, fkField: string, childId: string): boolean {
-    const res = this._$pendingResolution();
-    if (!res || res.type !== 'twoChilds' || (res as PendingRelationalResolution).columnName !== columnName) { return false; }
-    return (res as PendingRelationalResolution).subtreeLevels.get(fkField) === childId;
+    const res = this._$pendingResolutions().get(`twoChilds:${columnName}`) as PendingRelationalResolution | undefined;
+    if (!res || res.type !== 'twoChilds') { return false; }
+    return res.subtreeLevels.get(fkField) === childId;
   }
 
   // --- TWO_FATHERS ---
 
   protected selectTwoFathersWinner(rc: TwoFathersConflictDetail, winnerId: string): void {
-    this._$pendingResolution.update((prev) => {
-      const relPrev = prev as PendingRelationalResolution | null;
-      if (relPrev?.type === 'twoFathers' && relPrev.winnerRelatedId === winnerId) { return null; }
-      return { type: 'twoFathers', columnName: '__twoFathers__', conflictIds: rc.conflictIds, winnerRelatedId: winnerId, subtreeLevels: new Map() };
+    const key = 'twoFathers:__twoFathers__';
+    this._$pendingResolutions.update((prev) => {
+      const next = new Map(prev);
+      const existing = next.get(key) as PendingRelationalResolution | undefined;
+      if (existing?.type === 'twoFathers' && existing.winnerRelatedId === winnerId) {
+        next.delete(key);
+      } else {
+        next.set(key, { type: 'twoFathers', columnName: '__twoFathers__', conflictIds: rc.conflictIds, winnerRelatedId: winnerId, subtreeLevels: new Map() });
+      }
+      return next;
     });
+    this._clearFailedKey(key);
   }
 
   protected isTwoFathersWinnerSelected(id: string): boolean {
-    const res = this._$pendingResolution();
-    return res?.type === 'twoFathers' && (res as PendingRelationalResolution).winnerRelatedId === id;
+    const res = this._$pendingResolutions().get('twoFathers:__twoFathers__') as PendingRelationalResolution | undefined;
+    return res?.type === 'twoFathers' && res.winnerRelatedId === id;
+  }
+
+  protected isTwoFathersResolutionFailed(): boolean {
+    return this._$failedResolutionKeys().has('twoFathers:__twoFathers__');
   }
 
   // --- Cross-entity conflict ---
 
   protected selectCrossEntityWinner(columnName: string, entry: CrossEntityConflictEntry, value: string | null, applyToRobot: boolean): void {
     if (!value) { return; }
-    this._$pendingResolution.update((prev) => {
-      const isCross = prev?.type === 'crossEntity';
-      if (isCross && (prev as PendingCrossEntityResolution).columnName === columnName && (prev as PendingCrossEntityResolution).winnerValue === value) { return null; }
-      return { type: 'crossEntity', columnName, conflictId: entry.conflictId, winnerValue: value, applyToRobot };
+    const key = `crossEntity:${entry.conflictId}`;
+    this._$pendingResolutions.update((prev) => {
+      const next = new Map(prev);
+      const existing = next.get(key) as PendingCrossEntityResolution | undefined;
+      if (existing?.type === 'crossEntity' && existing.winnerValue === value) {
+        next.delete(key);
+      } else {
+        next.set(key, { type: 'crossEntity', columnName, conflictId: entry.conflictId, winnerValue: value, applyToRobot });
+      }
+      return next;
     });
+    this._clearFailedKey(key);
   }
 
   protected isCrossEntityWinnerSelected(columnName: string, value: string | null): boolean {
-    const res = this._$pendingResolution();
-    return res?.type === 'crossEntity' && (res as PendingCrossEntityResolution).columnName === columnName && (res as PendingCrossEntityResolution).winnerValue === value;
+    if (!value) { return false; }
+    return [...this._$pendingResolutions().values()].some(
+      (r) => r.type === 'crossEntity' && r.columnName === columnName && (r as PendingCrossEntityResolution).winnerValue === value,
+    );
+  }
+
+  protected isCrossEntityResolutionFailed(conflictId: number): boolean {
+    return this._$failedResolutionKeys().has(`crossEntity:${conflictId}`);
   }
 
   protected getCrossEntityBadge(entry: CrossEntityConflictEntry): { entityLabel: string; entityId: string } {
@@ -238,29 +290,21 @@ export class ConflictItemComponent {
 
   public resolve(): void {
     if (!this._$canResolve()) { return; }
-    const resolution = this._$pendingResolution()!;
-    if (resolution.type === 'value') {
-      this._submitValueResolution(resolution);
-    } else if (resolution.type === 'crossEntity') {
-      this._submitCrossEntityResolution(resolution as PendingCrossEntityResolution);
-    } else {
-      this._$confirmedRelational.set(resolution as PendingRelationalResolution);
+    const hasRelational = [...this._$pendingResolutions().values()].some((r) => r.type === 'twoFathers' || r.type === 'twoChilds');
+    if (hasRelational) {
       this._$showFloatingWarning.set(true);
+    } else {
+      this._executeBatch();
     }
   }
 
   protected confirmResolution(): void {
     this._$showFloatingWarning.set(false);
-    const relational = this._$confirmedRelational();
-    if (relational) {
-      this._submitRelationalResolution(relational);
-      this._$confirmedRelational.set(null);
-    }
+    this._executeBatch();
   }
 
   protected cancelResolution(): void {
     this._$showFloatingWarning.set(false);
-    this._$confirmedRelational.set(null);
   }
 
   private _loadDetail(): void {
@@ -297,72 +341,70 @@ export class ConflictItemComponent {
     });
   }
 
-  private _submitValueResolution(resolution: PendingValueResolution): void {
+  private _executeBatch(): void {
+    this._$isResolving.set(true);
+    this._$failedResolutionKeys.set(new Set());
+    const entries = [...this._$pendingResolutions().entries()];
+    const hadCrossEntity = entries.some(([, r]) => r.type === 'crossEntity');
+    const results = new Map<string, boolean>();
+
+    from(entries)
+      .pipe(
+        concatMap(([key, resolution]) =>
+          this._buildApiCall(resolution).pipe(
+            map(() => ({ key, success: true as const })),
+            catchError(() => of({ key, success: false as const })),
+          ),
+        ),
+      )
+      .subscribe({
+        next: ({ key, success }) => results.set(key, success),
+        complete: () => this._afterBatch(results, hadCrossEntity),
+      });
+  }
+
+  private _buildApiCall(resolution: PendingResolution) {
     const { tableName, entityId } = this.$group();
-    this._$isResolving.set(true);
-    this._conflictsService
-      .resolveConflict({ tableName, entityId, columnName: resolution.columnName, winnerValue: resolution.winnerValue, conflictResolver: DEFAULT_USER_NAME, resolutionNotes: this._$notes() })
-      .subscribe({
-        next: () => this._afterResolve(),
-        error: () => this._$isResolving.set(false),
-      });
-  }
-
-  private _submitRelationalResolution(resolution: PendingRelationalResolution): void {
+    const notes = this._$notes();
+    if (resolution.type === 'value') {
+      return this._conflictsService.resolveConflict({ tableName, entityId, columnName: resolution.columnName, winnerValue: resolution.winnerValue, conflictResolver: DEFAULT_USER_NAME, resolutionNotes: notes });
+    }
+    if (resolution.type === 'crossEntity') {
+      return this._conflictsService.resolveCrossEntityConflict({ conflictId: resolution.conflictId, winnerValue: resolution.winnerValue, conflictResolver: DEFAULT_USER_NAME, resolutionNotes: notes, applyToRobot: resolution.applyToRobot });
+    }
     const subtreeEntries = [...resolution.subtreeLevels.entries()];
-    this._$isResolving.set(true);
-    this._conflictsService
-      .resolveRelationalConflict({
-        conflictIds: resolution.conflictIds,
-        winnerRelatedId: resolution.winnerRelatedId,
-        winnerChildFkField: subtreeEntries[0]?.[0] ?? null,
-        winnerChildId: subtreeEntries[0]?.[1] || null,
-        conflictResolver: DEFAULT_USER_NAME,
-        resolutionNotes: this._$notes(),
-      })
-      .subscribe({
-        next: () => this._afterResolve(),
-        error: () => this._$isResolving.set(false),
-      });
+    return this._conflictsService.resolveRelationalConflict({ conflictIds: resolution.conflictIds, winnerRelatedId: resolution.winnerRelatedId, winnerChildFkField: subtreeEntries[0]?.[0] ?? null, winnerChildId: subtreeEntries[0]?.[1] || null, conflictResolver: DEFAULT_USER_NAME, resolutionNotes: notes });
   }
 
-  private _afterResolve(): void {
+  private _afterBatch(results: Map<string, boolean>, hadCrossEntity: boolean): void {
     this._$isResolving.set(false);
-    this._$pendingResolution.set(null);
-    this._$notes.set('');
-    this._$detail.set(null);
+    const failedKeys = new Set([...results.entries()].filter(([, success]) => !success).map(([key]) => key));
+
+    this._$pendingResolutions.update((prev) => {
+      const next = new Map(prev);
+      results.forEach((success, key) => { if (success) { next.delete(key); } });
+      return next;
+    });
+
+    this._$failedResolutionKeys.set(failedKeys);
+
+    if (failedKeys.size === 0) { this._$notes.set(''); }
+
     this._homeStore.refresh();
+
+    if (hadCrossEntity) {
+      const filter = this._conflictsStore.filter();
+      this._conflictsStore.loadConflicts(filter.tableName, filter.entityId, filter.conflictIds);
+    }
+
+    this._$detail.set(null);
     this._reloadDetailAfterResolve();
   }
 
-  private _submitCrossEntityResolution(resolution: PendingCrossEntityResolution): void {
-    const isRobotTable = this.$group().tableName === 'robots';
-    this._$isResolving.set(true);
-    this._conflictsService
-      .resolveCrossEntityConflict({
-        conflictId: resolution.conflictId,
-        winnerValue: resolution.winnerValue,
-        conflictResolver: DEFAULT_USER_NAME,
-        resolutionNotes: this._$notes(),
-        applyToRobot: isRobotTable,
-      })
-      .subscribe({
-        next: () => this._afterCrossEntityResolve(),
-        error: () => this._$isResolving.set(false),
-      });
-  }
-
-  private _afterCrossEntityResolve(): void {
-    this._$isResolving.set(false);
-    this._$pendingResolution.set(null);
-    this._$notes.set('');
-    this._$detail.set(null);
-    this._homeStore.refresh();
-    // Reload full list — re-detection may have created new conflicts for other entities
-    const filter = this._conflictsStore.filter();
-    this._conflictsStore.loadConflicts(filter.tableName, filter.entityId, filter.conflictIds);
-    // Also reload this entity's detail in case it still has conflicts
-    this._loadDetail();
+  private _clearFailedKey(key: string): void {
+    if (this._$failedResolutionKeys().has(key)) {
+      this._$failedResolutionKeys.update((prev) => { const next = new Set(prev); next.delete(key); return next; });
+    }
   }
 
   private _reloadDetailAfterResolve(): void {

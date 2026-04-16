@@ -52,6 +52,9 @@
                   <!-- TWO_FATHERS cell -->
                   @if (_$twoFathersConflict()) {
                     <td class="conflict-item__cell conflict-item__cell--conflict">
+                      @if (isTwoFathersResolutionFailed()) {
+                        <span class="conflict-item__resolution-error"><i class="pi pi-exclamation-circle"></i> שגיאה בהכרעה</span>
+                      }
                       <div class="conflict-item__options">
                         @for (opt of _$twoFathersConflict()!.options; track opt.id) {
                           <app-conflict-option-btn
@@ -88,6 +91,9 @@
                   <!-- TWO_CHILDS cells -->
                   @for (col of _$twoChildsConflicts(); track col.columnName) {
                     <td class="conflict-item__cell conflict-item__cell--conflict">
+                      @if (isTwoChildsResolutionFailed(col.columnName)) {
+                        <span class="conflict-item__resolution-error"><i class="pi pi-exclamation-circle"></i> שגיאה בהכרעה</span>
+                      }
                       <div class="conflict-item__options">
                         @for (opt of col.relationalConflict!.options; track opt.id) {
                           <app-conflict-option-btn
@@ -123,6 +129,14 @@
                   <!-- Value conflict cells (includes cross-entity conflict entries) -->
                   @for (col of _$valueConflictColumns(); track col.columnName) {
                     <td class="conflict-item__cell conflict-item__cell--conflict">
+                      @if (col.crossEntityConflicts.length === 0 && isValueResolutionFailed(col.columnName)) {
+                        <span class="conflict-item__resolution-error"><i class="pi pi-exclamation-circle"></i> שגיאה בהכרעה</span>
+                      }
+                      @for (crossEntry of col.crossEntityConflicts; track crossEntry.conflictId) {
+                        @if (isCrossEntityResolutionFailed(crossEntry.conflictId)) {
+                          <span class="conflict-item__resolution-error"><i class="pi pi-exclamation-circle"></i> שגיאה בהכרעה</span>
+                        }
+                      }
                       <div class="conflict-item__options">
                         @for (entry of col.conflictValues; track entry.value) {
                           <app-conflict-option-btn
