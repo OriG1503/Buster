@@ -97,7 +97,7 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
       return;
     }
     if (cell.status === 'resolved') {
-      if (FK_TO_ENTITY_ID[col]) {
+      if (FK_TO_ENTITY_ID[col] && cell.value !== null) {
         window.open(this._buildFkHomeUrl(col, cell.value ?? ''), '_blank');
       } else {
         const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
@@ -206,7 +206,7 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
         this._router.createUrlTree(['/conflicts'], { queryParams: { tableName, open: entityId } }),
       );
     }
-    if (cell.status === 'resolved' && FK_TO_ENTITY_ID[col]) {
+    if (cell.status === 'resolved' && FK_TO_ENTITY_ID[col] && cell.value !== null) {
       return this._buildFkHomeUrl(col, cell.value ?? '');
     }
     return null;
