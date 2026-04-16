@@ -66,7 +66,10 @@ export class RelationalConflictResolverService {
     const winnerNotes = winnerRelatedId === oldRelatedId ? conflict.oldRelatedNotes : conflict.newRelatedNotes;
     const winnerSourceTime = winnerRelatedId === oldRelatedId ? conflict.oldRelatedSourceTime : conflict.newRelatedSourceTime;
 
-    const anchorFkField = `${relatedTable.slice(0, -1)}Id`; // 'communications' → 'communicationId'
+    const anchorFkField = Object.keys(FK_FIELD_TO_TABLE).find((k) => FK_FIELD_TO_TABLE[k] === relatedTable);
+    if (!anchorFkField) {
+      throw new BadRequestException(`No FK field registered for related table: ${relatedTable}`);
+    }
     const anchorService = this._registry.get(anchorTable);
     const anchorEntity = await anchorService.findById(anchorId);
 
@@ -154,7 +157,10 @@ export class RelationalConflictResolverService {
     const { anchorId, anchorTable, oldRelatedId, newRelatedId, relatedTable } = conflict;
     const loserRelatedId = winnerRelatedId === oldRelatedId ? newRelatedId : oldRelatedId;
 
-    const childFkField = `${anchorTable.slice(0, -1)}Id`; // 'communications' → 'communicationId'
+    const childFkField = Object.keys(FK_FIELD_TO_TABLE).find((k) => FK_FIELD_TO_TABLE[k] === anchorTable);
+    if (!childFkField) {
+      throw new BadRequestException(`No FK field registered for anchor table: ${anchorTable}`);
+    }
     const relatedService = this._registry.get(relatedTable);
 
     const [winnerEntity, loserEntity] = await Promise.all([
