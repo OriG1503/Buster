@@ -1,0 +1,110 @@
+<div class="history-popup__backdrop" (click)="onClose()"></div>
+
+<div
+  class="history-popup__panel"
+  dir="rtl"
+  [style.top]="_$panelStyle().top"
+  [style.bottom]="_$panelStyle().bottom"
+  [style.left]="_$panelStyle().left"
+  [style.width]="_$panelStyle().width"
+  [style.maxHeight]="_$panelStyle().maxHeight"
+>
+  <div class="history-popup__header">
+    <span class="history-popup__title">היסטוריית קונפליקט מוכרע</span>
+    <div class="history-popup__header-actions">
+      @if (!_$isRelational() && _$canEdit()) {
+        <button
+          class="history-popup__btn-icon"
+          [class.history-popup__btn-icon--active]="_$isEditMode()"
+          type="button"
+          aria-label="ערוך"
+          [disabled]="_$isLoading() || _$isError()"
+          (click)="onEditClick()"
+        >
+          <i class="pi pi-pencil"></i>
+        </button>
+      }
+      <button class="history-popup__btn-icon" type="button" aria-label="סגור" (click)="onClose()">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="history-popup__body">
+    @if (_$isLoading()) {
+      <div class="history-popup__loading">
+        @for (i of [1, 2, 3]; track i) {
+          <div class="history-popup__skeleton-row">
+            <span class="history-popup__skeleton"></span>
+            <span class="history-popup__skeleton"></span>
+            <span class="history-popup__skeleton"></span>
+            <span class="history-popup__skeleton"></span>
+          </div>
+        }
+      </div>
+    } @else if (_$isError()) {
+      <div class="history-popup__error">שגיאה בטעינת הנתונים</div>
+    } @else if (_$isRelational()) {
+      @if (_$relationalHistory(); as history) {
+        <app-history-table-relational
+          [$history]="history"
+          [$sourceLabel]="_$sourceLabel()"
+          [$sourceTimeLabel]="_$sourceTimeLabel()"
+          [$notesLabel]="_$notesLabel()"
+        />
+        <app-history-popup-footer
+          [$resolverName]="history.resolverName"
+          [$resolutionDate]="formatDate(history.resolutionDate)"
+          [$resolutionNotes]="history.resolutionNotes"
+          (confirm)="onClose()"
+        />
+      }
+    } @else if (_$isCrossEntity()) {
+      @if (_$crossEntityHistory(); as history) {
+        <app-history-table-cross-entity
+          [$history]="history"
+          [$isEditMode]="_$isEditMode()"
+          [$pendingWinnerValue]="_$pendingWinnerValue()"
+          [$sourceLabel]="_$sourceLabel()"
+          [$sourceTimeLabel]="_$sourceTimeLabel()"
+          [$notesLabel]="_$notesLabel()"
+          (entrySelected)="onEntryDotClick($event)"
+        />
+        <app-history-popup-footer
+          [$isEditMode]="_$isEditMode()"
+          [$isSaving]="_$isSaving()"
+          [$resolverName]="history.resolverName"
+          [$resolutionDate]="formatDate(history.resolutionDate)"
+          [$resolutionNotes]="history.resolutionNotes"
+          [$editUserName]="_defaultUserName"
+          [$editNotes]="_$editNotes()"
+          (confirm)="onClose()"
+          (editNotesChange)="_$editNotes.set($event)"
+        />
+      }
+    } @else {
+      @if (_$valueHistory(); as history) {
+        <app-history-table-value
+          [$history]="history"
+          [$isEditMode]="_$isEditMode()"
+          [$pendingWinnerValue]="_$pendingWinnerValue()"
+          [$sourceLabel]="_$sourceLabel()"
+          [$sourceTimeLabel]="_$sourceTimeLabel()"
+          [$notesLabel]="_$notesLabel()"
+          (entrySelected)="onEntryDotClick($event)"
+        />
+        <app-history-popup-footer
+          [$isEditMode]="_$isEditMode()"
+          [$isSaving]="_$isSaving()"
+          [$resolverName]="history.resolverName"
+          [$resolutionDate]="formatDate(history.resolutionDate)"
+          [$resolutionNotes]="history.resolutionNotes"
+          [$editUserName]="_defaultUserName"
+          [$editNotes]="_$editNotes()"
+          (confirm)="onClose()"
+          (editNotesChange)="_$editNotes.set($event)"
+        />
+      }
+    }
+  </div>
+</div>

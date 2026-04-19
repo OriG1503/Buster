@@ -97,7 +97,7 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
       return;
     }
     if (cell.status === 'resolved') {
-      if (FK_TO_ENTITY_ID[col] && cell.value !== null) {
+      if (FK_TO_ENTITY_ID[col] && cell.value !== null && this._getFkTargetTable(col) !== this._store.selectedTable()) {
         window.open(this._buildFkHomeUrl(col, cell.value ?? ''), '_blank');
       } else {
         const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
@@ -181,6 +181,12 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
     return cell?.status ?? 'raw';
   }
 
+  private _getFkTargetTable(col: string): string {
+    const fkTarget = FK_TO_ENTITY_ID[col];
+    const idCol = fkTarget.endsWith('.id') ? fkTarget : col;
+    return idCol.split('.')[0];
+  }
+
   private _buildFkHomeUrl(col: string, entityId: string): string {
     const fkTarget = FK_TO_ENTITY_ID[col];
     // Use the '.id' side of the FK pair as the filter column.
@@ -206,7 +212,7 @@ export class HomeTableComponent implements AfterViewInit, OnDestroy {
         this._router.createUrlTree(['/conflicts'], { queryParams: { tableName, open: entityId } }),
       );
     }
-    if (cell.status === 'resolved' && FK_TO_ENTITY_ID[col] && cell.value !== null) {
+    if (cell.status === 'resolved' && FK_TO_ENTITY_ID[col] && cell.value !== null && this._getFkTargetTable(col) !== this._store.selectedTable()) {
       return this._buildFkHomeUrl(col, cell.value ?? '');
     }
     return null;
