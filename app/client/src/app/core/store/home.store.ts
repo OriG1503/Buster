@@ -14,8 +14,31 @@ import { TableRow } from '../../shared/types/table-view-response.type';
 const PAGE_SIZE = 20;
 const VALID_TABLES = new Set(Object.keys(ENTITY_COLUMN_TREE));
 const DEFAULT_TABLE = 'robots';
+const ROBOT_DEFAULT_COLUMNS = [
+  'robots.id',
+  'plastics.id',
+  'batteries.id',
+  'irons.id',
+  'wirings.id',
+  'sensors.id',
+  'communications.id',
+  'storages.id',
+  'cardboards.id',
+  'sales.carrier',
+  'wirings.district',
+  'sales.onlineStoreName',
+  'sales.isStockAshdod',
+  'sales.isStockTelAviv',
+  'sales.isStockRehovot',
+  'storages.isStockNetanya',
+  'storages.isStockAfula',
+  'sales.isPurchased',
+];
 
 function defaultColumns(tableName: string): string[] {
+  if (tableName === DEFAULT_TABLE) {
+    return ROBOT_DEFAULT_COLUMNS;
+  }
   const keys = ENTITY_COLUMN_TREE[tableName][0].columns.map((col) => col.key);
   const linked = keys
     .map((key) => FK_TO_ENTITY_ID[key])
