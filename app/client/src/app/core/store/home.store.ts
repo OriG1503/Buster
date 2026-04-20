@@ -11,12 +11,14 @@ import { FK_TO_ENTITY_ID } from '../../shared/consts/fk-to-entity-id.consts';
 import { ColumnGroup } from '../../shared/types/column-group.type';
 import { ColumnToggleEvent } from '../../shared/types/column-toggle-event.type';
 import { TableRow } from '../../shared/types/table-view-response.type';
-import { HOME_PAGE_SIZE, DEFAULT_TABLE, VALID_TABLES } from './consts/home-store.consts';
+import { HOME_PAGE_SIZE, DEFAULT_TABLE, VALID_TABLES, ROBOT_DEFAULT_COLUMNS } from './consts/home-store.consts';
 import { HomeState } from './types/home-state.type';
 
 function defaultColumns(tableName: string): string[] {
+  if (tableName === DEFAULT_TABLE) {
+    return ROBOT_DEFAULT_COLUMNS;
+  }
   const keys = ENTITY_COLUMN_TREE[tableName][0].columns;
-  // Only follow FK → child.id direction to avoid adding parent FK columns unintentionally.
   const linked = keys
     .filter((key) => !key.endsWith('.id'))
     .map((key) => FK_TO_ENTITY_ID[key])
