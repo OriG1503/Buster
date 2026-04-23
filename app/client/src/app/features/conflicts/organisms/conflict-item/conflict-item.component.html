@@ -1,5 +1,6 @@
 <div class="conflict-item" [class.conflict-item--expanded]="_isExpanded()">
   <button class="conflict-item__header" (click)="toggle()">
+    <span class="conflict-item__timestamp">{{ formatLatestConflictTime(_$latestConflictTimestamp()) }}</span>
     <i
       class="conflict-item__chevron pi"
       [class.pi-chevron-left]="!_isExpanded()"

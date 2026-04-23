@@ -18,6 +18,14 @@
     background-color: rgba(255, 255, 255, 0.04);
   }
 
+  &__timestamp {
+    color: var(--color-navy-gray);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    white-space: nowrap;
+    margin-right: auto;
+  }
+
   &__chevron {
     font-size: var(--font-size-xs);
     color: var(--color-blue);

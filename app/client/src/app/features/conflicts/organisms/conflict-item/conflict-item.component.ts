@@ -82,6 +82,34 @@ export class ConflictItemComponent {
   protected readonly _$sourceLabel = computed(() => this._displayNames.getColumnLabel(this.$group().tableName, 'source'));
   protected readonly _$sourceTimeLabel = computed(() => this._displayNames.getColumnLabel(this.$group().tableName, 'sourceTime'));
   protected readonly UPLOADED_LABEL = CONFLICTS_LABEL_MAP.uploadedAtLabel;
+  protected readonly _$latestConflictTimestamp = computed(() => {
+    const detail = this._$detail();
+    if (!detail) { return null; }
+    const timestamps: string[] = [];
+    detail.columns.forEach((col) => {
+      col.conflictValues.forEach((entry) => {
+        if (entry.createdAt) { timestamps.push(entry.createdAt); }
+      });
+      col.crossEntityConflicts.forEach((entry) => {
+        if (entry.sourceTime) { timestamps.push(entry.sourceTime); }
+      });
+      if (col.relationalConflict?.options) {
+        col.relationalConflict.options.forEach((opt) => {
+          // Relational conflicts don't have explicit timestamps, we'll skip them
+        });
+      }
+    });
+    if (detail.twoFathersConflict?.options) {
+      // Two fathers conflict doesn't have explicit timestamps in the options
+    }
+    if (timestamps.length === 0) { return null; }
+    const latestTimestamp = timestamps.reduce((max, current) => {
+      const maxDate = new Date(max);
+      const currentDate = new Date(current);
+      return currentDate > maxDate ? current : max;
+    });
+    return latestTimestamp;
+  });
 
   public constructor() {
     effect(() => {
@@ -121,6 +149,17 @@ export class ConflictItemComponent {
   protected formatDate(isoDate: string | null): string {
     if (!isoDate) { return '—'; }
     return new Date(isoDate).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit' });
+  }
+
+  protected formatLatestConflictTime(isoDate: string | null): string {
+    if (!isoDate) { return '—'; }
+    const date = new Date(isoDate);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
   }
 
   protected getSubtreeFkFields(rc: RelationalConflictDetail): string[] {
