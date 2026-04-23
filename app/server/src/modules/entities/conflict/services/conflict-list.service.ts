@@ -28,14 +28,15 @@ export class ConflictListService {
     tableName?: string,
     entityId?: string,
     conflictIds?: number[],
+    date?: string,
   ): Promise<ConflictListResponse> {
     const params: unknown[] = [];
 
-    const valueFilter = this._buildValueFilter(tableName, entityId, conflictIds, params);
-    const relationalFilter = this._buildRelationalFilter(tableName, entityId, params);
+    const valueFilter = this._buildValueFilter(tableName, entityId, conflictIds, date, params);
+    const relationalFilter = this._buildRelationalFilter(tableName, entityId, date, params);
 
-    const crossEntityRobotFilter = this._buildCrossEntityFilter(tableName, entityId, 'robot', params);
-    const crossEntityWiringFilter = this._buildCrossEntityFilter(tableName, entityId, 'wiring', params);
+    const crossEntityRobotFilter = this._buildCrossEntityFilter(tableName, entityId, 'robot', date, params);
+    const crossEntityWiringFilter = this._buildCrossEntityFilter(tableName, entityId, 'wiring', date, params);
 
     const sql = `
       SELECT DISTINCT "tableName", "entityId"
@@ -68,6 +69,7 @@ export class ConflictListService {
     tableName: string | undefined,
     entityId: string | undefined,
     conflictIds: number[] | undefined,
+    date: string | undefined,
     params: unknown[],
   ): string {
     const clauses: string[] = [];
@@ -82,6 +84,10 @@ export class ConflictListService {
     if (conflictIds?.length) {
       params.push(conflictIds);
       clauses.push(`AND "id" = ANY($${params.length})`);
+    }
+    if (date) {
+      params.push(date);
+      clauses.push(`AND "createdAt"::date = $${params.length}::date`);
     }
     return clauses.join(' ');
   }
@@ -112,6 +118,7 @@ export class ConflictListService {
   private _buildRelationalFilter(
     tableName: string | undefined,
     entityId: string | undefined,
+    date: string | undefined,
     params: unknown[],
   ): string {
     const clauses: string[] = [];
@@ -123,6 +130,10 @@ export class ConflictListService {
       params.push(`%${entityId}%`);
       clauses.push(`AND "anchorId" ILIKE $${params.length}`);
     }
+    if (date) {
+      params.push(date);
+      clauses.push(`AND "createdAt"::date = $${params.length}::date`);
+    }
     return clauses.join(' ');
   }
 
@@ -130,6 +141,7 @@ export class ConflictListService {
     tableName: string | undefined,
     entityId: string | undefined,
     side: 'robot' | 'wiring',
+    date: string | undefined,
     params: unknown[],
   ): string {
     const idColumn = side === 'robot' ? 'robotId' : 'wiringId';
@@ -141,6 +153,10 @@ export class ConflictListService {
     if (entityId) {
       params.push(`%${entityId}%`);
       clauses.push(`AND "${idColumn}" ILIKE $${params.length}`);
+    }
+    if (date) {
+      params.push(date);
+      clauses.push(`AND "createdAt"::date = $${params.length}::date`);
     }
     return clauses.join(' ');
   }

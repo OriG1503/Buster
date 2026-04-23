@@ -360,7 +360,7 @@ export class ConflictItemComponent {
     this._homeStore.refresh();
     // Reload full list — re-detection may have created new conflicts for other entities
     const filter = this._conflictsStore.filter();
-    this._conflictsStore.loadConflicts(filter.tableName, filter.entityId, filter.conflictIds);
+    this._conflictsStore.loadConflicts(filter.tableName, filter.entityId, filter.conflictIds, filter.date);
     // Also reload this entity's detail in case it still has conflicts
     this._loadDetail();
   }

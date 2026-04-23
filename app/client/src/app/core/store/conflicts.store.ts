@@ -14,9 +14,15 @@ export const ConflictsStore = signalStore(
         next: ({ count }) => patchState(store, { openCount: count }),
       });
     },
-    loadConflicts(tableName = '', entityId = '', conflictIds: number[] = []): void {
-      patchState(store, { isLoadingMore: true, page: 0, hasMore: true, openConflicts: [], filter: { tableName, entityId, conflictIds } });
-      conflictsService.getList(1, CONFLICTS_PAGE_SIZE, tableName, entityId, conflictIds).subscribe({
+    loadConflicts(tableName = '', entityId = '', conflictIds: number[] = [], date = ''): void {
+      patchState(store, {
+        isLoadingMore: true,
+        page: 0,
+        hasMore: true,
+        openConflicts: [],
+        filter: { tableName, entityId, conflictIds, date },
+      });
+      conflictsService.getList(1, CONFLICTS_PAGE_SIZE, tableName, entityId, conflictIds, date).subscribe({
         next: (openConflicts) =>
           patchState(store, {
             openConflicts,
@@ -31,9 +37,9 @@ export const ConflictsStore = signalStore(
         return;
       }
       const nextPage = store.page() + 1;
-      const { tableName, entityId, conflictIds } = store.filter();
+      const { tableName, entityId, conflictIds, date } = store.filter();
       patchState(store, { isLoadingMore: true });
-      conflictsService.getList(nextPage, CONFLICTS_PAGE_SIZE, tableName, entityId, conflictIds).subscribe({
+      conflictsService.getList(nextPage, CONFLICTS_PAGE_SIZE, tableName, entityId, conflictIds, date).subscribe({
         next: (newConflicts) =>
           patchState(store, (state) => ({
             openConflicts: [...state.openConflicts, ...newConflicts],

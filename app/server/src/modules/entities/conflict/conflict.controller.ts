@@ -22,9 +22,17 @@ export class ConflictController {
     @Query('tableName') tableName?: string,
     @Query('entityId') entityId?: string,
     @Query('conflictIds') conflictIds?: string,
+    @Query('date') date?: string,
   ): Promise<ConflictListResponse> {
     const parsedConflictIds = conflictIds ? conflictIds.split(',').map(Number).filter((n) => !isNaN(n)) : undefined;
-    return this._conflictListService.getOpenGroups(Number(page), Number(limit), tableName, entityId, parsedConflictIds);
+    return this._conflictListService.getOpenGroups(
+      Number(page),
+      Number(limit),
+      tableName,
+      entityId,
+      parsedConflictIds,
+      date,
+    );
   }
 
   @Get('count')

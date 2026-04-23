@@ -18,11 +18,19 @@ export class ConflictsService {
     return this._http.get<ConflictCountResponse>(API_ROUTES.conflicts.count);
   }
 
-  public getList(page: number, limit: number, tableName?: string, entityId?: string, conflictIds?: number[]): Observable<ConflictGroup[]> {
+  public getList(
+    page: number,
+    limit: number,
+    tableName?: string,
+    entityId?: string,
+    conflictIds?: number[],
+    date?: string,
+  ): Observable<ConflictGroup[]> {
     const params: Record<string, string | number> = { page, limit };
     if (tableName) { params['tableName'] = tableName; }
     if (entityId) { params['entityId'] = entityId; }
     if (conflictIds?.length) { params['conflictIds'] = conflictIds.join(','); }
+    if (date) { params['date'] = date; }
     return this._http.get<ConflictGroup[]>(API_ROUTES.conflicts.list, { params });
   }
 
