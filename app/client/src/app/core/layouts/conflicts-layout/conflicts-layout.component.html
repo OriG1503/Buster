@@ -30,11 +30,16 @@
         placeholder="חפש לפי מזהה ישות"
         (input)="onEntityIdInput($any($event.target).value)"
       />
-      <input
-        class="conflicts-layout__filter-date"
-        type="date"
-        [value]="_$filterDate()"
-        (change)="onDateChange($any($event.target).value)"
+      <p-datepicker
+        styleClass="conflicts-layout__filter-date"
+        [ngModel]="_$filterDateValue()"
+        [showIcon]="true"
+        [showButtonBar]="true"
+        dateFormat="dd/mm/yy"
+        placeholder="סנן לפי תאריך"
+        appendTo="body"
+        (onSelect)="onDateChange($event)"
+        (onClear)="onDateChange(null)"
       />
       <app-conflict-color-legend />
     </div>

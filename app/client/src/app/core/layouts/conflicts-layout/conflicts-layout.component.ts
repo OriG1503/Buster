@@ -1,6 +1,19 @@
-import { AfterViewInit, Component, computed, effect, ElementRef, inject, OnDestroy, signal, viewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  computed,
+  effect,
+  ElementRef,
+  inject,
+  OnDestroy,
+  signal,
+  viewChild,
+  ViewEncapsulation,
+} from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
+import { DatePickerModule } from 'primeng/datepicker';
 
 import { ConflictsStore } from '../../store/conflicts.store';
 import { ConflictItemComponent } from '../../../features/conflicts/organisms/conflict-item/conflict-item.component';
@@ -9,9 +22,10 @@ import { DisplayNamesService } from '../../services/display-names/display-names.
 
 @Component({
   selector: 'app-conflicts-layout',
-  imports: [ConflictItemComponent, ConflictColorLegendComponent],
+  imports: [ConflictItemComponent, ConflictColorLegendComponent, FormsModule, DatePickerModule],
   templateUrl: './conflicts-layout.component.html',
   styleUrl: './conflicts-layout.component.scss',
+  encapsulation: ViewEncapsulation.None,
 })
 export class ConflictsLayoutComponent implements AfterViewInit, OnDestroy {
   protected readonly _store = inject(ConflictsStore);
@@ -37,6 +51,12 @@ export class ConflictsLayoutComponent implements AfterViewInit, OnDestroy {
     { equal: (a, b) => a.length === b.length && a.every((v, i) => v === b[i]) },
   );
   protected readonly _$filterDate = computed(() => this._$queryParams()['date'] ?? '');
+  protected readonly _$filterDateValue = computed<Date | null>(() => {
+    const raw = this._$filterDate();
+    if (!raw) { return null; }
+    const parsed = new Date(raw);
+    return isNaN(parsed.getTime()) ? null : parsed;
+  });
   protected readonly _$openEntityId = computed(() => this._$queryParams()['open'] ?? '');
 
   protected readonly _$filterTitle = computed(() => {
@@ -117,11 +137,19 @@ export class ConflictsLayoutComponent implements AfterViewInit, OnDestroy {
     }, 300);
   }
 
-  protected onDateChange(value: string): void {
+  protected onDateChange(value: Date | null): void {
+    const isoDate = value ? this._toIsoDate(value) : null;
     this._router.navigate([], {
-      queryParams: { date: value || null },
+      queryParams: { date: isoDate },
       queryParamsHandling: 'merge',
     });
+  }
+
+  private _toIsoDate(value: Date): string {
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, '0');
+    const day = String(value.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   private _formatHebrewDate(isoDate: string): string {
