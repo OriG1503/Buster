@@ -22,7 +22,8 @@ export class ConflictController {
     @Query('tableName') tableName?: string,
     @Query('entityId') entityId?: string,
     @Query('conflictIds') conflictIds?: string,
-    @Query('date') date?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
   ): Promise<ConflictListResponse> {
     const parsedConflictIds = conflictIds ? conflictIds.split(',').map(Number).filter((n) => !isNaN(n)) : undefined;
     return this._conflictListService.getOpenGroups(
@@ -31,7 +32,8 @@ export class ConflictController {
       tableName,
       entityId,
       parsedConflictIds,
-      date,
+      startDate,
+      endDate,
     );
   }
 

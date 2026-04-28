@@ -1,0 +1,41 @@
+<div class="verbal-section">
+  <div class="verbal-content">
+    <div class="amount-stepper">
+      <input
+        type="number"
+        class="amount-input"
+        [value]="$verbalAmount()"
+        (input)="onAmountInput($event)"
+        min="1"
+        [max]="maxAmount"
+      />
+      <div class="stepper-arrows">
+        <button
+          type="button"
+          class="stepper-arrow-btn"
+          (click)="incrementAmount()"
+          [disabled]="maxAmount !== null && $verbalAmount() >= maxAmount"
+        >
+          <i class="pi pi-chevron-up"></i>
+        </button>
+        <button
+          type="button"
+          class="stepper-arrow-btn"
+          (click)="decrementAmount()"
+          [disabled]="$verbalAmount() <= 1"
+        >
+          <i class="pi pi-chevron-down"></i>
+        </button>
+      </div>
+    </div>
+    <p-select
+      [options]="timeUnitOptions"
+      [ngModel]="$verbalUnit()"
+      (ngModelChange)="onUnitChange($event)"
+      optionLabel="label"
+      optionValue="value"
+      styleClass="unit-select"
+    />
+    <span class="verbal-last-label">{{ translations.lastLabel }}</span>
+  </div>
+</div>

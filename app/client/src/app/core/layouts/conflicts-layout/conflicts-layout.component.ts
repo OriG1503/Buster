@@ -8,24 +8,21 @@ import {
   OnDestroy,
   signal,
   viewChild,
-  ViewEncapsulation,
 } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
-import { DatePickerModule } from 'primeng/datepicker';
 
 import { ConflictsStore } from '../../store/conflicts.store';
 import { ConflictItemComponent } from '../../../features/conflicts/organisms/conflict-item/conflict-item.component';
 import { ConflictColorLegendComponent } from '../../../features/conflicts/atoms/conflict-color-legend/conflict-color-legend.component';
+import { DateRangePickerComponent } from '../../../features/conflicts/molecules/date-range-picker/date-range-picker.component';
 import { DisplayNamesService } from '../../services/display-names/display-names.service';
 
 @Component({
   selector: 'app-conflicts-layout',
-  imports: [ConflictItemComponent, ConflictColorLegendComponent, FormsModule, DatePickerModule],
+  imports: [ConflictItemComponent, ConflictColorLegendComponent, DateRangePickerComponent],
   templateUrl: './conflicts-layout.component.html',
   styleUrl: './conflicts-layout.component.scss',
-  encapsulation: ViewEncapsulation.None,
 })
 export class ConflictsLayoutComponent implements AfterViewInit, OnDestroy {
   protected readonly _store = inject(ConflictsStore);
@@ -50,13 +47,30 @@ export class ConflictsLayoutComponent implements AfterViewInit, OnDestroy {
     },
     { equal: (a, b) => a.length === b.length && a.every((v, i) => v === b[i]) },
   );
-  protected readonly _$filterDate = computed(() => this._$queryParams()['date'] ?? '');
-  protected readonly _$filterDateValue = computed<Date | null>(() => {
-    const raw = this._$filterDate();
-    if (!raw) { return null; }
-    const parsed = new Date(raw);
-    return isNaN(parsed.getTime()) ? null : parsed;
-  });
+  protected readonly _$filterStartDate = computed(() => this._$queryParams()['startDate'] ?? '');
+  protected readonly _$filterEndDate = computed(() => this._$queryParams()['endDate'] ?? '');
+  protected readonly _$filterDateRange = computed<Date[] | null>(
+    () => {
+      const start = this._$filterStartDate();
+      const end = this._$filterEndDate();
+      if (!start || !end) {
+        return null;
+      }
+      const startDate = new Date(start);
+      const endDate = new Date(end);
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        return null;
+      }
+      return [startDate, endDate];
+    },
+    {
+      equal: (a, b) => {
+        if (a === b) { return true; }
+        if (!a || !b) { return false; }
+        return a.length === b.length && a.every((d, i) => d.getTime() === b[i].getTime());
+      },
+    },
+  );
   protected readonly _$openEntityId = computed(() => this._$queryParams()['open'] ?? '');
 
   protected readonly _$filterTitle = computed(() => {
@@ -64,13 +78,16 @@ export class ConflictsLayoutComponent implements AfterViewInit, OnDestroy {
     const conflictIds = this._$filterConflictIds();
     const tableName = this._$filterTableName();
     const entityId = this._$filterEntityId();
-    const date = this._$filterDate();
+    const start = this._$filterStartDate();
+    const end = this._$filterEndDate();
     if (conflictIds.length) { parts.push(`קונפליקטים מהעלאה אחרונה (${conflictIds.length})`); }
     if (tableName) {
       parts.push(`סוג ישות: ${this._displayNames.getEntityPluralName(tableName)}`);
     }
     if (entityId) { parts.push(`מזהה: ${entityId}`); }
-    if (date) { parts.push(`תאריך: ${this._formatHebrewDate(date)}`); }
+    if (start && end) {
+      parts.push(`תאריך: ${this._formatHebrewDate(start)} - ${this._formatHebrewDate(end)}`);
+    }
     return parts.length ? `מסנן לפי — ${parts.join(' | ')}` : '';
   });
 
@@ -80,7 +97,8 @@ export class ConflictsLayoutComponent implements AfterViewInit, OnDestroy {
         this._$filterTableName(),
         this._$filterEntityId(),
         this._$filterConflictIds(),
-        this._$filterDate(),
+        this._$filterStartDate(),
+        this._$filterEndDate(),
       );
     });
     effect(() => {
@@ -137,10 +155,19 @@ export class ConflictsLayoutComponent implements AfterViewInit, OnDestroy {
     }, 300);
   }
 
-  protected onDateChange(value: Date | null): void {
-    const isoDate = value ? this._toIsoDate(value) : null;
+  protected onDateRangeChange(range: Date[] | null): void {
+    if (!range || range.length !== 2 || !range[0] || !range[1]) {
+      this._router.navigate([], {
+        queryParams: { startDate: null, endDate: null },
+        queryParamsHandling: 'merge',
+      });
+      return;
+    }
     this._router.navigate([], {
-      queryParams: { date: isoDate },
+      queryParams: {
+        startDate: this._toIsoDate(range[0]),
+        endDate: this._toIsoDate(range[1]),
+      },
       queryParamsHandling: 'merge',
     });
   }

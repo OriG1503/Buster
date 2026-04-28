@@ -1,0 +1,25 @@
+<div class="calendar-section">
+  <p-datepicker
+    [ngModel]="$dateRange()"
+    (ngModelChange)="onCalendarSelect($event)"
+    selectionMode="range"
+    [inline]="true"
+    [showOtherMonths]="true"
+  />
+</div>
+
+<div class="divider"></div>
+
+<div class="date-display">
+  <div class="date-display-item">
+    <span class="date-display-value">
+      {{ $fromDate() ?? translations.fromPlaceholder }}
+    </span>
+  </div>
+  <span class="date-display-separator">-</span>
+  <div class="date-display-item">
+    <span class="date-display-value">
+      {{ $toDate() ?? translations.toPlaceholder }}
+    </span>
+  </div>
+</div>

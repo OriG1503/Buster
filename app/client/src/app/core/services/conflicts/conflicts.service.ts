@@ -24,13 +24,15 @@ export class ConflictsService {
     tableName?: string,
     entityId?: string,
     conflictIds?: number[],
-    date?: string,
+    startDate?: string,
+    endDate?: string,
   ): Observable<ConflictGroup[]> {
     const params: Record<string, string | number> = { page, limit };
     if (tableName) { params['tableName'] = tableName; }
     if (entityId) { params['entityId'] = entityId; }
     if (conflictIds?.length) { params['conflictIds'] = conflictIds.join(','); }
-    if (date) { params['date'] = date; }
+    if (startDate) { params['startDate'] = startDate; }
+    if (endDate) { params['endDate'] = endDate; }
     return this._http.get<ConflictGroup[]>(API_ROUTES.conflicts.list, { params });
   }
 

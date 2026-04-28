@@ -8,5 +8,5 @@ export const CONFLICTS_INITIAL_STATE: ConflictsState = {
   page: 0,
   hasMore: true,
   isLoadingMore: false,
-  filter: { tableName: '', entityId: '', conflictIds: [], date: '' },
+  filter: { tableName: '', entityId: '', conflictIds: [], startDate: '', endDate: '' },
 };
