@@ -8,7 +8,7 @@ app-calendar-view {
 
   .divider {
     height: 1px;
-    background-color: var(--color-navy-gray);
+    background-color: rgba(255, 255, 255, 0.12);
     margin: 0.25rem 0;
   }
 
@@ -22,8 +22,8 @@ app-calendar-view {
 
     .date-display-item {
       padding: 0.3rem 1.25rem;
-      background-color: var(--color-white);
-      border: 2px solid var(--color-dark-navy);
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 2px solid var(--color-blue);
       border-radius: 1.25rem;
 
       .date-display-value {
@@ -42,13 +42,13 @@ app-calendar-view {
 
   .p-datepicker {
     --p-datepicker-date-selected-background: var(--color-blue);
-    --p-datepicker-date-selected-color: var(--color-white);
+    --p-datepicker-date-selected-color: #fff;
     --p-datepicker-date-range-selected-background: var(--color-option-hover);
     --p-datepicker-date-range-selected-color: var(--color-dark-navy);
     --p-datepicker-date-hover-background: var(--color-option-hover);
     --p-datepicker-date-hover-color: var(--color-dark-navy);
-    --p-datepicker-date-focus-ring-color: rgba(63, 112, 227, 0.3);
-    --p-datepicker-date-focus-ring-shadow: 0 0 0 2px rgba(63, 112, 227, 0.3);
+    --p-datepicker-date-focus-ring-color: var(--color-option-hover);
+    --p-datepicker-date-focus-ring-shadow: 0 0 0 2px var(--color-option-hover);
     --p-datepicker-today-background: var(--color-option-hover);
     --p-datepicker-today-color: var(--color-dark-navy);
     --p-button-text-hover-background: var(--color-option-hover);
@@ -56,12 +56,14 @@ app-calendar-view {
     --p-button-text-primary-color: var(--color-dark-navy);
     --p-button-text-hover-color: var(--color-dark-navy);
     --p-button-text-primary-hover-color: var(--color-dark-navy);
+    background-color: transparent;
     border: none;
     width: 100%;
     padding: 0;
   }
 
   .p-datepicker-header {
+    background-color: transparent;
     padding: 0.25rem 0;
     border: none;
 
@@ -95,7 +97,7 @@ app-calendar-view {
       border-radius: 0.25rem;
 
       &:hover {
-        background-color: var(--color-light-gray);
+        background-color: rgba(255, 255, 255, 0.08);
       }
     }
   }
@@ -116,7 +118,7 @@ app-calendar-view {
   }
 
   .p-datepicker-weekday {
-    color: var(--color-dark-navy);
+    color: var(--color-navy-gray);
     font-size: 0;
     display: inline-block;
     overflow: hidden;
@@ -136,6 +138,7 @@ app-calendar-view {
     font-size: var(--font-size-xs);
     color: var(--color-dark-navy);
     border: none;
+    background-color: transparent;
 
     &:hover:not(.p-datepicker-day-selected) {
       background-color: var(--color-option-hover);
@@ -143,12 +146,12 @@ app-calendar-view {
 
     &:focus-visible {
       outline: none;
-      box-shadow: 0 0 0 2px rgba(63, 112, 227, 0.3);
+      box-shadow: 0 0 0 2px var(--color-option-hover);
     }
 
     &.p-datepicker-day-selected {
       background-color: var(--color-blue);
-      color: var(--color-white);
+      color: #fff;
 
       &:hover {
         background-color: var(--color-blue);
@@ -184,14 +187,14 @@ app-calendar-view {
     cursor: pointer;
 
     &:hover {
-      background-color: var(--color-light-gray);
+      background-color: rgba(255, 255, 255, 0.08);
     }
   }
 
   .p-datepicker-month-selected,
   .p-datepicker-year-selected {
     background-color: var(--color-blue);
-    color: var(--color-white);
+    color: #fff;
 
     &:hover {
       background-color: var(--color-blue);

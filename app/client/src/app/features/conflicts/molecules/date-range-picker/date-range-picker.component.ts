@@ -14,12 +14,10 @@ import {
   Signal,
 } from '@angular/core';
 import { DateRangeMode } from '../../types/date-range-mode.type';
-import { DateFilterOption } from '../../types/date-filter-option.type';
 import { TimeUnit, TimeUnitOption } from '../../types/time-unit.type';
 import { VerbalChange } from '../../types/verbal-change.type';
 import {
   DATE_RANGE_MODE_LABEL_MAP,
-  DATE_FILTER_OPTION_LABEL_MAP,
   TIME_UNIT_LABEL_MAP,
   DATE_RANGE_LABEL_MAP,
 } from '../../mapping/date-range.label-map';
@@ -42,7 +40,6 @@ export class DateRangePickerComponent {
 
   public $isPopupOpen: WritableSignal<boolean> = signal<boolean>(false);
   public $selectedMode: WritableSignal<DateRangeMode> = signal<DateRangeMode>('calendar');
-  public $selectedOption: WritableSignal<DateFilterOption> = signal<DateFilterOption>('option1');
   private _$lastSelectionMode: WritableSignal<DateRangeMode> = signal<DateRangeMode>('calendar');
   private _$verbalAmount: WritableSignal<number> = signal<number>(DEFAULT_VERBAL_AMOUNT);
   private _$verbalUnit: WritableSignal<TimeUnit> = signal<TimeUnit>(DEFAULT_VERBAL_UNIT);
@@ -55,7 +52,6 @@ export class DateRangePickerComponent {
   ];
 
   public readonly modeLabels: typeof DATE_RANGE_MODE_LABEL_MAP = DATE_RANGE_MODE_LABEL_MAP;
-  public readonly optionLabels: typeof DATE_FILTER_OPTION_LABEL_MAP = DATE_FILTER_OPTION_LABEL_MAP;
   public readonly translations: typeof DATE_RANGE_LABEL_MAP = DATE_RANGE_LABEL_MAP;
 
   private _formatDatePipe: FormatDatePipe = inject(FormatDatePipe);
@@ -106,10 +102,6 @@ export class DateRangePickerComponent {
     if (mode === 'verbal') {
       this._emitVerbalRange(this._$verbalAmount(), this._$verbalUnit());
     }
-  }
-
-  public selectOption(option: DateFilterOption): void {
-    this.$selectedOption.set(option);
   }
 
   public onCalendarSelect(dates: Date[]): void {

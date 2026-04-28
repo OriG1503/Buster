@@ -38,31 +38,6 @@
         </button>
       </div>
 
-      <div class="radio-group">
-        <div class="radio-option">
-          <button
-            type="button"
-            class="radio-btn"
-            [class.radio-btn-active]="$selectedOption() === 'option1'"
-            (click)="selectOption('option1')"
-          >
-            <span class="radio-dot"></span>
-          </button>
-          <span class="radio-label">{{ optionLabels.option1 }}</span>
-        </div>
-        <div class="radio-option">
-          <button
-            type="button"
-            class="radio-btn"
-            [class.radio-btn-active]="$selectedOption() === 'option2'"
-            (click)="selectOption('option2')"
-          >
-            <span class="radio-dot"></span>
-          </button>
-          <span class="radio-label">{{ optionLabels.option2 }}</span>
-        </div>
-      </div>
-
       <div class="divider"></div>
 
       @if ($selectedMode() === 'calendar') {
