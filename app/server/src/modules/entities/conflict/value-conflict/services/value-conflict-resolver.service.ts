@@ -17,12 +17,14 @@ export class ValueConflictResolverService {
   /** Picks a winner value for an open value-conflict group and persists the resolution. */
   public async resolve(resolveConflictDto: ResolveValueConflictDto): Promise<BaseEntity> {
     const { tableName, entityId, columnName, winnerValue, conflictResolver, resolutionNotes } = resolveConflictDto;
+    //LOG
     this._logger.info(
       `ValueConflictResolverService.resolve — "${tableName}/${entityId}/${columnName}" → winner "${winnerValue}" by "${conflictResolver}"${resolutionNotes ? ` notes="${resolutionNotes}"` : ''}`,
       'app-workflow',
     );
 
     const conflicts = await this._fetchAndValidateConflicts(tableName, entityId, columnName, winnerValue);
+    //LOG
     this._logger.debug(
       `ValueConflictResolverService.resolve — fetched ${conflicts.length} conflict(s) for group`,
       'app-workflow',
@@ -48,6 +50,7 @@ export class ValueConflictResolverService {
     }
 
     await this._valueConflictRepository.resolveMany(tableName, entityId, columnName, conflictResolver, resolutionNotes);
+    //LOG
     this._logger.info(
       `ValueConflictResolverService.resolve — group "${tableName}/${entityId}/${columnName}" closed`,
       'app-workflow',

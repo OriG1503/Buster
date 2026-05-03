@@ -24,6 +24,7 @@ export class FileController {
     @UploadedFile() file: Express.Multer.File,
     @CurrentUser() user: JwtPayload,
   ): Promise<UploadSummary> {
+    //LOG
     this._logger.info(
       `FileController.upload — POST /api/file received for user "${user.email}", filename "${file?.originalname}"`,
       'app-workflow',
@@ -34,6 +35,7 @@ export class FileController {
   @Public()
   @Get('report/:filename')
   public async downloadReport(@Param('filename') filename: string, @Res() res: Response): Promise<void> {
+    //LOG
     this._logger.info(`FileController.downloadReport — GET /api/file/report/${filename}`, 'app-workflow');
     const buffer = await this._fileService.getReport(filename);
     res.set({
@@ -42,6 +44,7 @@ export class FileController {
       'Content-Length': String(buffer.length),
     });
     res.send(buffer);
+    //LOG
     this._logger.info(
       `FileController.downloadReport — report "${filename}" sent (${buffer.length} bytes)`,
       'app-workflow',

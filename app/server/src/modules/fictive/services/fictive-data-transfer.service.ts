@@ -20,6 +20,7 @@ export class FictiveDataTransferService {
       return;
     }
 
+    //LOG
     this._logger.debug(
       `FictiveDataTransferService.clearFkFields — clearing [${fkFieldsToClear.join(', ')}] on "${service.tableName}/${fictive.id}"`,
       'app-workflow',
@@ -58,6 +59,7 @@ export class FictiveDataTransferService {
     const notesUpdates = Object.fromEntries(transferKeys.map((k) => [k, meta.notes]));
     const sourceTimeUpdates = Object.fromEntries(transferKeys.map((k) => [k, meta.sourceTime]));
 
+    //LOG
     this._logger.info(
       `FictiveDataTransferService.transferData — transferring [${transferKeys.join(', ')}] from fictive "${service.tableName}/${fictive.id}" to real "${service.tableName}/${realId}"`,
       'app-workflow',

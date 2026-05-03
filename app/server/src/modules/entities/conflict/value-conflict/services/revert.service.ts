@@ -20,6 +20,7 @@ export class RevertService {
    */
   public async revert(dto: RevertValueConflictDto): Promise<BaseEntity> {
     const { tableName, entityId, columnName, revertValue, revertedBy, resolutionNotes } = dto;
+    //LOG
     this._logger.info(
       `ValueConflict.RevertService.revert — "${tableName}/${entityId}/${columnName}" → revert to "${revertValue}" by "${revertedBy}"${resolutionNotes ? ` notes="${resolutionNotes}"` : ''}`,
       'app-workflow',
@@ -92,6 +93,7 @@ export class RevertService {
       entity.sourceTime,
     );
 
+    //LOG
     this._logger.info(
       `ValueConflict.RevertService.revert — "${tableName}/${entityId}/${columnName}" reverted to "${revertValue}"`,
       'app-workflow',

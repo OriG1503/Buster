@@ -16,12 +16,14 @@ export class JwtAuthGuard implements CanActivate {
   public canActivate(context: ExecutionContext): boolean {
     const handler = context.getHandler().name;
     if (this._isPublic(context)) {
+      //LOG
       this._logger.debug(`JwtAuthGuard skipped — public route handler "${handler}"`, 'app-workflow');
       return true;
     }
 
     const token = this._extractToken(context);
     if (!token) {
+      //LOG
       this._logger.warn(`JwtAuthGuard rejected — no Bearer token on handler "${handler}"`, 'app-workflow');
       throw new UnauthorizedException();
     }
@@ -29,12 +31,14 @@ export class JwtAuthGuard implements CanActivate {
     try {
       const payload = this._jwtService.verify<JwtPayload>(token);
       context.switchToHttp().getRequest()['user'] = payload;
+      //LOG
       this._logger.debug(
         `JwtAuthGuard accepted — user "${payload.email}" role "${payload.role}" on handler "${handler}"`,
         'app-workflow',
       );
       return true;
     } catch {
+      //LOG
       this._logger.warn(`JwtAuthGuard rejected — invalid/expired token on handler "${handler}"`, 'app-workflow');
       throw new UnauthorizedException();
     }

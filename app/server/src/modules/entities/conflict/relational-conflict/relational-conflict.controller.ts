@@ -20,6 +20,7 @@ export class RelationalConflictController {
   @RequireRole(Role.EDITOR)
   @Patch('resolve')
   public async resolve(@Body() dto: ResolveRelationalConflictDto): Promise<RelationalConflictEntity> {
+    //LOG
     this._logger.info(
       `RelationalConflictController.resolve — PATCH /api/conflicts/relational/resolve conflictIds=[${dto.conflictIds.join(', ')}] winner="${dto.winnerRelatedId}"`,
       'app-workflow',
@@ -33,6 +34,7 @@ export class RelationalConflictController {
     @Query('anchorId') anchorId: string,
     @Query('relatedTable') relatedTable: string,
   ): Promise<RelationalHistoryResponse> {
+    //LOG
     this._logger.info(
       `RelationalConflictController.history — GET /api/conflicts/relational/history "${anchorTable}/${anchorId}" relatedTable="${relatedTable}"`,
       'app-workflow',

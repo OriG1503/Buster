@@ -35,6 +35,7 @@ export class ParsedRowEnricher {
     const robotId = nullIfEmpty(row.robot_UUID);
     const rowCommId = nullIfEmpty(row.communication?.communication_UUID ?? null);
 
+    //LOG
     this._logger.debug(
       `ParsedRowEnricher.enrich — robotId="${robotId ?? 'null'}", commId="${rowCommId ?? 'null'}"`,
       'app-workflow',
@@ -135,6 +136,7 @@ export class ParsedRowEnricher {
     }
 
     const plasticId = dbState.existingPlasticId ?? this._fictiveId.generate(PLASTIC_CONFIG.displayName, batteryId);
+    //LOG
     this._logger.info(
       `ParsedRowEnricher._enrichPlastic — assigned plastic_UUID="${plasticId}" (${dbState.existingPlasticId ? 'from DB' : 'fictive'}) for battery "${batteryId}"`,
       'app-workflow',
@@ -170,6 +172,7 @@ export class ParsedRowEnricher {
     }
 
     const commId = dbState.existingCommId ?? this._fictiveId.generate(COMMUNICATION_CONFIG.displayName, robotId);
+    //LOG
     this._logger.info(
       `ParsedRowEnricher._enrichCommunication — assigned communication_UUID="${commId}" (${dbState.existingCommId ? 'from DB' : 'fictive'}) for robot "${robotId}"`,
       'app-workflow',
@@ -199,6 +202,7 @@ export class ParsedRowEnricher {
     }
 
     const wiringId = dbState.existingWiringId ?? this._fictiveId.generate(WIRING_CONFIG.displayName, storageId);
+    //LOG
     this._logger.info(
       `ParsedRowEnricher._enrichWiring — assigned wiring_UUID="${wiringId}" (${dbState.existingWiringId ? 'from DB' : 'fictive'}) for storage "${storageId}"`,
       'app-workflow',

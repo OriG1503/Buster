@@ -70,6 +70,7 @@ export class FkConflictService {
     }
 
     if (this._fictiveId.isFictive(String(existingOwner.id))) {
+      //LOG
       this._logger.info(
         `FkConflictService._checkOneFkTwoFathersOnInsert — fictive owner "${existingOwner.id}" replaced by real "${id}" on field "${fkField}"`,
         'app-workflow',
@@ -81,6 +82,7 @@ export class FkConflictService {
       });
       return null;
     }
+    //LOG
     this._logger.warn(
       `FkConflictService._checkOneFkTwoFathersOnInsert — TWO_FATHERS detected: "${service.tableName}/${id}" and "${service.tableName}/${existingOwner.id}" both want to own "${childId}" via "${fkField}"`,
       'app-workflow',
@@ -176,6 +178,7 @@ export class FkConflictService {
     const incomingFkId = String(fields[fkField]);
 
     if (this._fictiveId.isFictive(storedFkId) && !this._fictiveId.isFictive(incomingFkId)) {
+      //LOG
       this._logger.info(
         `FkConflictService._checkOneTwoChilds — replacing fictive child "${storedFkId}" with real "${incomingFkId}" on "${service.tableName}/${id}.${fkField}"`,
         'app-workflow',
@@ -187,6 +190,7 @@ export class FkConflictService {
     if (!relatedTable) {
       return null;
     }
+    //LOG
     this._logger.warn(
       `FkConflictService._checkOneTwoChilds — TWO_CHILDS conflict on "${service.tableName}/${id}.${fkField}" (stored="${storedFkId}", incoming="${incomingFkId}")`,
       'app-workflow',
@@ -267,6 +271,7 @@ export class FkConflictService {
       return null;
     }
 
+    //LOG
     this._logger.warn(
       `FkConflictService._checkOneFkTwoFathersOnGapFill — TWO_FATHERS on gap-fill: "${service.tableName}/${id}" tried to claim "${relatedTable}/${childId}" already owned by "${existingOwner.id}"`,
       'app-workflow',

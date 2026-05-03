@@ -13,6 +13,7 @@ export class ConflictReattributionService {
 
   /** Re-attributes all open conflict records that reference a fictive entity ID to a real entity ID. */
   public async reattribute(fictiveId: string, realId: string): Promise<void> {
+    //LOG
     this._logger.info(
       `ConflictReattributionService.reattribute — moving open conflicts from fictive "${fictiveId}" to real "${realId}"`,
       'app-workflow',

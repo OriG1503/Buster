@@ -23,6 +23,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const body = exception.getResponse();
     const message =
       typeof body === 'string' ? body : ((body as Record<string, unknown>)['message'] ?? exception.message);
+    //LOG
     this._logger.warn(`HTTP exception — ${method} ${url} → ${status}: ${String(message)}`, 'app-workflow');
     res.status(status).json(body);
   }
@@ -30,6 +31,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
   private _handleUnexpectedException(exception: unknown, res: Response, method: string, url: string): void {
     const stack =
       exception instanceof Error ? `${exception.message} | stack: ${exception.stack ?? ''}` : String(exception);
+    //LOG
     this._logger.error(`Unhandled exception — ${method} ${url} → 500: ${stack}`, 'app-workflow');
     res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ statusCode: 500, message: 'Internal server error' });
   }

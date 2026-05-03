@@ -22,12 +22,14 @@ export class RolesGuard implements CanActivate {
     const handler = context.getHandler().name;
 
     if (!requiredRole) {
+      //LOG
       this._logger.debug(`RolesGuard skipped — no role required on handler "${handler}"`, 'app-workflow');
       return true;
     }
 
     const user: JwtPayload = context.switchToHttp().getRequest()['user'];
     if (user && ROLE_LEVEL[user.role] >= ROLE_LEVEL[requiredRole]) {
+      //LOG
       this._logger.debug(
         `RolesGuard accepted — user "${user.email}" role "${user.role}" passes required "${requiredRole}" on handler "${handler}"`,
         'app-workflow',
@@ -35,6 +37,7 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
+    //LOG
     this._logger.warn(
       `RolesGuard rejected — user "${user?.email ?? 'unknown'}" role "${user?.role ?? 'none'}" below required "${requiredRole}" on handler "${handler}"`,
       'app-workflow',

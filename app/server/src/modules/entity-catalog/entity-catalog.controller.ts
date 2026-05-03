@@ -14,6 +14,7 @@ export class EntityCatalogController {
   @Public()
   @Get()
   public getConfigs(): EntityCatalogConfig {
+    //LOG
     this._logger.info('EntityCatalogController.getConfigs — GET /api/entity-catalog', 'app-workflow');
     return this._entityCatalogService.getConfigs();
   }

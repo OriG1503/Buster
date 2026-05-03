@@ -14,6 +14,7 @@ export class AuthController {
   @Get('me')
   @Public()
   public getMe(): LoginResponse {
+    //LOG
     this._logger.info('AuthController.getMe — GET /api/auth/me', 'app-workflow');
     return this._authService.getMe();
   }

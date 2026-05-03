@@ -22,6 +22,7 @@ export class ProcessReportService {
    * - Unknown column headers and data cells → orange
    */
   public async generate(csvPath: string, result: ProcessResult, unknownColumns: string[]): Promise<Buffer> {
+    //LOG
     this._logger.info(
       `ProcessReportService.generate — building report from "${csvPath}" with ${result.flyingFields.length} flying-field set(s) and ${unknownColumns.length} unknown column(s)`,
       'app-workflow',
@@ -38,6 +39,7 @@ export class ProcessReportService {
     sheet.columns.forEach((col) => {
       col.width = 22;
     });
+    //LOG
     this._logger.debug(
       `ProcessReportService.generate — workbook ready (${sheet.actualRowCount} rows, ${sheet.actualColumnCount} columns)`,
       'app-workflow',

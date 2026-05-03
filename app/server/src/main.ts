@@ -25,6 +25,7 @@ async function bootstrap() {
   app.useGlobalFilters(app.get(GlobalExceptionFilter));
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
+  //LOG
   logger.info(`Server bootstrap complete — listening on port ${port}`, 'app-workflow');
 }
 bootstrap();

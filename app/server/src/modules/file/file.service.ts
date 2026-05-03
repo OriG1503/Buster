@@ -28,6 +28,7 @@ export class FileService {
   /** Full upload pipeline: validate → convert → save locally → parse → process → generate report. */
   public async handleFile(file: Express.Multer.File, username: string): Promise<UploadSummary> {
     file.originalname = this._fixFilename(file.originalname);
+    //LOG
     this._logger.info(
       `FileService.handleFile invoked — file: "${file?.originalname}", size: ${file?.size ?? 0} bytes, user: "${username}"`,
       'app-workflow',
@@ -36,16 +37,19 @@ export class FileService {
     const csvFile = this._toCsvFile(file);
     const uploadedFileName = `${UPLOADS_DIR}/${csvFile.originalname}`;
 
+    //LOG
     this._logger.debug(`FileService.handleFile — saving raw upload to "${uploadedFileName}"`, 'app-workflow');
     await mkdir(UPLOADS_DIR, { recursive: true });
     await writeFile(uploadedFileName, csvFile.buffer);
 
     // Translate display-name column headers → parser snake_case names before sending to parser.
+    //LOG
     this._logger.debug(
       `FileService.handleFile — translating CSV headers for "${csvFile.originalname}"`,
       'app-workflow',
     );
     const { buffer: translatedBuffer, unknownColumns, totalColumnCount } = this._translateCsvHeaders(csvFile.buffer);
+    //LOG
     this._logger.info(
       `FileService.handleFile — header translation done: ${totalColumnCount} columns, ${unknownColumns.length} unknown`,
       'app-workflow',
@@ -54,6 +58,7 @@ export class FileService {
     // Reject early if any column headers are unrecognised — generate a report highlighting them
     // in orange but skip the parser and DB entirely.
     if (unknownColumns.length > 0) {
+      //LOG
       this._logger.warn(
         `FileService.handleFile — upload rejected, ${unknownColumns.length} unknown columns in "${csvFile.originalname}": [${unknownColumns.join(', ')}]`,
         'app-workflow',
@@ -63,6 +68,7 @@ export class FileService {
       const reportBuffer = await this._reportService.generate(uploadedFileName, emptyResult, unknownColumns);
       await mkdir(REPORTS_DIR, { recursive: true });
       await writeFile(`${REPORTS_DIR}/${reportName}`, reportBuffer);
+      //LOG
       this._logger.info(
         `FileService.handleFile — report written for rejected upload at "${REPORTS_DIR}/${reportName}"`,
         'app-workflow',
@@ -73,14 +79,17 @@ export class FileService {
     await mkdir(TMP_DIR, { recursive: true });
     const tmpPath = `${TMP_DIR}/${csvFile.originalname}`;
     await writeFile(tmpPath, translatedBuffer);
+    //LOG
     this._logger.debug(`FileService.handleFile — wrote translated CSV to tmp path "${tmpPath}"`, 'app-workflow');
 
     const parsedRows = await this._sendToParser(tmpPath);
+    //LOG
     this._logger.info(
       `FileService.handleFile — dispatching ${parsedRows.length} parsed rows to DataProcessorService for file "${csvFile.originalname}"`,
       'app-workflow',
     );
     const result = await this._dataProcessorService.process(parsedRows, username);
+    //LOG
     this._logger.info(
       `FileService.handleFile — data processing finished: ${result.conflictCount} conflicts, ${result.uploadPercentage}% uploaded`,
       'app-workflow',
@@ -90,6 +99,7 @@ export class FileService {
     const reportBuffer = await this._reportService.generate(uploadedFileName, result, unknownColumns);
     await mkdir(REPORTS_DIR, { recursive: true });
     await writeFile(`${REPORTS_DIR}/${reportName}`, reportBuffer);
+    //LOG
     this._logger.info(
       `FileService.handleFile — report generated and written to "${REPORTS_DIR}/${reportName}"`,
       'app-workflow',
@@ -100,8 +110,10 @@ export class FileService {
 
   /** Returns the report buffer for the given filename from local storage. */
   public async getReport(filename: string): Promise<Buffer> {
+    //LOG
     this._logger.info(`FileService.getReport invoked — filename "${filename}"`, 'app-workflow');
     return readFile(`${REPORTS_DIR}/${filename}`).catch(() => {
+      //LOG
       this._logger.warn(`FileService.getReport — report "${filename}" not found at "${REPORTS_DIR}"`, 'app-workflow');
       throw new NotFoundException(`Report "${filename}" not found`);
     });
@@ -114,6 +126,7 @@ export class FileService {
     totalColumnCount: number,
   ): UploadSummary {
     const flyingFieldCount = result.flyingFields.reduce((sum, f) => sum + f.redFields.length, 0);
+    //LOG
     this._logger.info(
       `FileService — upload complete: ${result.uploadPercentage}% uploaded, ${result.conflictCount} conflicts, ${flyingFieldCount} flying fields, report "${reportName}"`,
       'app-workflow',
@@ -222,6 +235,7 @@ export class FileService {
     const normalized = header.trim().replace(/^"|"$/g, '').replace(/""/g, '"');
     const translated = labelMap.get(normalized);
     if (!translated) {
+      //LOG
       this._logger.warn(
         `FileService._translateHeader — column ${index + 1} unknown in display-names config: "${normalized}"`,
         'app-workflow',
@@ -233,6 +247,7 @@ export class FileService {
 
   /** Sends the local file path to the parser service and returns the structured parsed rows. */
   private async _sendToParser(localPath: string): Promise<ParsedRow[]> {
+    //LOG
     this._logger.info(
       `FileService._sendToParser — POST ${process.env.PARSER_URL} with path "${localPath}"`,
       'app-workflow',
@@ -241,12 +256,14 @@ export class FileService {
     const { data } = await firstValueFrom(
       this._httpService.post<ParsedRow[]>(process.env.PARSER_URL!, { path: localPath }),
     ).catch((err) => {
+      //LOG
       this._logger.error(
         `FileService._sendToParser — parser request failed for "${localPath}": ${err?.message ?? err}`,
         'app-workflow',
       );
       throw new InternalServerErrorException('Parser service failed to process the file');
     });
+    //LOG
     this._logger.info(
       `FileService._sendToParser — parser returned ${data.length} rows in ${Date.now() - start}ms`,
       'app-workflow',

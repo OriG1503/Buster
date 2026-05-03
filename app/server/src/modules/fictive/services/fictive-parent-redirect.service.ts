@@ -18,6 +18,7 @@ export class FictiveParentRedirectService {
   ): Promise<void> {
     const parents = await parentService.findAllByFkValue(fkField, fictiveId);
     if (parents.length > 0) {
+      //LOG
       this._logger.info(
         `FictiveParentRedirectService.redirectAll — redirecting ${parents.length} "${parentService.tableName}" parent(s) from fictive "${fictiveId}" to real "${realId}" via "${fkField}"`,
         'app-workflow',

@@ -25,6 +25,7 @@ export class ConflictController {
     @Query('entityId') entityId?: string,
     @Query('conflictIds') conflictIds?: string,
   ): Promise<ConflictListResponse> {
+    //LOG
     this._logger.info(
       `ConflictController.list — GET /api/conflicts page=${page} limit=${limit} tableName="${tableName ?? 'any'}" entityId="${entityId ?? 'any'}" conflictIds="${conflictIds ?? ''}"`,
       'app-workflow',
@@ -40,12 +41,14 @@ export class ConflictController {
 
   @Get('count')
   public async count(): Promise<{ count: number }> {
+    //LOG
     this._logger.info('ConflictController.count — GET /api/conflicts/count', 'app-workflow');
     return { count: await this._conflictListService.countOpen() };
   }
 
   @Post('open-ids')
   public async checkOpenIds(@Body() dto: CheckOpenIdsDto): Promise<string[]> {
+    //LOG
     this._logger.info(
       `ConflictController.checkOpenIds — POST /api/conflicts/open-ids ids=${dto.ids.length}`,
       'app-workflow',
@@ -58,6 +61,7 @@ export class ConflictController {
     @Query('tableName') tableName: string,
     @Query('entityId') entityId: string,
   ): Promise<ConflictEntityDetailResponse> {
+    //LOG
     this._logger.info(
       `ConflictController.entityDetail — GET /api/conflicts/entity tableName="${tableName}" entityId="${entityId}"`,
       'app-workflow',

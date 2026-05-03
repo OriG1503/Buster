@@ -17,6 +17,7 @@ export class RelationalConflictResolverService {
 
   public async resolve(dto: ResolveRelationalConflictDto): Promise<RelationalConflictEntity> {
     const { conflictIds, winnerRelatedId, winnerChildId, winnerChildFkField, conflictResolver, resolutionNotes } = dto;
+    //LOG
     this._logger.info(
       `RelationalConflictResolverService.resolve — conflictIds=[${conflictIds.join(', ')}], winnerRelatedId="${winnerRelatedId}", winnerChildId="${winnerChildId ?? 'none'}", resolver="${conflictResolver}"`,
       'app-workflow',
@@ -42,6 +43,7 @@ export class RelationalConflictResolverService {
     }
 
     if (primaryConflict.conflictType === RELATIONAL_CONFLICT_TYPE.TWO_CHILDS) {
+      //LOG
       this._logger.debug(
         `RelationalConflictResolverService.resolve — branch TWO_CHILDS for "${primaryForWinner.anchorTable}/${primaryForWinner.anchorId}"`,
         'app-workflow',
@@ -53,6 +55,7 @@ export class RelationalConflictResolverService {
         winnerChildFkField ?? null,
       );
     } else {
+      //LOG
       this._logger.debug(
         `RelationalConflictResolverService.resolve — branch TWO_FATHERS for "${primaryForWinner.anchorTable}/${primaryForWinner.anchorId}"`,
         'app-workflow',
@@ -65,6 +68,7 @@ export class RelationalConflictResolverService {
         this._relationalConflictRepository.resolve(id, conflictResolver, resolutionNotes ?? null),
       ),
     );
+    //LOG
     this._logger.info(
       `RelationalConflictResolverService.resolve — closed ${conflictIds.length} relational conflict(s)`,
       'app-workflow',

@@ -17,6 +17,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     const detail =
       exception instanceof Error ? `${exception.message} | stack: ${exception.stack ?? ''}` : String(exception);
+    //LOG
     this._logger.error(
       `Unhandled exception — [${request.method}] ${request.url} → ${status}: ${detail}`,
       'app-workflow',

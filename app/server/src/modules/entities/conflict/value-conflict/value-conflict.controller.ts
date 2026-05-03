@@ -23,6 +23,7 @@ export class ValueConflictController {
   @RequireRole(Role.EDITOR)
   @Patch('resolve')
   public async resolve(@Body() dto: ResolveValueConflictDto): Promise<BaseEntity> {
+    //LOG
     this._logger.info(
       `ValueConflictController.resolve — PATCH /api/conflicts/value/resolve "${dto.tableName}/${dto.entityId}/${dto.columnName}" → "${dto.winnerValue}"`,
       'app-workflow',
@@ -33,6 +34,7 @@ export class ValueConflictController {
   @RequireRole(Role.EDITOR)
   @Patch('revert')
   public async revert(@Body() dto: RevertValueConflictDto): Promise<BaseEntity> {
+    //LOG
     this._logger.info(
       `ValueConflictController.revert — PATCH /api/conflicts/value/revert "${dto.tableName}/${dto.entityId}/${dto.columnName}" → "${dto.revertValue}"`,
       'app-workflow',
@@ -46,6 +48,7 @@ export class ValueConflictController {
     @Query('entityId') entityId: string,
     @Query('columnName') columnName: string,
   ): Promise<ConflictHistoryResponse> {
+    //LOG
     this._logger.info(
       `ValueConflictController.history — GET /api/conflicts/value/history "${tableName}/${entityId}/${columnName}"`,
       'app-workflow',

@@ -15,17 +15,20 @@ export class AuthService {
   ) {}
 
   public getMe(): LoginResponse {
+    //LOG
     this._logger.info('AuthService.getMe called — building mock JWT payload', 'app-workflow');
     // TODO: Replace MOCK_USER_GROUPS with a real group-lookup call to the directory service.
     const groups = MOCK_USER_GROUPS;
     const role = this._deriveRole(groups);
     const email = 'mock@local';
     const payload: JwtPayload = { sub: email, email, groups, role };
+    //LOG
     this._logger.debug(
       `AuthService.getMe — JWT payload assembled for "${email}" with role "${role}" and groups [${groups.join(', ')}]`,
       'app-workflow',
     );
     const accessToken = this._jwtService.sign(payload);
+    //LOG
     this._logger.info(`AuthService.getMe — JWT signed and returned for user "${email}"`, 'app-workflow');
     return { accessToken, role, email };
   }
@@ -38,6 +41,7 @@ export class AuthService {
       }
       return highest;
     }, Role.VIEWER);
+    //LOG
     this._logger.debug(
       `AuthService._deriveRole — derived role "${role}" from groups [${groups.join(', ')}]`,
       'app-workflow',

@@ -35,6 +35,7 @@ export class RelationalConflictDetectionService {
     newRelatedSourceTime: string | null,
     conflictCreator: string,
   ): Promise<number | null> {
+    //LOG
     this._logger.warn(
       `RelationalConflictDetectionService.detectTwoChilds — TWO_CHILDS: "${anchorTable}/${anchorId}" has two competing "${relatedTable}" children — old="${oldRelatedId}", new="${newRelatedId}", creator="${conflictCreator}"`,
       'app-workflow',
@@ -85,6 +86,7 @@ export class RelationalConflictDetectionService {
     newRelatedSourceTime: string | null,
     conflictCreator: string,
   ): Promise<number | null> {
+    //LOG
     this._logger.warn(
       `RelationalConflictDetectionService.detectTwoFathers — TWO_FATHERS: "${anchorTable}/${anchorId}" claimed by two "${relatedTable}" parents — old="${oldRelatedId}", new="${newRelatedId}", creator="${conflictCreator}"`,
       'app-workflow',

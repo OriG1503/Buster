@@ -17,6 +17,7 @@ export class TableViewController {
 
   @Post()
   public async query(@Body() dto: TableViewQueryDto): Promise<TableViewResponse> {
+    //LOG
     this._logger.info(
       `TableViewController.query — POST /api/table-view body { tableName: "${dto.tableName}", columns: ${dto.columns.length}, page: ${dto.page} }`,
       'app-workflow',

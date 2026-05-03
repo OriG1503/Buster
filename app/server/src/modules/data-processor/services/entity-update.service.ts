@@ -94,6 +94,7 @@ export class EntityUpdateService {
 
     try {
       if (Object.keys(result.fieldsToUpdate).length > 0) {
+        //LOG
         this._logger.info(
           `EntityUpdateService.updateExisting — gap-filling "${service.tableName}/${id}" with [${Object.keys(result.fieldsToUpdate).join(', ')}]`,
           'app-workflow',
@@ -109,6 +110,7 @@ export class EntityUpdateService {
           stored.sourceTime,
         );
       } else {
+        //LOG
         this._logger.debug(
           `EntityUpdateService.updateExisting — no gap-fills to apply for "${service.tableName}/${id}"`,
           'app-workflow',
@@ -119,6 +121,7 @@ export class EntityUpdateService {
       if (!(error instanceof QueryFailedError) || pgError.code !== PG_UNIQUE_VIOLATION) {
         throw error;
       }
+      //LOG
       this._logger.warn(
         `EntityUpdateService.updateExisting — gap-fill update skipped for "${service.tableName}/${id}", unique constraint violation`,
         'app-workflow',

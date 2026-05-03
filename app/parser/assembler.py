@@ -118,6 +118,7 @@ def assemble(rows):
     for row in rows:
         if any(v is not None for v in row.values()):
             robot_uuid = row.get("robot_UUID") or "<no-uuid>"
+            # LOG
             logger_service.debug(
                 f"assemble — building hierarchy for row {row_index} (robot_UUID=\"{robot_uuid}\")",
                 "app-workflow",
@@ -125,8 +126,10 @@ def assemble(rows):
             yield _build_hierarchy_from_row(row)
             yielded += 1
         else:
+            # LOG
             logger_service.debug(f"assemble — skipping empty row {row_index}", "app-workflow")
         row_index += 1
+    # LOG
     logger_service.info(
         f"assemble — produced {yielded} hierarchies from {row_index} row(s)",
         "app-workflow",

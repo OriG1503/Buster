@@ -12,6 +12,7 @@ export class ConflictListService {
   ) {}
 
   public async countOpen(): Promise<number> {
+    //LOG
     this._logger.debug(
       'ConflictListService.countOpen — counting open conflicts across value/relational/cross-entity tables',
       'app-workflow',
@@ -28,6 +29,7 @@ export class ConflictListService {
       ) combined
     `);
     const count = parseInt(rows[0].count, 10);
+    //LOG
     this._logger.info(`ConflictListService.countOpen — open conflict groups: ${count}`, 'app-workflow');
     return count;
   }
@@ -39,6 +41,7 @@ export class ConflictListService {
     entityId?: string,
     conflictIds?: number[],
   ): Promise<ConflictListResponse> {
+    //LOG
     this._logger.info(
       `ConflictListService.getOpenGroups — page=${page}, limit=${limit}, tableName="${tableName ?? 'any'}", entityId="${entityId ?? 'any'}", conflictIds=[${conflictIds?.join(', ') ?? ''}]`,
       'app-workflow',
@@ -76,6 +79,7 @@ export class ConflictListService {
 
     params.push(limit, (page - 1) * limit);
     const result = await this._dataSource.query<ConflictListResponse>(sql, params);
+    //LOG
     this._logger.info(`ConflictListService.getOpenGroups — returned ${result.length} group(s)`, 'app-workflow');
     return result;
   }
@@ -103,6 +107,7 @@ export class ConflictListService {
   }
 
   public async findOpenByEntityIds(ids: string[]): Promise<string[]> {
+    //LOG
     this._logger.debug(
       `ConflictListService.findOpenByEntityIds — checking ${ids.length} id(s) for open conflicts`,
       'app-workflow',
@@ -129,6 +134,7 @@ export class ConflictListService {
       [ids],
     );
     const found = result.map((row) => row.entityId);
+    //LOG
     this._logger.info(
       `ConflictListService.findOpenByEntityIds — ${found.length}/${ids.length} ids have open conflicts`,
       'app-workflow',

@@ -29,6 +29,7 @@ export class ConflictEntityDetailService {
   ) {}
 
   public async getEntityDetail(tableName: string, entityId: string): Promise<ConflictEntityDetailResponse> {
+    //LOG
     this._logger.info(
       `ConflictEntityDetailService.getEntityDetail — fetching detail for "${tableName}/${entityId}"`,
       'app-workflow',
@@ -38,6 +39,7 @@ export class ConflictEntityDetailService {
       this._relationalConflictRepository.findOpenByAnchor(entityId, tableName),
       this._fetchCrossEntityConflicts(tableName, entityId),
     ]);
+    //LOG
     this._logger.debug(
       `ConflictEntityDetailService.getEntityDetail — "${tableName}/${entityId}" — columns=${columns.length}, relational=${relationalConflicts.length}, crossEntity=${crossEntityConflicts.length}`,
       'app-workflow',

@@ -23,6 +23,7 @@ def flatten_hierarchy(obj):
         return dataclasses.asdict(obj)
 
     primary_field = type(obj).__name__.removesuffix("Hierarchy").lower()
+    # LOG
     logger_service.debug(
         f"flatten_hierarchy — flattening \"{type(obj).__name__}\" with primary field \"{primary_field}\"",
         "app-workflow",

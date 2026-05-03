@@ -21,6 +21,7 @@ export class CrossEntityConflictDetectionService {
    * Called after a robot is inserted or updated (if it has a wiringId).
    */
   public async detectForRobotWiringPair(robotId: string, wiringId: string, conflictCreator: string): Promise<void> {
+    //LOG
     this._logger.debug(
       `CrossEntityConflictDetectionService.detectForRobotWiringPair — robot "${robotId}" ↔ wiring "${wiringId}" (creator="${conflictCreator}")`,
       'app-workflow',
@@ -31,6 +32,7 @@ export class CrossEntityConflictDetectionService {
     ]);
 
     if (!robot || !wiring) {
+      //LOG
       this._logger.debug(
         `CrossEntityConflictDetectionService.detectForRobotWiringPair — pair not found (robot=${!!robot}, wiring=${!!wiring}), skipping`,
         'app-workflow',
@@ -55,6 +57,7 @@ export class CrossEntityConflictDetectionService {
    * Called after wiring values change (via upload or conflict resolution).
    */
   public async detectForWiringRobots(wiringId: string, conflictCreator: string): Promise<void> {
+    //LOG
     this._logger.debug(
       `CrossEntityConflictDetectionService.detectForWiringRobots — wiring "${wiringId}" (creator="${conflictCreator}")`,
       'app-workflow',
@@ -65,6 +68,7 @@ export class CrossEntityConflictDetectionService {
     ]);
 
     if (!wiring || robots.length === 0) {
+      //LOG
       this._logger.debug(
         `CrossEntityConflictDetectionService.detectForWiringRobots — wiring "${wiringId}" missing or no robots (count=${robots.length}), skipping`,
         'app-workflow',
@@ -72,6 +76,7 @@ export class CrossEntityConflictDetectionService {
       return;
     }
 
+    //LOG
     this._logger.info(
       `CrossEntityConflictDetectionService.detectForWiringRobots — re-evaluating ${robots.length} robot(s) attached to wiring "${wiringId}"`,
       'app-workflow',
@@ -132,6 +137,7 @@ export class CrossEntityConflictDetectionService {
       conflictCreator,
     });
 
+    //LOG
     this._logger.warn(
       `CrossEntityConflictDetectionService._detectForField — conflict on [${field}]: robots/${robot.id}="${robotValue}" ↔ wirings/${wiring.id}="${wiringValue}" (creator="${conflictCreator}")`,
       'app-workflow',

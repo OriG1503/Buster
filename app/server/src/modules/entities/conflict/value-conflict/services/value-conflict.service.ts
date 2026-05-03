@@ -71,12 +71,14 @@ export class ValueConflictService {
     });
 
     if (conflictsToCreate.length > 0) {
+      //LOG
       this._logger.warn(
         `ValueConflictService.detectConflicts — "${tableName}/${entityId}" produced ${conflictsToCreate.length} conflict(s) on [${conflictsToCreate.map((c) => c['columnName']).join(', ')}] by "${conflictCreator}"`,
         'app-workflow',
       );
     }
     if (Object.keys(fieldsToUpdate).length > 0) {
+      //LOG
       this._logger.info(
         `ValueConflictService.detectConflicts — "${tableName}/${entityId}" queued ${Object.keys(fieldsToUpdate).length} gap-fill(s) on [${Object.keys(fieldsToUpdate).join(', ')}]`,
         'app-workflow',

@@ -25,6 +25,7 @@ export class EntityIngestionService {
     rowIndex: number,
   ): Promise<EntityResult> {
     if (!mapped) {
+      //LOG
       this._logger.debug(
         `EntityIngestionService — skipping empty entity for table "${service.tableName}" row ${rowIndex}`,
         'app-workflow',
@@ -34,6 +35,7 @@ export class EntityIngestionService {
 
     const record = mapped as MappedEntityBase & Record<string, EntityValue>;
     if (!record.id) {
+      //LOG
       this._logger.warn(
         `EntityIngestionService — missing id on table "${service.tableName}" row ${rowIndex}, marking as flying-field`,
         'app-workflow',
@@ -45,6 +47,7 @@ export class EntityIngestionService {
     const nonNullCount = Object.keys(fields).filter((k) => fields[k] !== null).length;
 
     if (nonNullCount === 0) {
+      //LOG
       this._logger.debug(
         `EntityIngestionService — inserting stub for "${service.tableName}/${id}" (no data fields)`,
         'app-workflow',
@@ -54,6 +57,7 @@ export class EntityIngestionService {
 
     const stored = await service.findById(id);
     if (stored) {
+      //LOG
       this._logger.info(
         `EntityIngestionService — updating existing "${service.tableName}/${id}" with ${nonNullCount} field(s)`,
         'app-workflow',
@@ -70,6 +74,7 @@ export class EntityIngestionService {
         nonNullCount,
       );
     }
+    //LOG
     this._logger.info(
       `EntityIngestionService — inserting new "${service.tableName}/${id}" with ${nonNullCount} field(s)`,
       'app-workflow',

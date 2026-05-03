@@ -31,6 +31,7 @@ export class CrossEntityConflictResolverService {
     }
 
     const { wiringId, robotId, fieldName } = conflict;
+    //LOG
     this._logger.info(
       `CrossEntityConflictResolverService.resolve — conflict ${conflictId}: field "${fieldName}" → winner "${winnerValue}" by "${conflictResolver}" (applyToRobot=${applyToRobot}, robot="${robotId}", wiring="${wiringId}")`,
       'app-workflow',
@@ -120,6 +121,7 @@ export class CrossEntityConflictResolverService {
       robotId = lastConflict.robotId;
     }
 
+    //LOG
     this._logger.info(
       `CrossEntityConflictResolverService.revert — "${tableName}/${entityId}/${columnName}" → revert to "${revertValue}" by "${revertedBy}" (robot="${robotId}", wiring="${wiringId}")`,
       'app-workflow',

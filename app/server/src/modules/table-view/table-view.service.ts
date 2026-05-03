@@ -23,6 +23,7 @@ export class TableViewService {
 
   public async query(dto: TableViewQueryDto): Promise<TableViewResponse> {
     const filterKeys = Object.keys(dto.filters);
+    //LOG
     this._logger.info(
       `TableViewService.query — table "${dto.tableName}", page=${dto.page}, pageSize=${dto.pageSize}, columns=${dto.columns.length}, filters=[${filterKeys.join(', ')}]`,
       'app-workflow',
@@ -33,6 +34,7 @@ export class TableViewService {
     const tablesInvolved = this._computeTablesInvolved(tableName, columns, Object.keys(filters));
     const joinClauses = this._buildJoinClauses(tableName, tablesInvolved);
     const { whereClauses, whereParams } = this._buildWhereClauses(filters);
+    //LOG
     this._logger.debug(
       `TableViewService.query — tablesInvolved=[${[...tablesInvolved].join(', ')}], joins=${joinClauses.length}, whereClauses=${whereClauses.length}`,
       'app-workflow',
@@ -54,6 +56,7 @@ export class TableViewService {
 
     const countSql = `SELECT COUNT(*) AS total ${fromFragment} ${whereFragment}`;
 
+    //LOG
     this._logger.debug(`TableViewService.query — running data + count SQL queries`, 'app-workflow');
     const [rows, countResult] = await Promise.all([
       this._dataSource.query(dataSql, dataParams) as Promise<Record<string, unknown>[]>,
@@ -61,6 +64,7 @@ export class TableViewService {
     ]);
 
     const total = parseInt(countResult[0].total, 10);
+    //LOG
     this._logger.info(
       `TableViewService.query — returned ${rows.length} rows of ${total} total for "${tableName}"`,
       'app-workflow',
@@ -75,6 +79,7 @@ export class TableViewService {
 
   private _validateInput({ tableName, columns, filters }: TableViewQueryDto): void {
     if (!ALLOWED_TABLES.has(tableName)) {
+      //LOG
       this._logger.warn(`TableViewService._validateInput — rejected invalid table "${tableName}"`, 'app-workflow');
       throw new BadRequestException(`Invalid table: ${tableName}`);
     }
@@ -83,6 +88,7 @@ export class TableViewService {
     allKeys.forEach((col) => {
       const [table, column] = col.split('.');
       if (!ALLOWED_COLUMNS[table]?.has(column)) {
+        //LOG
         this._logger.warn(`TableViewService._validateInput — rejected invalid column "${col}"`, 'app-workflow');
         throw new BadRequestException(`Invalid column: ${col}`);
       }

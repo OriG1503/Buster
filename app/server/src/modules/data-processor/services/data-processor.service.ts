@@ -32,6 +32,7 @@ export class DataProcessorService {
    * race conditions where later rows silently lose their data due to unique constraint violations.
    */
   public async process(rows: ParsedRow[], username: string): Promise<ProcessResult> {
+    //LOG
     this._logger.info(
       `DataProcessorService.process — starting sequential ingestion of ${rows.length} rows for user "${username}"`,
       'app-workflow',
@@ -39,9 +40,11 @@ export class DataProcessorService {
     const results = await rows.reduce<Promise<RowResult[]>>(async (acc, row, i) => {
       const prev = await acc;
       try {
+        //LOG
         this._logger.debug(`DataProcessorService.process — processing row ${i}/${rows.length - 1}`, 'app-workflow');
         return [...prev, await this._processRow(row, username, i)];
       } catch (error) {
+        //LOG
         this._logger.error(
           `DataProcessorService.process — row ${i} failed unexpectedly, skipped: ${(error as Error).message}`,
           'app-workflow',
@@ -59,6 +62,7 @@ export class DataProcessorService {
     const totalFields = results.reduce((sum, r) => sum + r.totalFields, 0);
     const flyingFieldCount = flyingFields.reduce((sum, f) => sum + f.redFields.length, 0);
     const uploadPercentage = totalFields > 0 ? Math.round(((totalFields - flyingFieldCount) / totalFields) * 100) : 100;
+    //LOG
     this._logger.info(
       `DataProcessorService — aggregate result: ${uploadPercentage}% uploaded, ${conflictCount} conflicts, ${flyingFieldCount} flying fields, ${totalFields} fields total`,
       'app-workflow',
@@ -68,6 +72,7 @@ export class DataProcessorService {
 
   /** Processes a single parsed row leaf-first. */
   private async _processRow(row: ParsedRow, username: string, rowIndex: number): Promise<RowResult> {
+    //LOG
     this._logger.debug(
       `DataProcessorService._processRow — enriching row ${rowIndex} (robot_UUID="${row.robot_UUID ?? ''}")`,
       'app-workflow',
@@ -124,17 +129,20 @@ export class DataProcessorService {
     const robotWiringId = mappedRobotRecord?.['wiringId'] ? String(mappedRobotRecord['wiringId']) : null;
 
     if (processedWiringId) {
+      //LOG
       this._logger.debug(
         `DataProcessorService._processRow — re-running cross-entity detection for wiring "${processedWiringId}" and its robots`,
         'app-workflow',
       );
       await this._crossEntityDetectionService.detectForWiringRobots(processedWiringId, username).catch((err) => {
+        //LOG
         this._logger.warn(
           `DataProcessorService._processRow — cross-entity detection failed for wiring "${processedWiringId}": ${(err as Error).message}`,
           'app-workflow',
         );
       });
     } else if (robotId && robotWiringId) {
+      //LOG
       this._logger.debug(
         `DataProcessorService._processRow — re-running cross-entity detection for robot "${robotId}" ↔ wiring "${robotWiringId}"`,
         'app-workflow',
@@ -142,6 +150,7 @@ export class DataProcessorService {
       await this._crossEntityDetectionService
         .detectForRobotWiringPair(robotId, robotWiringId, username)
         .catch((err) => {
+          //LOG
           this._logger.warn(
             `DataProcessorService._processRow — cross-entity detection failed for robot "${robotId}": ${(err as Error).message}`,
             'app-workflow',

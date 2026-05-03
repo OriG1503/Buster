@@ -20,6 +20,7 @@ export class CrossEntityConflictController {
   @RequireRole(Role.EDITOR)
   @Patch('resolve')
   public async resolve(@Body() dto: ResolveCrossEntityConflictDto): Promise<void> {
+    //LOG
     this._logger.info(
       `CrossEntityConflictController.resolve — PATCH /api/conflicts/cross-entity/resolve conflictId=${dto.conflictId} winner="${dto.winnerValue}" applyToRobot=${dto.applyToRobot}`,
       'app-workflow',
@@ -30,6 +31,7 @@ export class CrossEntityConflictController {
   @RequireRole(Role.EDITOR)
   @Patch('revert')
   public async revert(@Body() dto: RevertCrossEntityConflictDto): Promise<void> {
+    //LOG
     this._logger.info(
       `CrossEntityConflictController.revert — PATCH /api/conflicts/cross-entity/revert "${dto.tableName}/${dto.entityId}/${dto.columnName}" → "${dto.revertValue}"`,
       'app-workflow',
@@ -43,6 +45,7 @@ export class CrossEntityConflictController {
     @Query('entityId') entityId: string,
     @Query('columnName') columnName: string,
   ): Promise<CrossEntityHistoryResponse> {
+    //LOG
     this._logger.info(
       `CrossEntityConflictController.history — GET /api/conflicts/cross-entity/history "${tableName}/${entityId}/${columnName}"`,
       'app-workflow',

@@ -46,6 +46,7 @@ export class EntityInsertService {
     rowIndex: number,
   ): Promise<EntityResult> {
     const yellowFields = Object.keys(fields).filter((k) => !k.endsWith('Id'));
+    //LOG
     this._logger.debug(
       `EntityInsertService.insertStub — inserting stub "${service.tableName}/${id}" (yellowFields=[${yellowFields.join(', ')}])`,
       'app-workflow',
@@ -57,6 +58,7 @@ export class EntityInsertService {
       if (!(error instanceof QueryFailedError) || pgError.code !== PG_UNIQUE_VIOLATION) {
         throw error;
       }
+      //LOG
       this._logger.warn(
         `EntityInsertService.insertStub — unique violation on "${service.tableName}/${id}", treated as no-op`,
         'app-workflow',
@@ -100,6 +102,7 @@ export class EntityInsertService {
     );
 
     if (conflictedFkFields.size > 0) {
+      //LOG
       this._logger.warn(
         `EntityInsertService.insertNew — nulling FK fields [${[...conflictedFkFields].join(', ')}] on "${service.tableName}/${id}" due to TWO_FATHERS conflicts`,
         'app-workflow',
@@ -107,6 +110,7 @@ export class EntityInsertService {
     }
 
     try {
+      //LOG
       this._logger.debug(
         `EntityInsertService.insertNew — inserting "${service.tableName}/${id}" with ${nonNullCount} field(s) by "${username}"`,
         'app-workflow',
@@ -117,6 +121,7 @@ export class EntityInsertService {
       if (!(error instanceof QueryFailedError) || pgError.code !== PG_UNIQUE_VIOLATION) {
         throw error;
       }
+      //LOG
       this._logger.warn(
         `EntityInsertService.insertNew — unique violation on "${service.tableName}/${id}" (likely concurrent insert), ignored`,
         'app-workflow',

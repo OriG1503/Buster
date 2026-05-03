@@ -34,6 +34,7 @@ export class FictiveReplacementService {
     newOwnerId: string,
     meta: RowMeta,
   ): Promise<void> {
+    //LOG
     this._logger.info(
       `FictiveReplacementService.replaceOwner — table "${ownerTable}", fictive "${fictiveOwnerId}" → real "${newOwnerId}"`,
       'app-workflow',
@@ -41,6 +42,7 @@ export class FictiveReplacementService {
     const ownerService = this._registry.get(ownerTable);
     const fictive = await ownerService.findById(fictiveOwnerId);
     if (!fictive) {
+      //LOG
       this._logger.warn(
         `FictiveReplacementService.replaceOwner — fictive "${ownerTable}/${fictiveOwnerId}" not found, skipping`,
         'app-workflow',
@@ -52,6 +54,7 @@ export class FictiveReplacementService {
     await this._dataTransfer.transferData(ownerService, fictive, newOwnerId, meta);
     await this._conflictReattribution.reattribute(fictiveOwnerId, newOwnerId);
     await ownerService.softDelete(fictiveOwnerId);
+    //LOG
     this._logger.info(
       `FictiveReplacementService.replaceOwner — fictive "${ownerTable}/${fictiveOwnerId}" soft-deleted, data transferred to "${newOwnerId}"`,
       'app-workflow',
@@ -76,12 +79,14 @@ export class FictiveReplacementService {
     realChildId: string,
     meta: RowMeta,
   ): Promise<void> {
+    //LOG
     this._logger.info(
       `FictiveReplacementService.replaceChild — parent "${parentService.tableName}.${fkField}", fictive child "${fictiveChildId}" → real "${realChildId}"`,
       'app-workflow',
     );
     const childTable = FK_FIELD_TO_TABLE[fkField];
     if (!childTable) {
+      //LOG
       this._logger.warn(
         `FictiveReplacementService.replaceChild — no child table mapped for fkField "${fkField}", skipping`,
         'app-workflow',
@@ -93,6 +98,7 @@ export class FictiveReplacementService {
     const fictive = await childService.findById(fictiveChildId);
 
     if (fictive) {
+      //LOG
       this._logger.debug(
         `FictiveReplacementService.replaceChild — fictive "${childTable}/${fictiveChildId}" found, transferring data to real "${realChildId}"`,
         'app-workflow',
@@ -102,6 +108,7 @@ export class FictiveReplacementService {
       await this._conflictReattribution.reattribute(fictiveChildId, realChildId);
       await childService.softDelete(fictiveChildId);
     } else {
+      //LOG
       this._logger.debug(
         `FictiveReplacementService.replaceChild — fictive "${childTable}/${fictiveChildId}" already removed; only redirecting parents`,
         'app-workflow',
