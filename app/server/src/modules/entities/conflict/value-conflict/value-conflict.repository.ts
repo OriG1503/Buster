@@ -22,7 +22,11 @@ export class ValueConflictRepository extends BaseConflictRepository<ValueConflic
     });
   }
 
-  public findMostRecentResolved(tableName: string, entityId: string, columnName: string): Promise<ValueConflictEntity | null> {
+  public findMostRecentResolved(
+    tableName: string,
+    entityId: string,
+    columnName: string,
+  ): Promise<ValueConflictEntity | null> {
     return this._repository.findOne({
       where: { tableName, entityId, columnName, isSolved: true },
       order: { id: 'DESC' },
@@ -30,10 +34,18 @@ export class ValueConflictRepository extends BaseConflictRepository<ValueConflic
   }
 
   /** Finds the most recent solved conflict in the group where newValue or oldValue matches. */
-  public findResolvedByGroupValue(tableName: string, entityId: string, columnName: string, value: string): Promise<ValueConflictEntity | null> {
+  public findResolvedByGroupValue(
+    tableName: string,
+    entityId: string,
+    columnName: string,
+    value: string,
+  ): Promise<ValueConflictEntity | null> {
     const base = { tableName, entityId, columnName, isSolved: true };
     return this._repository.findOne({
-      where: [{ ...base, newValue: value }, { ...base, oldValue: value }],
+      where: [
+        { ...base, newValue: value },
+        { ...base, oldValue: value },
+      ],
       order: { id: 'DESC' },
     });
   }
@@ -42,7 +54,9 @@ export class ValueConflictRepository extends BaseConflictRepository<ValueConflic
     return this._repository.find({ where: { tableName, entityId, isSolved: false } });
   }
 
-  public async findOpenIdsByData(conflicts: { tableName: string; entityId: string; columnName: string; newValue: string }[]): Promise<number[]> {
+  public async findOpenIdsByData(
+    conflicts: { tableName: string; entityId: string; columnName: string; newValue: string }[],
+  ): Promise<number[]> {
     if (!conflicts.length) {
       return [];
     }
@@ -55,7 +69,12 @@ export class ValueConflictRepository extends BaseConflictRepository<ValueConflic
           conflicts.forEach((c, i) => {
             qb2.orWhere(
               `(c.tableName = :tableName${i} AND c.entityId = :entityId${i} AND c.columnName = :columnName${i} AND c.newValue = :newValue${i})`,
-              { [`tableName${i}`]: c.tableName, [`entityId${i}`]: c.entityId, [`columnName${i}`]: c.columnName, [`newValue${i}`]: c.newValue },
+              {
+                [`tableName${i}`]: c.tableName,
+                [`entityId${i}`]: c.entityId,
+                [`columnName${i}`]: c.columnName,
+                [`newValue${i}`]: c.newValue,
+              },
             );
           });
         }),
@@ -66,13 +85,22 @@ export class ValueConflictRepository extends BaseConflictRepository<ValueConflic
 
   /** Re-attributes all open conflicts referencing a fictive entity ID to the replacement real entity ID. */
   public async reattribute(fictiveId: string, realId: string): Promise<void> {
-    await this._repository.update(
-      { entityId: fictiveId, isSolved: false } as FindOptionsWhere<ValueConflictEntity>,
-      { entityId: realId },
-    );
+    await this._repository.update({ entityId: fictiveId, isSolved: false } as FindOptionsWhere<ValueConflictEntity>, {
+      entityId: realId,
+    });
   }
 
-  public async resolveMany(tableName: string, entityId: string, columnName: string, conflictResolver: string | null, notes: string | null): Promise<void> {
-    await this._markResolved({ tableName, entityId, columnName, isSolved: false } as FindOptionsWhere<ValueConflictEntity>, conflictResolver, notes);
+  public async resolveMany(
+    tableName: string,
+    entityId: string,
+    columnName: string,
+    conflictResolver: string | null,
+    notes: string | null,
+  ): Promise<void> {
+    await this._markResolved(
+      { tableName, entityId, columnName, isSolved: false } as FindOptionsWhere<ValueConflictEntity>,
+      conflictResolver,
+      notes,
+    );
   }
 }

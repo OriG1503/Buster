@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { FK_FIELD_TO_TABLE } from '../../../shared/consts/fk-field-to-table.const';
+import { LoggerService } from '../../../shared/services/logger/logger.service';
 import { EntityService } from '../../../shared/types/entity-service.type';
 import { EntityServiceRegistry } from '../../../shared/services/entity-service-registry.service';
 import { RowMeta } from '../types/row-meta.type';
@@ -14,6 +15,7 @@ export class FictiveReplacementService {
     private readonly _conflictReattribution: ConflictReattributionService,
     private readonly _dataTransfer: FictiveDataTransferService,
     private readonly _parentRedirect: FictiveParentRedirectService,
+    private readonly _logger: LoggerService,
   ) {}
 
   /**
@@ -26,15 +28,34 @@ export class FictiveReplacementService {
    *
    * Steps: clear fictive's FK children → transfer data → reattribute conflicts → soft-delete fictive.
    */
-  public async replaceOwner(ownerTable: string, fictiveOwnerId: string, newOwnerId: string, meta: RowMeta): Promise<void> {
+  public async replaceOwner(
+    ownerTable: string,
+    fictiveOwnerId: string,
+    newOwnerId: string,
+    meta: RowMeta,
+  ): Promise<void> {
+    this._logger.info(
+      `FictiveReplacementService.replaceOwner — table "${ownerTable}", fictive "${fictiveOwnerId}" → real "${newOwnerId}"`,
+      'app-workflow',
+    );
     const ownerService = this._registry.get(ownerTable);
     const fictive = await ownerService.findById(fictiveOwnerId);
-    if (!fictive) { return; }
+    if (!fictive) {
+      this._logger.warn(
+        `FictiveReplacementService.replaceOwner — fictive "${ownerTable}/${fictiveOwnerId}" not found, skipping`,
+        'app-workflow',
+      );
+      return;
+    }
 
     await this._dataTransfer.clearFkFields(ownerService, fictive);
     await this._dataTransfer.transferData(ownerService, fictive, newOwnerId, meta);
     await this._conflictReattribution.reattribute(fictiveOwnerId, newOwnerId);
     await ownerService.softDelete(fictiveOwnerId);
+    this._logger.info(
+      `FictiveReplacementService.replaceOwner — fictive "${ownerTable}/${fictiveOwnerId}" soft-deleted, data transferred to "${newOwnerId}"`,
+      'app-workflow',
+    );
   }
 
   /**
@@ -55,17 +76,36 @@ export class FictiveReplacementService {
     realChildId: string,
     meta: RowMeta,
   ): Promise<void> {
+    this._logger.info(
+      `FictiveReplacementService.replaceChild — parent "${parentService.tableName}.${fkField}", fictive child "${fictiveChildId}" → real "${realChildId}"`,
+      'app-workflow',
+    );
     const childTable = FK_FIELD_TO_TABLE[fkField];
-    if (!childTable) { return; }
+    if (!childTable) {
+      this._logger.warn(
+        `FictiveReplacementService.replaceChild — no child table mapped for fkField "${fkField}", skipping`,
+        'app-workflow',
+      );
+      return;
+    }
 
     const childService = this._registry.get(childTable);
     const fictive = await childService.findById(fictiveChildId);
 
     if (fictive) {
+      this._logger.debug(
+        `FictiveReplacementService.replaceChild — fictive "${childTable}/${fictiveChildId}" found, transferring data to real "${realChildId}"`,
+        'app-workflow',
+      );
       await this._dataTransfer.clearFkFields(childService, fictive);
       await this._dataTransfer.transferData(childService, fictive, realChildId, meta);
       await this._conflictReattribution.reattribute(fictiveChildId, realChildId);
       await childService.softDelete(fictiveChildId);
+    } else {
+      this._logger.debug(
+        `FictiveReplacementService.replaceChild — fictive "${childTable}/${fictiveChildId}" already removed; only redirecting parents`,
+        'app-workflow',
+      );
     }
 
     await this._parentRedirect.redirectAll(parentService, fkField, fictiveChildId, realChildId, meta);

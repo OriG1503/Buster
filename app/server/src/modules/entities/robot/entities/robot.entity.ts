@@ -7,7 +7,11 @@ import { WiringEntity } from '../../wiring/entities/wiring.entity';
 
 @Entity('robots')
 export class RobotEntity extends BaseEntity {
-  @OneToOne(() => CardboardEntity, (cardboard) => cardboard.robot, { nullable: true, onDelete: 'SET NULL', onUpdate: 'CASCADE' })
+  @OneToOne(() => CardboardEntity, (cardboard) => cardboard.robot, {
+    nullable: true,
+    onDelete: 'SET NULL',
+    onUpdate: 'CASCADE',
+  })
   @JoinColumn({ name: 'cardboardId' })
   public cardboard: CardboardEntity | null;
 
@@ -21,7 +25,11 @@ export class RobotEntity extends BaseEntity {
   @RelationId((robot: RobotEntity) => robot.sensor)
   public sensorId: string | null;
 
-  @OneToOne(() => CommunicationEntity, (communication) => communication.robot, { nullable: true, onDelete: 'SET NULL', onUpdate: 'CASCADE' })
+  @OneToOne(() => CommunicationEntity, (communication) => communication.robot, {
+    nullable: true,
+    onDelete: 'SET NULL',
+    onUpdate: 'CASCADE',
+  })
   @JoinColumn({ name: 'communicationId' })
   public communication: CommunicationEntity | null;
 
@@ -55,7 +63,11 @@ export class RobotEntity extends BaseEntity {
   @Column({ type: 'boolean', nullable: true })
   public isStockAfula: boolean | null;
 
-  @ManyToOne(() => WiringEntity, (wiring) => wiring.robots, { nullable: true, onDelete: 'SET NULL', onUpdate: 'CASCADE' })
+  @ManyToOne(() => WiringEntity, (wiring) => wiring.robots, {
+    nullable: true,
+    onDelete: 'SET NULL',
+    onUpdate: 'CASCADE',
+  })
   @JoinColumn({ name: 'wiringId' })
   public wiring: WiringEntity | null;
 

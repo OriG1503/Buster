@@ -2,10 +2,16 @@ export const nullIfEmpty = (value: string | null | undefined): string | null =>
   value === '' || value === null || value === undefined ? null : value;
 
 export const parseBool = (value: string | null | undefined): boolean | null => {
-  if (value === null || value === undefined || value.trim() === '') { return null; }
+  if (value === null || value === undefined || value.trim() === '') {
+    return null;
+  }
   const v = value.trim().toLowerCase();
-  if (['true', 't', '1', 'כן'].includes(v)) { return true; }
-  if (['false', 'f', '0', 'לא'].includes(v)) { return false; }
+  if (['true', 't', '1', 'כן'].includes(v)) {
+    return true;
+  }
+  if (['false', 'f', '0', 'לא'].includes(v)) {
+    return false;
+  }
   return null;
 };
 
@@ -16,13 +22,24 @@ export const parseBool = (value: string | null | undefined): boolean | null => {
  * Returns null for empty, missing, or unparseable values.
  */
 export const parseSourceTime = (value: string | null | undefined): string | null => {
-  if (!value?.trim()) { return null; }
+  if (!value?.trim()) {
+    return null;
+  }
   const trimmed = value.trim();
   const ddmmMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{1,2}):(\d{1,2}))?$/);
   if (ddmmMatch) {
     const [, day, month, year, hours = '0', minutes = '0', seconds = '0'] = ddmmMatch;
-    const date = new Date(Number(year), Number(month) - 1, Number(day), Number(hours), Number(minutes), Number(seconds));
-    if (!isNaN(date.getTime())) { return date.toISOString(); }
+    const date = new Date(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hours),
+      Number(minutes),
+      Number(seconds),
+    );
+    if (!isNaN(date.getTime())) {
+      return date.toISOString();
+    }
   }
   const fallback = new Date(trimmed);
   return isNaN(fallback.getTime()) ? null : fallback.toISOString();

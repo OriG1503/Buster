@@ -1,7 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import {
-  BATTERY_CONFIG, CARDBOARD_CONFIG, COMMUNICATION_CONFIG, IRON_CONFIG,
-  PLASTIC_CONFIG, ROBOT_CONFIG, SENSOR_CONFIG, STORAGE_CONFIG, WIRING_CONFIG,
+  BATTERY_CONFIG,
+  CARDBOARD_CONFIG,
+  COMMUNICATION_CONFIG,
+  IRON_CONFIG,
+  PLASTIC_CONFIG,
+  ROBOT_CONFIG,
+  SENSOR_CONFIG,
+  STORAGE_CONFIG,
+  WIRING_CONFIG,
 } from '../../../shared/consts/entity-configs.const';
 import { MappedEntity } from '../../../shared/types/mapped-entity.type';
 import { BatteryInsertData } from '../../entities/battery/types/battery-insert-data.type';
@@ -41,19 +48,25 @@ export class ParserRowMapper {
 
   public mapPlastic(row: ParsedRow): MappedEntity<PlasticInsertData> | null {
     const base = mapEntityRow(PLASTIC_CONFIG.columns, row.communication?.plastic ?? null);
-    if (!base) { return null; }
+    if (!base) {
+      return null;
+    }
     return { ...base, batteryId: nullIfEmpty(row.communication?.plastic?.battery?.battery_UUID ?? null) };
   }
 
   public mapWiring(row: ParsedRow): MappedEntity<WiringInsertData> | null {
     const base = mapEntityRow(WIRING_CONFIG.columns, row.wiring ?? null);
-    if (!base) { return null; }
+    if (!base) {
+      return null;
+    }
     return { ...base, storageId: nullIfEmpty(row.wiring?.storage?.storage_UUID ?? null) };
   }
 
   public mapCommunication(row: ParsedRow): MappedEntity<CommunicationInsertData> | null {
     const base = mapEntityRow(COMMUNICATION_CONFIG.columns, row.communication ?? null);
-    if (!base) { return null; }
+    if (!base) {
+      return null;
+    }
     return {
       ...base,
       plasticId: nullIfEmpty(row.communication?.plastic?.plastic_UUID ?? null),
@@ -63,7 +76,9 @@ export class ParserRowMapper {
 
   public mapRobot(row: ParsedRow): MappedEntity<RobotInsertData> | null {
     const base = mapEntityRow(ROBOT_CONFIG.columns, row);
-    if (!base) { return null; }
+    if (!base) {
+      return null;
+    }
     return {
       ...base,
       cardboardId: nullIfEmpty(row.cardboard?.cardboard_UUID ?? null),

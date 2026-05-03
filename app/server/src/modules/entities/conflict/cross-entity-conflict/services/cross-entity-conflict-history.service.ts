@@ -11,17 +11,23 @@ export class CrossEntityConflictHistoryService {
     private readonly _registry: EntityServiceRegistry,
   ) {}
 
-  public async getHistory(tableName: string, entityId: string, columnName: string): Promise<CrossEntityHistoryResponse> {
+  public async getHistory(
+    tableName: string,
+    entityId: string,
+    columnName: string,
+  ): Promise<CrossEntityHistoryResponse> {
     const isRobot = tableName === 'robots';
     const conflicts = isRobot
       ? await this._crossEntityConflictRepository.findSolvedByRobotField(entityId, columnName)
       : await this._crossEntityConflictRepository.findSolvedByWiringField(entityId, columnName);
 
     if (conflicts.length === 0) {
-      throw new NotFoundException(`No resolved cross-entity conflict history for ${tableName}/${entityId}/${columnName}`);
+      throw new NotFoundException(
+        `No resolved cross-entity conflict history for ${tableName}/${entityId}/${columnName}`,
+      );
     }
 
-    const entity = await this._registry.get(tableName).findById(entityId) as (Record<string, unknown> | null);
+    const entity = (await this._registry.get(tableName).findById(entityId)) as Record<string, unknown> | null;
     const currentValue = entity ? String(entity[columnName] ?? '') : null;
 
     const entries = isRobot

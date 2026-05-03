@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { FK_FIELD_TO_TABLE } from '../../../shared/consts/fk-field-to-table.const';
 import { ONE_TO_ONE_FK_FIELDS } from '../../../shared/consts/one-to-one-fk-fields.const';
 import { BaseEntity } from '../../../shared/entities/base.entity';
+import { LoggerService } from '../../../shared/services/logger/logger.service';
 import { EntityValue } from '../../../shared/types/entity-value.type';
 import { EntityService } from '../../../shared/types/entity-service.type';
 import { EntityServiceRegistry } from '../../../shared/services/entity-service-registry.service';
@@ -24,6 +25,7 @@ export class FkConflictService {
     private readonly _registry: EntityServiceRegistry,
     private readonly _fictiveReplacement: FictiveReplacementService,
     private readonly _fictiveId: FictiveIdService,
+    private readonly _logger: LoggerService,
   ) {}
 
   /**
@@ -43,7 +45,9 @@ export class FkConflictService {
     const results = await Promise.all(
       Object.keys(fields)
         .filter((f) => f.endsWith('Id') && ONE_TO_ONE_FK_FIELDS.has(f) && fields[f] != null)
-        .map((fkField) => this._checkOneFkTwoFathersOnInsert(service, id, fkField, fields, source, notes, sourceTime, username)),
+        .map((fkField) =>
+          this._checkOneFkTwoFathersOnInsert(service, id, fkField, fields, source, notes, sourceTime, username),
+        ),
     );
     const conflictedFkFields = new Set(results.filter((f): f is string => f !== null));
     return { conflictCount: conflictedFkFields.size, conflictedFkFields };
@@ -61,23 +65,45 @@ export class FkConflictService {
   ): Promise<string | null> {
     const childId = String(fields[fkField]);
     const existingOwner = await service.findByFkValue(fkField, childId, id);
-    if (!existingOwner) { return null; }
-
-    if (this._fictiveId.isFictive(String(existingOwner.id))) {
-      await this._fictiveReplacement.replaceOwner(service.tableName, String(existingOwner.id), id, { source, notes, sourceTime });
+    if (!existingOwner) {
       return null;
     }
+
+    if (this._fictiveId.isFictive(String(existingOwner.id))) {
+      this._logger.info(
+        `FkConflictService._checkOneFkTwoFathersOnInsert — fictive owner "${existingOwner.id}" replaced by real "${id}" on field "${fkField}"`,
+        'app-workflow',
+      );
+      await this._fictiveReplacement.replaceOwner(service.tableName, String(existingOwner.id), id, {
+        source,
+        notes,
+        sourceTime,
+      });
+      return null;
+    }
+    this._logger.warn(
+      `FkConflictService._checkOneFkTwoFathersOnInsert — TWO_FATHERS detected: "${service.tableName}/${id}" and "${service.tableName}/${existingOwner.id}" both want to own "${childId}" via "${fkField}"`,
+      'app-workflow',
+    );
 
     const childTable = FK_FIELD_TO_TABLE[fkField];
     const childEntity = await this._registry.get(childTable).findById(childId);
     await this._relationalConflictService.detectTwoFathers(
-      childId, childTable,
-      childEntity?.source?.[fkField] ?? null, childEntity?.notes?.[fkField] ?? null, childEntity?.sourceTime?.[fkField] ?? null,
-      existingOwner.id as string, id, service.tableName,
+      childId,
+      childTable,
+      childEntity?.source?.[fkField] ?? null,
+      childEntity?.notes?.[fkField] ?? null,
+      childEntity?.sourceTime?.[fkField] ?? null,
+      existingOwner.id,
+      id,
+      service.tableName,
       existingOwner.source?.[fkField] ?? null,
       existingOwner.notes?.[fkField] ?? null,
       existingOwner.sourceTime?.[fkField] ?? null,
-      source, notes, sourceTime, username,
+      source,
+      notes,
+      sourceTime,
+      username,
     );
     return fkField;
   }
@@ -100,17 +126,35 @@ export class FkConflictService {
     const outcomes = await Promise.all(
       Object.keys(fields)
         .filter((f) => {
-          if (!f.endsWith('Id')) { return false; }
+          if (!f.endsWith('Id')) {
+            return false;
+          }
           const storedVal = storedRecord[f];
           const incomingVal = fields[f];
           return storedVal != null && incomingVal != null && storedVal !== incomingVal;
         })
-        .map((fkField) => this._checkOneTwoChilds(service, id, fkField, stored, storedRecord, fields, source, notes, sourceTime, username)),
+        .map((fkField) =>
+          this._checkOneTwoChilds(
+            service,
+            id,
+            fkField,
+            stored,
+            storedRecord,
+            fields,
+            source,
+            notes,
+            sourceTime,
+            username,
+          ),
+        ),
     );
 
     const conflictCount = outcomes.filter((o): o is { kind: 'conflict' } => o?.kind === 'conflict').length;
     const fictiveReplacements = outcomes
-      .filter((o): o is { kind: 'fictive'; fkField: string; fictiveChildId: string; realChildId: string } => o?.kind === 'fictive')
+      .filter(
+        (o): o is { kind: 'fictive'; fkField: string; fictiveChildId: string; realChildId: string } =>
+          o?.kind === 'fictive',
+      )
       .map(({ fkField, fictiveChildId, realChildId }) => ({ fkField, fictiveChildId, realChildId }));
 
     return { conflictCount, fictiveReplacements };
@@ -132,18 +176,38 @@ export class FkConflictService {
     const incomingFkId = String(fields[fkField]);
 
     if (this._fictiveId.isFictive(storedFkId) && !this._fictiveId.isFictive(incomingFkId)) {
+      this._logger.info(
+        `FkConflictService._checkOneTwoChilds — replacing fictive child "${storedFkId}" with real "${incomingFkId}" on "${service.tableName}/${id}.${fkField}"`,
+        'app-workflow',
+      );
       return { kind: 'fictive', fkField, fictiveChildId: storedFkId, realChildId: incomingFkId };
     }
 
     const relatedTable = FK_FIELD_TO_TABLE[fkField];
-    if (!relatedTable) { return null; }
+    if (!relatedTable) {
+      return null;
+    }
+    this._logger.warn(
+      `FkConflictService._checkOneTwoChilds — TWO_CHILDS conflict on "${service.tableName}/${id}.${fkField}" (stored="${storedFkId}", incoming="${incomingFkId}")`,
+      'app-workflow',
+    );
 
     await this._relationalConflictService.detectTwoChilds(
-      id, service.tableName,
-      stored.source?.[fkField] ?? null, stored.notes?.[fkField] ?? null, stored.sourceTime?.[fkField] ?? null,
-      storedFkId, incomingFkId, relatedTable,
-      stored.source?.[fkField] ?? null, stored.notes?.[fkField] ?? null, stored.sourceTime?.[fkField] ?? null,
-      source, notes, sourceTime, username,
+      id,
+      service.tableName,
+      stored.source?.[fkField] ?? null,
+      stored.notes?.[fkField] ?? null,
+      stored.sourceTime?.[fkField] ?? null,
+      storedFkId,
+      incomingFkId,
+      relatedTable,
+      stored.source?.[fkField] ?? null,
+      stored.notes?.[fkField] ?? null,
+      stored.sourceTime?.[fkField] ?? null,
+      source,
+      notes,
+      sourceTime,
+      username,
     );
     return { kind: 'conflict' };
   }
@@ -165,7 +229,18 @@ export class FkConflictService {
     const results = await Promise.all(
       Object.keys(fieldsToUpdate)
         .filter((k) => k.endsWith('Id'))
-        .map((fkField) => this._checkOneFkTwoFathersOnGapFill(service, id, fkField, fieldsToUpdate, source, notes, sourceTime, username)),
+        .map((fkField) =>
+          this._checkOneFkTwoFathersOnGapFill(
+            service,
+            id,
+            fkField,
+            fieldsToUpdate,
+            source,
+            notes,
+            sourceTime,
+            username,
+          ),
+        ),
     );
     const conflictedFkFields = results.filter((f): f is string => f !== null);
     return { conflictCount: conflictedFkFields.length, conflictedFkFields };
@@ -183,20 +258,36 @@ export class FkConflictService {
   ): Promise<string | null> {
     const childId = String(fieldsToUpdate[fkField]);
     const relatedTable = FK_FIELD_TO_TABLE[fkField];
-    if (!relatedTable) { return null; }
+    if (!relatedTable) {
+      return null;
+    }
 
     const existingOwner = await service.findByFkValue(fkField, childId, id);
-    if (!existingOwner) { return null; }
+    if (!existingOwner) {
+      return null;
+    }
 
+    this._logger.warn(
+      `FkConflictService._checkOneFkTwoFathersOnGapFill — TWO_FATHERS on gap-fill: "${service.tableName}/${id}" tried to claim "${relatedTable}/${childId}" already owned by "${existingOwner.id}"`,
+      'app-workflow',
+    );
     const childEntity = await this._registry.get(relatedTable).findById(childId);
     await this._relationalConflictService.detectTwoFathers(
-      childId, relatedTable,
-      childEntity?.source?.[fkField] ?? null, childEntity?.notes?.[fkField] ?? null, childEntity?.sourceTime?.[fkField] ?? null,
-      existingOwner.id as string, id, service.tableName,
+      childId,
+      relatedTable,
+      childEntity?.source?.[fkField] ?? null,
+      childEntity?.notes?.[fkField] ?? null,
+      childEntity?.sourceTime?.[fkField] ?? null,
+      existingOwner.id,
+      id,
+      service.tableName,
       existingOwner.source?.[fkField] ?? null,
       existingOwner.notes?.[fkField] ?? null,
       existingOwner.sourceTime?.[fkField] ?? null,
-      source, notes, sourceTime, username,
+      source,
+      notes,
+      sourceTime,
+      username,
     );
     return fkField;
   }

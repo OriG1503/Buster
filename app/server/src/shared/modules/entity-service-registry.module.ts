@@ -11,7 +11,17 @@ import { WiringModule } from '../../modules/entities/wiring/wiring.module';
 import { EntityServiceRegistry } from '../services/entity-service-registry.service';
 
 @Module({
-  imports: [BatteryModule, CardboardModule, CommunicationModule, IronModule, PlasticModule, RobotModule, SensorModule, StorageModule, WiringModule],
+  imports: [
+    BatteryModule,
+    CardboardModule,
+    CommunicationModule,
+    IronModule,
+    PlasticModule,
+    RobotModule,
+    SensorModule,
+    StorageModule,
+    WiringModule,
+  ],
   providers: [EntityServiceRegistry],
   exports: [EntityServiceRegistry],
 })

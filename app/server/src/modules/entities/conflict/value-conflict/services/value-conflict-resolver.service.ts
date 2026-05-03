@@ -1,5 +1,6 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { BaseEntity } from '../../../../../shared/entities/base.entity';
+import { LoggerService } from '../../../../../shared/services/logger/logger.service';
 import { EntityServiceRegistry } from '../../../../../shared/services/entity-service-registry.service';
 import { ValueConflictEntity } from '../entities/value-conflict.entity';
 import { ValueConflictRepository } from '../value-conflict.repository';
@@ -7,19 +8,25 @@ import { ResolveValueConflictDto } from '../dto/resolve-value-conflict.dto';
 
 @Injectable()
 export class ValueConflictResolverService {
-  private readonly _logger = new Logger(ValueConflictResolverService.name);
-
   public constructor(
     private readonly _valueConflictRepository: ValueConflictRepository,
     private readonly _registry: EntityServiceRegistry,
+    private readonly _logger: LoggerService,
   ) {}
 
   /** Picks a winner value for an open value-conflict group and persists the resolution. */
   public async resolve(resolveConflictDto: ResolveValueConflictDto): Promise<BaseEntity> {
     const { tableName, entityId, columnName, winnerValue, conflictResolver, resolutionNotes } = resolveConflictDto;
-    this._logger.log(`Resolving: ${tableName}/${entityId}/${columnName} → "${winnerValue}" by ${conflictResolver}`);
+    this._logger.info(
+      `ValueConflictResolverService.resolve — "${tableName}/${entityId}/${columnName}" → winner "${winnerValue}" by "${conflictResolver}"${resolutionNotes ? ` notes="${resolutionNotes}"` : ''}`,
+      'app-workflow',
+    );
 
     const conflicts = await this._fetchAndValidateConflicts(tableName, entityId, columnName, winnerValue);
+    this._logger.debug(
+      `ValueConflictResolverService.resolve — fetched ${conflicts.length} conflict(s) for group`,
+      'app-workflow',
+    );
     const entityService = this._registry.get(tableName);
     const winnerConflict = conflicts.find((c) => c.newValue === winnerValue);
 
@@ -41,14 +48,20 @@ export class ValueConflictResolverService {
     }
 
     await this._valueConflictRepository.resolveMany(tableName, entityId, columnName, conflictResolver, resolutionNotes);
-    this._logger.log(`Resolved: ${tableName}/${entityId}/${columnName}`);
+    this._logger.info(
+      `ValueConflictResolverService.resolve — group "${tableName}/${entityId}/${columnName}" closed`,
+      'app-workflow',
+    );
 
     return this._fetchUpdatedEntity(entityService, entityId, tableName);
   }
 
   /** Fetches open value conflicts for a group and validates that winnerValue is one of the competing values. */
   private async _fetchAndValidateConflicts(
-    tableName: string, entityId: string, columnName: string, winnerValue: string,
+    tableName: string,
+    entityId: string,
+    columnName: string,
+    winnerValue: string,
   ): Promise<ValueConflictEntity[]> {
     const conflicts = await this._valueConflictRepository.findByGroup(tableName, entityId, columnName);
 
@@ -66,7 +79,11 @@ export class ValueConflictResolverService {
   }
 
   /** Fetches the entity after resolution and throws if it is missing. */
-  private async _fetchUpdatedEntity(entityService: { findById(id: string): Promise<BaseEntity | null> }, entityId: string, tableName: string): Promise<BaseEntity> {
+  private async _fetchUpdatedEntity(
+    entityService: { findById(id: string): Promise<BaseEntity | null> },
+    entityId: string,
+    tableName: string,
+  ): Promise<BaseEntity> {
     const updatedEntity = await entityService.findById(entityId);
 
     if (!updatedEntity) {

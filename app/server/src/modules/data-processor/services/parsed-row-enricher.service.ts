@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { LoggerService } from '../../../shared/services/logger/logger.service';
 import { RobotRepository } from '../../entities/robot/robot.repository';
 import { CommunicationRepository } from '../../entities/communication/communication.repository';
 import { PlasticRepository } from '../../entities/plastic/plastic.repository';
@@ -22,6 +23,7 @@ export class ParsedRowEnricher {
     private readonly _plasticRepository: PlasticRepository,
     private readonly _wiringRepository: WiringRepository,
     private readonly _fictiveId: FictiveIdService,
+    private readonly _logger: LoggerService,
   ) {}
 
   /**
@@ -33,16 +35,38 @@ export class ParsedRowEnricher {
     const robotId = nullIfEmpty(row.robot_UUID);
     const rowCommId = nullIfEmpty(row.communication?.communication_UUID ?? null);
 
+    this._logger.debug(
+      `ParsedRowEnricher.enrich — robotId="${robotId ?? 'null'}", commId="${rowCommId ?? 'null'}"`,
+      'app-workflow',
+    );
     const dbState = await this._fetchDbState(robotId, rowCommId, row);
 
-    const enrichedPlastic = this._enrichPlastic(row.communication?.plastic ?? null, robotId, rowCommId, row.source, row.notes, dbState);
-    const enrichedCommunication = this._enrichCommunication(row.communication, enrichedPlastic, robotId, row.source, row.notes, dbState);
+    const enrichedPlastic = this._enrichPlastic(
+      row.communication?.plastic ?? null,
+      robotId,
+      rowCommId,
+      row.source,
+      row.notes,
+      dbState,
+    );
+    const enrichedCommunication = this._enrichCommunication(
+      row.communication,
+      enrichedPlastic,
+      robotId,
+      row.source,
+      row.notes,
+      dbState,
+    );
     const enrichedWiring = this._enrichWiring(row.wiring, robotId, row.source, row.notes, dbState);
 
     return { ...row, communication: enrichedCommunication, wiring: enrichedWiring };
   }
 
-  private async _fetchDbState(robotId: string | null, rowCommId: string | null, row: ParsedRow): Promise<DbLookupState> {
+  private async _fetchDbState(
+    robotId: string | null,
+    rowCommId: string | null,
+    row: ParsedRow,
+  ): Promise<DbLookupState> {
     const dbRobot = robotId ? await this._robotRepository.findById(robotId) : null;
 
     const existingCommId = dbRobot?.communicationId ?? null;
@@ -55,21 +79,29 @@ export class ParsedRowEnricher {
   private async _resolveExistingPlasticId(effectiveCommId: string | null, row: ParsedRow): Promise<string | null> {
     if (effectiveCommId) {
       const dbComm = await this._communicationRepository.findById(effectiveCommId);
-      if (dbComm?.plasticId) { return dbComm.plasticId; }
+      if (dbComm?.plasticId) {
+        return dbComm.plasticId;
+      }
     }
 
     const batteryId = nullIfEmpty(row.communication?.plastic?.battery?.battery_UUID ?? null);
-    if (!batteryId) { return null; }
+    if (!batteryId) {
+      return null;
+    }
 
     const dbPlastic = await this._plasticRepository.findByFkValue('batteryId', batteryId);
     return dbPlastic?.id ?? null;
   }
 
   private async _resolveExistingWiringId(dbRobotWiringId: string | null, row: ParsedRow): Promise<string | null> {
-    if (dbRobotWiringId) { return dbRobotWiringId; }
+    if (dbRobotWiringId) {
+      return dbRobotWiringId;
+    }
 
     const storageId = nullIfEmpty(row.wiring?.storage?.storage_UUID ?? null);
-    if (!storageId) { return null; }
+    if (!storageId) {
+      return null;
+    }
 
     const dbWiring = await this._wiringRepository.findByFkValue('storageId', storageId);
     return dbWiring?.id ?? null;
@@ -88,15 +120,25 @@ export class ParsedRowEnricher {
     rowNotes: string | null,
     dbState: DbLookupState,
   ): ParsedPlasticRow | null {
-    if (!plastic || nullIfEmpty(plastic.plastic_UUID)) { return plastic; }
+    if (!plastic || nullIfEmpty(plastic.plastic_UUID)) {
+      return plastic;
+    }
 
     const batteryId = nullIfEmpty(plastic.battery?.battery_UUID);
-    if (!batteryId) { return plastic; }
+    if (!batteryId) {
+      return plastic;
+    }
 
     const hasParentContext = !!robotId || !!commId || !!dbState.existingCommId;
-    if (!hasParentContext) { return plastic; }
+    if (!hasParentContext) {
+      return plastic;
+    }
 
     const plasticId = dbState.existingPlasticId ?? this._fictiveId.generate(PLASTIC_CONFIG.displayName, batteryId);
+    this._logger.info(
+      `ParsedRowEnricher._enrichPlastic — assigned plastic_UUID="${plasticId}" (${dbState.existingPlasticId ? 'from DB' : 'fictive'}) for battery "${batteryId}"`,
+      'app-workflow',
+    );
     return { ...plastic, plastic_UUID: plasticId, source: rowSource, notes: rowNotes };
   }
 
@@ -113,15 +155,25 @@ export class ParsedRowEnricher {
     rowNotes: string | null,
     dbState: DbLookupState,
   ): ParsedCommunicationRow | null {
-    if (!comm) { return null; }
+    if (!comm) {
+      return null;
+    }
 
     const updated = { ...comm, plastic: enrichedPlastic };
-    if (nullIfEmpty(updated.communication_UUID)) { return updated; }
+    if (nullIfEmpty(updated.communication_UUID)) {
+      return updated;
+    }
 
     const hasChildData = !!nullIfEmpty(enrichedPlastic?.plastic_UUID) || !!nullIfEmpty(comm.iron?.iron_UUID);
-    if (!hasChildData || !robotId) { return updated; }
+    if (!hasChildData || !robotId) {
+      return updated;
+    }
 
     const commId = dbState.existingCommId ?? this._fictiveId.generate(COMMUNICATION_CONFIG.displayName, robotId);
+    this._logger.info(
+      `ParsedRowEnricher._enrichCommunication — assigned communication_UUID="${commId}" (${dbState.existingCommId ? 'from DB' : 'fictive'}) for robot "${robotId}"`,
+      'app-workflow',
+    );
     return { ...updated, communication_UUID: commId, source: rowSource, notes: rowNotes };
   }
 
@@ -137,12 +189,20 @@ export class ParsedRowEnricher {
     rowNotes: string | null,
     dbState: DbLookupState,
   ): ParsedWiringRow | null {
-    if (!wiring || nullIfEmpty(wiring.wiring_UUID)) { return wiring; }
+    if (!wiring || nullIfEmpty(wiring.wiring_UUID)) {
+      return wiring;
+    }
 
     const storageId = nullIfEmpty(wiring.storage?.storage_UUID);
-    if (!storageId || !robotId) { return wiring; }
+    if (!storageId || !robotId) {
+      return wiring;
+    }
 
     const wiringId = dbState.existingWiringId ?? this._fictiveId.generate(WIRING_CONFIG.displayName, storageId);
+    this._logger.info(
+      `ParsedRowEnricher._enrichWiring — assigned wiring_UUID="${wiringId}" (${dbState.existingWiringId ? 'from DB' : 'fictive'}) for storage "${storageId}"`,
+      'app-workflow',
+    );
     return { ...wiring, wiring_UUID: wiringId, source: rowSource, notes: rowNotes };
   }
 }

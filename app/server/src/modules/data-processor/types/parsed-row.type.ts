@@ -10,7 +10,11 @@ type SensorSection = EntityRowBase & { sensor_UUID: string | null };
 /** Exported hierarchy types — used by ParsedRowEnricher and anywhere the parser hierarchy is navigated. */
 export type ParsedPlasticRow = EntityRowBase & { plastic_UUID: string | null; battery: BatterySection | null };
 export type ParsedWiringRow = EntityRowBase & { wiring_UUID: string | null; storage: StorageSection | null };
-export type ParsedCommunicationRow = EntityRowBase & { communication_UUID: string | null; plastic: ParsedPlasticRow | null; iron: IronSection | null };
+export type ParsedCommunicationRow = EntityRowBase & {
+  communication_UUID: string | null;
+  plastic: ParsedPlasticRow | null;
+  iron: IronSection | null;
+};
 
 /** Top-level row returned by the Python parser for a single CSV record. */
 export type ParsedRow = EntityRowBase & {

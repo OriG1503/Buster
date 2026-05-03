@@ -19,7 +19,9 @@ export class ValueConflictHistoryService {
       throw new NotFoundException(`No resolved conflict history for ${tableName}/${entityId}/${columnName}`);
     }
 
-    const entity = (await this._registry.get(tableName).findById(entityId)) as (BaseEntity & Record<string, unknown>) | null;
+    const entity = (await this._registry.get(tableName).findById(entityId)) as
+      | (BaseEntity & Record<string, unknown>)
+      | null;
     const currentValue = entity ? String(entity[columnName] ?? '') : null;
 
     // Build a map of unique values, preserving insertion order (chronological).

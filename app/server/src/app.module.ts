@@ -1,6 +1,8 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { LoggingMiddleware } from './shared/middleware/logging.middleware';
+import { GlobalExceptionFilter } from './shared/filters/global-exception.filter';
 import { BatteryModule } from './modules/entities/battery/battery.module';
 import { PlasticModule } from './modules/entities/plastic/plastic.module';
 import { IronModule } from './modules/entities/iron/iron.module';
@@ -19,12 +21,14 @@ import { AuthModule } from './modules/auth/auth.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { EntityCatalogModule } from './modules/entity-catalog/entity-catalog.module';
+import { LoggerModule } from './shared/services/logger/logger.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    LoggerModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
       url: process.env.DATABASE_URL,
@@ -62,6 +66,11 @@ import { EntityCatalogModule } from './modules/entity-catalog/entity-catalog.mod
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
+    GlobalExceptionFilter,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  public configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(LoggingMiddleware).forRoutes('*');
+  }
+}

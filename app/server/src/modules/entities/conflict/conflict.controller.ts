@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { LoggerService } from '../../../shared/services/logger/logger.service';
 import { RequireRole } from '../../auth/decorators/require-role.decorator';
 import { Role } from '../../auth/types/role.type';
 import { ConflictListService } from './services/conflict-list.service';
@@ -13,6 +14,7 @@ export class ConflictController {
   public constructor(
     private readonly _conflictListService: ConflictListService,
     private readonly _conflictEntityDetailService: ConflictEntityDetailService,
+    private readonly _logger: LoggerService,
   ) {}
 
   @Get()
@@ -23,17 +25,31 @@ export class ConflictController {
     @Query('entityId') entityId?: string,
     @Query('conflictIds') conflictIds?: string,
   ): Promise<ConflictListResponse> {
-    const parsedConflictIds = conflictIds ? conflictIds.split(',').map(Number).filter((n) => !isNaN(n)) : undefined;
+    this._logger.info(
+      `ConflictController.list — GET /api/conflicts page=${page} limit=${limit} tableName="${tableName ?? 'any'}" entityId="${entityId ?? 'any'}" conflictIds="${conflictIds ?? ''}"`,
+      'app-workflow',
+    );
+    const parsedConflictIds = conflictIds
+      ? conflictIds
+          .split(',')
+          .map(Number)
+          .filter((n) => !isNaN(n))
+      : undefined;
     return this._conflictListService.getOpenGroups(Number(page), Number(limit), tableName, entityId, parsedConflictIds);
   }
 
   @Get('count')
   public async count(): Promise<{ count: number }> {
+    this._logger.info('ConflictController.count — GET /api/conflicts/count', 'app-workflow');
     return { count: await this._conflictListService.countOpen() };
   }
 
   @Post('open-ids')
   public async checkOpenIds(@Body() dto: CheckOpenIdsDto): Promise<string[]> {
+    this._logger.info(
+      `ConflictController.checkOpenIds — POST /api/conflicts/open-ids ids=${dto.ids.length}`,
+      'app-workflow',
+    );
     return this._conflictListService.findOpenByEntityIds(dto.ids);
   }
 
@@ -42,6 +58,10 @@ export class ConflictController {
     @Query('tableName') tableName: string,
     @Query('entityId') entityId: string,
   ): Promise<ConflictEntityDetailResponse> {
+    this._logger.info(
+      `ConflictController.entityDetail — GET /api/conflicts/entity tableName="${tableName}" entityId="${entityId}"`,
+      'app-workflow',
+    );
     return this._conflictEntityDetailService.getEntityDetail(tableName, entityId);
   }
 }

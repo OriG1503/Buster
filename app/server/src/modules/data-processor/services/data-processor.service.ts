@@ -1,8 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { FK_FIELD_TO_TABLE } from '../../../shared/consts/fk-field-to-table.const';
 import { EntityValue } from '../../../shared/types/entity-value.type';
 import { EntityService } from '../../../shared/types/entity-service.type';
 import { EntityServiceRegistry } from '../../../shared/services/entity-service-registry.service';
+import { LoggerService } from '../../../shared/services/logger/logger.service';
 import { CrossEntityConflictDetectionService } from '../../entities/conflict/cross-entity-conflict/services/cross-entity-conflict-detection.service';
 import { ParserRowMapper } from '../mappers/parser-row.mapper';
 import { ParsedRowEnricher } from './parsed-row-enricher.service';
@@ -16,14 +17,13 @@ import { RowResult } from '../types/row-result.type';
 
 @Injectable()
 export class DataProcessorService {
-  private readonly _logger = new Logger(DataProcessorService.name);
-
   public constructor(
     private readonly _mapper: ParserRowMapper,
     private readonly _enricher: ParsedRowEnricher,
     private readonly _ingestionService: EntityIngestionService,
     private readonly _registry: EntityServiceRegistry,
     private readonly _crossEntityDetectionService: CrossEntityConflictDetectionService,
+    private readonly _logger: LoggerService,
   ) {}
 
   /**
@@ -32,19 +32,23 @@ export class DataProcessorService {
    * race conditions where later rows silently lose their data due to unique constraint violations.
    */
   public async process(rows: ParsedRow[], username: string): Promise<ProcessResult> {
-    this._logger.log(`Processing ${rows.length} rows sequentially — user: ${username}`);
-    const results = await rows.reduce<Promise<RowResult[]>>(
-      async (acc, row, i) => {
-        const prev = await acc;
-        try {
-          return [...prev, await this._processRow(row, username, i)];
-        } catch (error) {
-          this._logger.error(`Row ${i} failed unexpectedly — skipped: ${(error as Error).message}`);
-          return [...prev, { conflictCount: 0, conflictIds: [], flyingFields: [], totalFields: 0 }];
-        }
-      },
-      Promise.resolve([]),
+    this._logger.info(
+      `DataProcessorService.process — starting sequential ingestion of ${rows.length} rows for user "${username}"`,
+      'app-workflow',
     );
+    const results = await rows.reduce<Promise<RowResult[]>>(async (acc, row, i) => {
+      const prev = await acc;
+      try {
+        this._logger.debug(`DataProcessorService.process — processing row ${i}/${rows.length - 1}`, 'app-workflow');
+        return [...prev, await this._processRow(row, username, i)];
+      } catch (error) {
+        this._logger.error(
+          `DataProcessorService.process — row ${i} failed unexpectedly, skipped: ${(error as Error).message}`,
+          'app-workflow',
+        );
+        return [...prev, { conflictCount: 0, conflictIds: [], flyingFields: [], totalFields: 0 }];
+      }
+    }, Promise.resolve([]));
     return this._aggregateResults(results);
   }
 
@@ -55,18 +59,28 @@ export class DataProcessorService {
     const totalFields = results.reduce((sum, r) => sum + r.totalFields, 0);
     const flyingFieldCount = flyingFields.reduce((sum, f) => sum + f.redFields.length, 0);
     const uploadPercentage = totalFields > 0 ? Math.round(((totalFields - flyingFieldCount) / totalFields) * 100) : 100;
-    this._logger.log(`Processing done — ${uploadPercentage}% uploaded, ${conflictCount} conflicts detected`);
+    this._logger.info(
+      `DataProcessorService — aggregate result: ${uploadPercentage}% uploaded, ${conflictCount} conflicts, ${flyingFieldCount} flying fields, ${totalFields} fields total`,
+      'app-workflow',
+    );
     return { conflictCount, conflictIds, flyingFields, uploadPercentage };
   }
 
   /** Processes a single parsed row leaf-first. */
   private async _processRow(row: ParsedRow, username: string, rowIndex: number): Promise<RowResult> {
+    this._logger.debug(
+      `DataProcessorService._processRow — enriching row ${rowIndex} (robot_UUID="${row.robot_UUID ?? ''}")`,
+      'app-workflow',
+    );
     const enriched = await this._enricher.enrich(row);
 
     // Tracks skipped entity IDs so downstream entities can null out any FK references — prevents FK constraint errors.
     const skippedByTable = new Map<string, Set<string>>();
 
-    const run = async (mapped: MappedEntityBase | null, service: EntityService<{ id: string }>): Promise<EntityResult> => {
+    const run = async (
+      mapped: MappedEntityBase | null,
+      service: EntityService<{ id: string }>,
+    ): Promise<EntityResult> => {
       const cleaned = this._nullifySkippedFKs(mapped, skippedByTable);
       const result = await this._ingestionService.processEntity(cleaned, service, username, rowIndex);
       if (result.wasSkipped && cleaned?.id) {
@@ -110,16 +124,42 @@ export class DataProcessorService {
     const robotWiringId = mappedRobotRecord?.['wiringId'] ? String(mappedRobotRecord['wiringId']) : null;
 
     if (processedWiringId) {
+      this._logger.debug(
+        `DataProcessorService._processRow — re-running cross-entity detection for wiring "${processedWiringId}" and its robots`,
+        'app-workflow',
+      );
       await this._crossEntityDetectionService.detectForWiringRobots(processedWiringId, username).catch((err) => {
-        this._logger.warn(`Cross-entity detection failed for wiring ${processedWiringId}: ${(err as Error).message}`);
+        this._logger.warn(
+          `DataProcessorService._processRow — cross-entity detection failed for wiring "${processedWiringId}": ${(err as Error).message}`,
+          'app-workflow',
+        );
       });
     } else if (robotId && robotWiringId) {
-      await this._crossEntityDetectionService.detectForRobotWiringPair(robotId, robotWiringId, username).catch((err) => {
-        this._logger.warn(`Cross-entity detection failed for robot ${robotId}: ${(err as Error).message}`);
-      });
+      this._logger.debug(
+        `DataProcessorService._processRow — re-running cross-entity detection for robot "${robotId}" ↔ wiring "${robotWiringId}"`,
+        'app-workflow',
+      );
+      await this._crossEntityDetectionService
+        .detectForRobotWiringPair(robotId, robotWiringId, username)
+        .catch((err) => {
+          this._logger.warn(
+            `DataProcessorService._processRow — cross-entity detection failed for robot "${robotId}": ${(err as Error).message}`,
+            'app-workflow',
+          );
+        });
     }
 
-    const allResults: EntityResult[] = [batteryResult, storageResult, ironResult, cardboardResult, sensorResult, plasticResult, wiringResult, commResult, robotResult];
+    const allResults: EntityResult[] = [
+      batteryResult,
+      storageResult,
+      ironResult,
+      cardboardResult,
+      sensorResult,
+      plasticResult,
+      wiringResult,
+      commResult,
+      robotResult,
+    ];
 
     return {
       conflictCount: allResults.reduce((sum, r) => sum + r.count, 0),
@@ -134,8 +174,13 @@ export class DataProcessorService {
    * Null propagation cascades: if plastic is skipped, communication's plasticId is nulled, potentially making
    * communication a UUID-only row which is also then skipped.
    */
-  private _nullifySkippedFKs(mapped: MappedEntityBase | null, skippedByTable: Map<string, Set<string>>): MappedEntityBase | null {
-    if (!mapped || skippedByTable.size === 0) { return mapped; }
+  private _nullifySkippedFKs(
+    mapped: MappedEntityBase | null,
+    skippedByTable: Map<string, Set<string>>,
+  ): MappedEntityBase | null {
+    if (!mapped || skippedByTable.size === 0) {
+      return mapped;
+    }
     const record = mapped as unknown as Record<string, EntityValue>;
     const cleaned = { ...record };
     Object.keys(cleaned)

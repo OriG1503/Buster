@@ -19,7 +19,11 @@ export class RelationalConflictHistoryService {
     private readonly _registry: EntityServiceRegistry,
   ) {}
 
-  public async getHistory(anchorTable: string, anchorId: string, relatedTable: string): Promise<RelationalHistoryResponse> {
+  public async getHistory(
+    anchorTable: string,
+    anchorId: string,
+    relatedTable: string,
+  ): Promise<RelationalHistoryResponse> {
     const conflicts = await this._relationalConflictRepository.findSolvedByAnchor(anchorTable, anchorId, relatedTable);
 
     if (conflicts.length === 0) {
@@ -43,9 +47,7 @@ export class RelationalConflictHistoryService {
       groups.push({ conflictType, relatedTable: groupRelatedTable, options });
     }
 
-    const lastResolved = conflicts.reduce((latest, rc) =>
-      (rc.updatedAt as Date) > (latest.updatedAt as Date) ? rc : latest,
-    );
+    const lastResolved = conflicts.reduce((latest, rc) => (rc.updatedAt > latest.updatedAt ? rc : latest));
 
     const firstConflict = conflicts[0];
     const anchorSnapshot = firstConflict.snapshot?.anchor ?? {};
@@ -83,13 +85,19 @@ export class RelationalConflictHistoryService {
       if (!fkField) {
         return null;
       }
-      const winnerParent = (await this._registry.get(relatedTable).findByFkValue(fkField, anchorId)) as Record<string, unknown> | null;
+      const winnerParent = (await this._registry.get(relatedTable).findByFkValue(fkField, anchorId)) as Record<
+        string,
+        unknown
+      > | null;
       return winnerParent ? ((winnerParent['id'] as string | null) ?? null) : null;
     }
     return null;
   }
 
-  private _mergeOptions(conflicts: RelationalConflictEntity[], winnerRelatedId: string | null): RelationalHistoryOption[] {
+  private _mergeOptions(
+    conflicts: RelationalConflictEntity[],
+    winnerRelatedId: string | null,
+  ): RelationalHistoryOption[] {
     const idToOption = new Map<string, RelationalHistoryOption>();
     conflicts.forEach((rc) => {
       if (!idToOption.has(rc.oldRelatedId)) {

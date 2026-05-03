@@ -1,13 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { LoggerService } from '../../shared/services/logger/logger.service';
 
 @Injectable()
 export class S3Service {
-  private readonly _logger = new Logger(S3Service.name);
   private readonly _client: S3Client;
   private readonly _bucket: string | undefined;
 
-  public constructor() {
+  public constructor(private readonly _logger: LoggerService) {
     this._bucket = process.env.S3_BUCKET;
     this._client = new S3Client({
       region: process.env.S3_REGION ?? 'us-east-1',
@@ -21,16 +21,24 @@ export class S3Service {
   /** Downloads a file from S3 and returns its content as a Buffer, or null if S3 is not configured or the key is not found. */
   public async download(key: string): Promise<Buffer | null> {
     if (!this._bucket) {
-      this._logger.warn('S3_BUCKET is not configured — skipping S3 download');
+      this._logger.warn(
+        `S3Service.download — S3_BUCKET not configured, skipping download for key "${key}"`,
+        'app-workflow',
+      );
       return null;
     }
     try {
+      this._logger.info(`S3Service.download — fetching key "${key}" from bucket "${this._bucket}"`, 'app-workflow');
       const { Body } = await this._client.send(new GetObjectCommand({ Bucket: this._bucket, Key: key }));
-      if (!Body) { return null; }
+      if (!Body) {
+        this._logger.warn(`S3Service.download — empty body for key "${key}"`, 'app-workflow');
+        return null;
+      }
       const bytes = await (Body as { transformToByteArray: () => Promise<Uint8Array> }).transformToByteArray();
+      this._logger.info(`S3Service.download — fetched ${bytes.length} bytes for key "${key}"`, 'app-workflow');
       return Buffer.from(bytes);
     } catch (error) {
-      this._logger.error(`Failed to download "${key}" from S3: ${(error as Error).message}`);
+      this._logger.error(`S3Service.download — failed for key "${key}": ${(error as Error).message}`, 'app-workflow');
       return null;
     }
   }
@@ -38,28 +46,41 @@ export class S3Service {
   /** Deletes an object from S3. Logs an error on failure but never throws. */
   public async delete(key: string): Promise<void> {
     if (!this._bucket) {
-      this._logger.warn('S3_BUCKET is not configured — skipping S3 delete');
+      this._logger.warn(
+        `S3Service.delete — S3_BUCKET not configured, skipping delete for key "${key}"`,
+        'app-workflow',
+      );
       return;
     }
     try {
+      this._logger.info(`S3Service.delete — deleting key "${key}" from bucket "${this._bucket}"`, 'app-workflow');
       await this._client.send(new DeleteObjectCommand({ Bucket: this._bucket, Key: key }));
+      this._logger.info(`S3Service.delete — deleted key "${key}"`, 'app-workflow');
     } catch (error) {
-      this._logger.error(`Failed to delete "${key}" from S3: ${(error as Error).message}`);
+      this._logger.error(`S3Service.delete — failed for key "${key}": ${(error as Error).message}`, 'app-workflow');
     }
   }
 
   /** Uploads a buffer to S3. Logs an error on failure but never throws. */
   public async upload(key: string, buffer: Buffer, contentType = 'application/octet-stream'): Promise<void> {
     if (!this._bucket) {
-      this._logger.warn('S3_BUCKET is not configured — skipping S3 upload');
+      this._logger.warn(
+        `S3Service.upload — S3_BUCKET not configured, skipping upload for key "${key}"`,
+        'app-workflow',
+      );
       return;
     }
     try {
+      this._logger.info(
+        `S3Service.upload — uploading ${buffer.length} bytes to key "${key}" (contentType "${contentType}")`,
+        'app-workflow',
+      );
       await this._client.send(
         new PutObjectCommand({ Bucket: this._bucket, Key: key, Body: buffer, ContentType: contentType }),
       );
+      this._logger.info(`S3Service.upload — upload complete for key "${key}"`, 'app-workflow');
     } catch (error) {
-      this._logger.error(`Failed to upload "${key}" to S3: ${(error as Error).message}`);
+      this._logger.error(`S3Service.upload — failed for key "${key}": ${(error as Error).message}`, 'app-workflow');
     }
   }
 }

@@ -8,7 +8,11 @@ export class PlasticEntity extends BaseEntity {
   @Column({ type: 'varchar', nullable: true })
   public plasticType: string | null;
 
-  @OneToOne(() => BatteryEntity, (battery) => battery.plastic, { nullable: true, onDelete: 'SET NULL', onUpdate: 'CASCADE' })
+  @OneToOne(() => BatteryEntity, (battery) => battery.plastic, {
+    nullable: true,
+    onDelete: 'SET NULL',
+    onUpdate: 'CASCADE',
+  })
   @JoinColumn({ name: 'batteryId' })
   public battery: BatteryEntity | null;
 

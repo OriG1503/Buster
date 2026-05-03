@@ -19,7 +19,11 @@ export class RelationalConflictRepository extends BaseConflictRepository<Relatio
     await this._markResolved({ id } as FindOptionsWhere<RelationalConflictEntity>, conflictResolver, resolutionNotes);
   }
 
-  public findSolvedByAnchor(anchorTable: string, anchorId: string, relatedTable: string): Promise<RelationalConflictEntity[]> {
+  public findSolvedByAnchor(
+    anchorTable: string,
+    anchorId: string,
+    relatedTable: string,
+  ): Promise<RelationalConflictEntity[]> {
     return this._repository.find({ where: { anchorTable, anchorId, relatedTable, isSolved: true } });
   }
 
@@ -29,15 +33,23 @@ export class RelationalConflictRepository extends BaseConflictRepository<Relatio
    */
   public async reattribute(fictiveId: string, realId: string): Promise<void> {
     await Promise.all([
-      this._repository.update({ anchorId: fictiveId, isSolved: false } as FindOptionsWhere<RelationalConflictEntity>, { anchorId: realId }),
-      this._repository.update({ oldRelatedId: fictiveId, isSolved: false } as FindOptionsWhere<RelationalConflictEntity>, { oldRelatedId: realId }),
-      this._repository.update({ newRelatedId: fictiveId, isSolved: false } as FindOptionsWhere<RelationalConflictEntity>, { newRelatedId: realId }),
+      this._repository.update({ anchorId: fictiveId, isSolved: false } as FindOptionsWhere<RelationalConflictEntity>, {
+        anchorId: realId,
+      }),
+      this._repository.update(
+        { oldRelatedId: fictiveId, isSolved: false } as FindOptionsWhere<RelationalConflictEntity>,
+        { oldRelatedId: realId },
+      ),
+      this._repository.update(
+        { newRelatedId: fictiveId, isSolved: false } as FindOptionsWhere<RelationalConflictEntity>,
+        { newRelatedId: realId },
+      ),
     ]);
   }
 
   /** Inserts a new conflict. Returns the new conflict's ID, or null if it already existed (unique violation ignored). */
   public async insertConflict(data: Partial<RelationalConflictEntity>): Promise<number | null> {
     const ids = await this.insertMany([data as Record<string, EntityValue>], true);
-    return ids.length > 0 ? (ids[0] as number) : null;
+    return ids.length > 0 ? ids[0] : null;
   }
 }

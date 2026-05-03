@@ -1,7 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { RobotEntity } from '../../../robot/entities/robot.entity';
 import { WiringEntity } from '../../../wiring/entities/wiring.entity';
 import { EntityServiceRegistry } from '../../../../../shared/services/entity-service-registry.service';
+import { LoggerService } from '../../../../../shared/services/logger/logger.service';
 import { CrossEntityConflictRepository } from '../cross-entity-conflict.repository';
 import { CROSS_ENTITY_FIELDS, CrossEntityField } from '../consts/cross-entity-fields.const';
 
@@ -9,11 +10,10 @@ type FieldTrackingMap = Record<string, string | null> | null;
 
 @Injectable()
 export class CrossEntityConflictDetectionService {
-  private readonly _logger = new Logger(CrossEntityConflictDetectionService.name);
-
   public constructor(
     private readonly _crossEntityConflictRepository: CrossEntityConflictRepository,
     private readonly _registry: EntityServiceRegistry,
+    private readonly _logger: LoggerService,
   ) {}
 
   /**
@@ -21,15 +21,32 @@ export class CrossEntityConflictDetectionService {
    * Called after a robot is inserted or updated (if it has a wiringId).
    */
   public async detectForRobotWiringPair(robotId: string, wiringId: string, conflictCreator: string): Promise<void> {
+    this._logger.debug(
+      `CrossEntityConflictDetectionService.detectForRobotWiringPair — robot "${robotId}" ↔ wiring "${wiringId}" (creator="${conflictCreator}")`,
+      'app-workflow',
+    );
     const [robot, wiring] = await Promise.all([
       this._registry.get('robots').findById(robotId),
       this._registry.get('wirings').findById(wiringId),
     ]);
 
-    if (!robot || !wiring) { return; }
+    if (!robot || !wiring) {
+      this._logger.debug(
+        `CrossEntityConflictDetectionService.detectForRobotWiringPair — pair not found (robot=${!!robot}, wiring=${!!wiring}), skipping`,
+        'app-workflow',
+      );
+      return;
+    }
 
     await Promise.all(
-      CROSS_ENTITY_FIELDS.map((field) => this._detectForField(robot as unknown as RobotEntity, wiring as unknown as WiringEntity, field, conflictCreator)),
+      CROSS_ENTITY_FIELDS.map((field) =>
+        this._detectForField(
+          robot as unknown as RobotEntity,
+          wiring as unknown as WiringEntity,
+          field,
+          conflictCreator,
+        ),
+      ),
     );
   }
 
@@ -38,17 +55,36 @@ export class CrossEntityConflictDetectionService {
    * Called after wiring values change (via upload or conflict resolution).
    */
   public async detectForWiringRobots(wiringId: string, conflictCreator: string): Promise<void> {
+    this._logger.debug(
+      `CrossEntityConflictDetectionService.detectForWiringRobots — wiring "${wiringId}" (creator="${conflictCreator}")`,
+      'app-workflow',
+    );
     const [wiring, robots] = await Promise.all([
       this._registry.get('wirings').findById(wiringId),
       this._getRobotsByWiringId(wiringId),
     ]);
 
-    if (!wiring || robots.length === 0) { return; }
+    if (!wiring || robots.length === 0) {
+      this._logger.debug(
+        `CrossEntityConflictDetectionService.detectForWiringRobots — wiring "${wiringId}" missing or no robots (count=${robots.length}), skipping`,
+        'app-workflow',
+      );
+      return;
+    }
 
+    this._logger.info(
+      `CrossEntityConflictDetectionService.detectForWiringRobots — re-evaluating ${robots.length} robot(s) attached to wiring "${wiringId}"`,
+      'app-workflow',
+    );
     await Promise.all(
       robots.flatMap((robot) =>
         CROSS_ENTITY_FIELDS.map((field) =>
-          this._detectForField(robot as unknown as RobotEntity, wiring as unknown as WiringEntity, field, conflictCreator),
+          this._detectForField(
+            robot as unknown as RobotEntity,
+            wiring as unknown as WiringEntity,
+            field,
+            conflictCreator,
+          ),
         ),
       ),
     );
@@ -69,7 +105,9 @@ export class CrossEntityConflictDetectionService {
     // Soft-delete any existing open conflict for this pair+field before re-evaluating
     await this._crossEntityConflictRepository.softDeleteOpenByRobotField(robot.id, field);
 
-    if (robotValue === null || wiringValue === null || robotValue === wiringValue) { return; }
+    if (robotValue === null || wiringValue === null || robotValue === wiringValue) {
+      return;
+    }
 
     const robotSourceMap = (robotRecord['source'] as FieldTrackingMap) ?? {};
     const wiringSourceMap = (wiringRecord['source'] as FieldTrackingMap) ?? {};
@@ -94,11 +132,16 @@ export class CrossEntityConflictDetectionService {
       conflictCreator,
     });
 
-    this._logger.warn(`Cross-entity conflict: robots/${robot.id} ↔ wirings/${wiring.id} on [${field}] — robot="${robotValue}" wiring="${wiringValue}"`);
+    this._logger.warn(
+      `CrossEntityConflictDetectionService._detectForField — conflict on [${field}]: robots/${robot.id}="${robotValue}" ↔ wirings/${wiring.id}="${wiringValue}" (creator="${conflictCreator}")`,
+      'app-workflow',
+    );
   }
 
   private async _getRobotsByWiringId(wiringId: string): Promise<RobotEntity[]> {
-    const robotService = this._registry.get('robots') as { findManyByWiringId?: (id: string) => Promise<RobotEntity[]> };
+    const robotService = this._registry.get('robots') as {
+      findManyByWiringId?: (id: string) => Promise<RobotEntity[]>;
+    };
     if (typeof robotService.findManyByWiringId === 'function') {
       return robotService.findManyByWiringId(wiringId);
     }

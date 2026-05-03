@@ -4,7 +4,10 @@ import { RelationalConflictType } from '../consts/relational-conflict-type.const
 import { RelationalConflictSnapshot } from '../types/relational-conflict-snapshot.type';
 
 @Entity('relational_conflicts')
-@Index(['conflictType', 'anchorId', 'anchorTable', 'oldRelatedId', 'newRelatedId'], { unique: true, where: '"isSolved" = false' })
+@Index(['conflictType', 'anchorId', 'anchorTable', 'oldRelatedId', 'newRelatedId'], {
+  unique: true,
+  where: '"isSolved" = false',
+})
 export class RelationalConflictEntity extends BaseConflictEntity {
   @Column({ type: 'varchar' })
   public conflictType: RelationalConflictType;

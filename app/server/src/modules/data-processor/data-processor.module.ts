@@ -19,7 +19,18 @@ import { ParsedRowEnricher } from './services/parsed-row-enricher.service';
 import { ProcessReportService } from './services/process-report.service';
 
 @Module({
-  imports: [EntityServiceRegistryModule, EntityCatalogModule, ValueConflictModule, RelationalConflictModule, CrossEntityConflictModule, FictiveModule, RobotModule, CommunicationModule, PlasticModule, WiringModule],
+  imports: [
+    EntityServiceRegistryModule,
+    EntityCatalogModule,
+    ValueConflictModule,
+    RelationalConflictModule,
+    CrossEntityConflictModule,
+    FictiveModule,
+    RobotModule,
+    CommunicationModule,
+    PlasticModule,
+    WiringModule,
+  ],
   providers: [
     DataProcessorService,
     EntityIngestionService,

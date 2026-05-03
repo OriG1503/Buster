@@ -1,14 +1,7 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Post,
-  Res,
-  UploadedFile,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Controller, Get, Param, Post, Res, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { LoggerService } from '../../shared/services/logger/logger.service';
 import { FileService } from './file.service';
 import { UploadSummary } from './types/upload-summary.type';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -19,7 +12,10 @@ import { Role } from '../auth/types/role.type';
 
 @Controller('file')
 export class FileController {
-  public constructor(private readonly _fileService: FileService) {}
+  public constructor(
+    private readonly _fileService: FileService,
+    private readonly _logger: LoggerService,
+  ) {}
 
   @RequireRole(Role.UPLOADER)
   @Post()
@@ -28,15 +24,17 @@ export class FileController {
     @UploadedFile() file: Express.Multer.File,
     @CurrentUser() user: JwtPayload,
   ): Promise<UploadSummary> {
+    this._logger.info(
+      `FileController.upload — POST /api/file received for user "${user.email}", filename "${file?.originalname}"`,
+      'app-workflow',
+    );
     return this._fileService.handleFile(file, user.email);
   }
 
   @Public()
   @Get('report/:filename')
-  public async downloadReport(
-    @Param('filename') filename: string,
-    @Res() res: Response,
-  ): Promise<void> {
+  public async downloadReport(@Param('filename') filename: string, @Res() res: Response): Promise<void> {
+    this._logger.info(`FileController.downloadReport — GET /api/file/report/${filename}`, 'app-workflow');
     const buffer = await this._fileService.getReport(filename);
     res.set({
       'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -44,5 +42,9 @@ export class FileController {
       'Content-Length': String(buffer.length),
     });
     res.send(buffer);
+    this._logger.info(
+      `FileController.downloadReport — report "${filename}" sent (${buffer.length} bytes)`,
+      'app-workflow',
+    );
   }
 }

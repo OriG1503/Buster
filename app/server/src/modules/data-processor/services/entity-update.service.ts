@@ -1,7 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { QueryFailedError } from 'typeorm';
 import { PG_UNIQUE_VIOLATION } from '../../../shared/consts/pg-error-codes.const';
 import { BaseEntity } from '../../../shared/entities/base.entity';
+import { LoggerService } from '../../../shared/services/logger/logger.service';
 import { EntityValue } from '../../../shared/types/entity-value.type';
 import { EntityService } from '../../../shared/types/entity-service.type';
 import { ValueConflictRepository } from '../../entities/conflict/value-conflict/value-conflict.repository';
@@ -12,13 +13,12 @@ import { FictiveReplacementService } from '../../fictive/services/fictive-replac
 
 @Injectable()
 export class EntityUpdateService {
-  private readonly _logger = new Logger(EntityUpdateService.name);
-
   public constructor(
     private readonly _conflictService: ValueConflictService,
     private readonly _valueConflictRepository: ValueConflictRepository,
     private readonly _fkConflictService: FkConflictService,
     private readonly _fictiveReplacement: FictiveReplacementService,
+    private readonly _logger: LoggerService,
   ) {}
 
   /**
@@ -38,27 +38,52 @@ export class EntityUpdateService {
     nonNullCount: number,
   ): Promise<EntityResult> {
     const result = this._conflictService.detectConflicts(
-      service.tableName, id,
+      service.tableName,
+      id,
       stored as object as Record<string, EntityValue>,
-      stored.source, stored.notes, stored.sourceTime,
-      fields, source, username, notes, sourceTime,
+      stored.source,
+      stored.notes,
+      stored.sourceTime,
+      fields,
+      source,
+      username,
+      notes,
+      sourceTime,
     );
 
     const conflictIds = await this._persistValueConflicts(result.conflictsToCreate);
 
     const { conflictCount: twoChildsCount, fictiveReplacements } = await this._fkConflictService.detectTwoChilds(
-      service, id, stored, fields, source, notes, sourceTime, username,
+      service,
+      id,
+      stored,
+      fields,
+      source,
+      notes,
+      sourceTime,
+      username,
     );
 
     await Promise.all(
       fictiveReplacements.map(({ fkField, fictiveChildId, realChildId }) =>
-        this._fictiveReplacement.replaceChild(service, fkField, fictiveChildId, realChildId, { source, notes, sourceTime }),
+        this._fictiveReplacement.replaceChild(service, fkField, fictiveChildId, realChildId, {
+          source,
+          notes,
+          sourceTime,
+        }),
       ),
     );
 
-    const { conflictCount: gapFillConflictCount, conflictedFkFields } = await this._fkConflictService.detectTwoFathersOnGapFill(
-      service, id, result.fieldsToUpdate, source, notes, sourceTime, username,
-    );
+    const { conflictCount: gapFillConflictCount, conflictedFkFields } =
+      await this._fkConflictService.detectTwoFathersOnGapFill(
+        service,
+        id,
+        result.fieldsToUpdate,
+        source,
+        notes,
+        sourceTime,
+        username,
+      );
 
     conflictedFkFields.forEach((fkField) => {
       delete result.fieldsToUpdate[fkField];
@@ -69,22 +94,50 @@ export class EntityUpdateService {
 
     try {
       if (Object.keys(result.fieldsToUpdate).length > 0) {
-        await service.update(id, result.fieldsToUpdate, result.sourceUpdates, stored.source, result.notesUpdates, stored.notes, result.sourceTimeUpdates, stored.sourceTime);
+        this._logger.info(
+          `EntityUpdateService.updateExisting — gap-filling "${service.tableName}/${id}" with [${Object.keys(result.fieldsToUpdate).join(', ')}]`,
+          'app-workflow',
+        );
+        await service.update(
+          id,
+          result.fieldsToUpdate,
+          result.sourceUpdates,
+          stored.source,
+          result.notesUpdates,
+          stored.notes,
+          result.sourceTimeUpdates,
+          stored.sourceTime,
+        );
+      } else {
+        this._logger.debug(
+          `EntityUpdateService.updateExisting — no gap-fills to apply for "${service.tableName}/${id}"`,
+          'app-workflow',
+        );
       }
     } catch (error) {
       const pgError = error as { code?: string };
-      if (!(error instanceof QueryFailedError) || pgError.code !== PG_UNIQUE_VIOLATION) { throw error; }
-      this._logger.warn(`Gap-fill update skipped for ${service.tableName}/${id} — unique constraint violation`);
+      if (!(error instanceof QueryFailedError) || pgError.code !== PG_UNIQUE_VIOLATION) {
+        throw error;
+      }
+      this._logger.warn(
+        `EntityUpdateService.updateExisting — gap-fill update skipped for "${service.tableName}/${id}", unique constraint violation`,
+        'app-workflow',
+      );
     }
 
     return {
       count: result.conflictsToCreate.length + twoChildsCount + gapFillConflictCount,
-      conflictIds, flyingField: null, totalFields: nonNullCount, wasSkipped: false,
+      conflictIds,
+      flyingField: null,
+      totalFields: nonNullCount,
+      wasSkipped: false,
     };
   }
 
   private async _persistValueConflicts(conflictsToCreate: Record<string, EntityValue>[]): Promise<number[]> {
-    if (conflictsToCreate.length === 0) { return []; }
+    if (conflictsToCreate.length === 0) {
+      return [];
+    }
     await this._valueConflictRepository.insertMany(conflictsToCreate, true);
     return this._valueConflictRepository.findOpenIdsByData(
       conflictsToCreate.map((c) => ({

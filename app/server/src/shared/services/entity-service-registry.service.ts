@@ -42,7 +42,9 @@ export class EntityServiceRegistry {
       wiringService,
     ];
 
-    this._map = Object.fromEntries(services.map((service) => [service.tableName, service as object as EntityService<{ id: string }>]));
+    this._map = Object.fromEntries(
+      services.map((service) => [service.tableName, service as object as EntityService<{ id: string }>]),
+    );
   }
 
   /** Returns the service for the given table name. Throws if no service is registered. */

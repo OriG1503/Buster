@@ -10,7 +10,13 @@ import { FictiveParentRedirectService } from './services/fictive-parent-redirect
 
 @Module({
   imports: [ValueConflictModule, RelationalConflictModule, EntityServiceRegistryModule],
-  providers: [FictiveReplacementService, ConflictReattributionService, FictiveDataTransferService, FictiveParentRedirectService, FictiveIdService],
+  providers: [
+    FictiveReplacementService,
+    ConflictReattributionService,
+    FictiveDataTransferService,
+    FictiveParentRedirectService,
+    FictiveIdService,
+  ],
   exports: [FictiveReplacementService, ConflictReattributionService, FictiveIdService],
 })
 export class FictiveModule {}

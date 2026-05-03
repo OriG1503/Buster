@@ -1,13 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
+import { LoggerService } from '../../../../shared/services/logger/logger.service';
 import { ConflictListResponse } from '../types/conflict-list-response.type';
 
 @Injectable()
 export class ConflictListService {
-  public constructor(@InjectDataSource() private readonly _dataSource: DataSource) {}
+  public constructor(
+    @InjectDataSource() private readonly _dataSource: DataSource,
+    private readonly _logger: LoggerService,
+  ) {}
 
   public async countOpen(): Promise<number> {
+    this._logger.debug(
+      'ConflictListService.countOpen — counting open conflicts across value/relational/cross-entity tables',
+      'app-workflow',
+    );
     const rows = await this._dataSource.query<[{ count: string }]>(`
       SELECT COUNT(*) AS count FROM (
         SELECT "tableName", "entityId" FROM value_conflicts WHERE "isSolved" = false AND "deletedAt" IS NULL
@@ -19,7 +27,9 @@ export class ConflictListService {
         SELECT 'wirings' AS "tableName", "wiringId" AS "entityId" FROM cross_entity_conflicts WHERE "isSolved" = false AND "deletedAt" IS NULL
       ) combined
     `);
-    return parseInt(rows[0].count, 10);
+    const count = parseInt(rows[0].count, 10);
+    this._logger.info(`ConflictListService.countOpen — open conflict groups: ${count}`, 'app-workflow');
+    return count;
   }
 
   public async getOpenGroups(
@@ -29,6 +39,10 @@ export class ConflictListService {
     entityId?: string,
     conflictIds?: number[],
   ): Promise<ConflictListResponse> {
+    this._logger.info(
+      `ConflictListService.getOpenGroups — page=${page}, limit=${limit}, tableName="${tableName ?? 'any'}", entityId="${entityId ?? 'any'}", conflictIds=[${conflictIds?.join(', ') ?? ''}]`,
+      'app-workflow',
+    );
     const params: unknown[] = [];
 
     const valueFilter = this._buildValueFilter(tableName, entityId, conflictIds, params);
@@ -61,7 +75,9 @@ export class ConflictListService {
     `;
 
     params.push(limit, (page - 1) * limit);
-    return this._dataSource.query<ConflictListResponse>(sql, params);
+    const result = await this._dataSource.query<ConflictListResponse>(sql, params);
+    this._logger.info(`ConflictListService.getOpenGroups — returned ${result.length} group(s)`, 'app-workflow');
+    return result;
   }
 
   private _buildValueFilter(
@@ -87,7 +103,13 @@ export class ConflictListService {
   }
 
   public async findOpenByEntityIds(ids: string[]): Promise<string[]> {
-    if (!ids.length) { return []; }
+    this._logger.debug(
+      `ConflictListService.findOpenByEntityIds — checking ${ids.length} id(s) for open conflicts`,
+      'app-workflow',
+    );
+    if (!ids.length) {
+      return [];
+    }
     const result = await this._dataSource.query<Array<{ entityId: string }>>(
       `
       SELECT DISTINCT "entityId" FROM (
@@ -106,7 +128,12 @@ export class ConflictListService {
       `,
       [ids],
     );
-    return result.map((row) => row.entityId);
+    const found = result.map((row) => row.entityId);
+    this._logger.info(
+      `ConflictListService.findOpenByEntityIds — ${found.length}/${ids.length} ids have open conflicts`,
+      'app-workflow',
+    );
+    return found;
   }
 
   private _buildRelationalFilter(

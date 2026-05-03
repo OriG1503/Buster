@@ -1,35 +1,41 @@
-import { CanActivate, ExecutionContext, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
+import { LoggerService } from '../../../shared/services/logger/logger.service';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { JwtPayload } from '../types/jwt-payload.type';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  private readonly _logger = new Logger(JwtAuthGuard.name);
-
   public constructor(
     private readonly _jwtService: JwtService,
     private readonly _reflector: Reflector,
+    private readonly _logger: LoggerService,
   ) {}
 
   public canActivate(context: ExecutionContext): boolean {
+    const handler = context.getHandler().name;
     if (this._isPublic(context)) {
+      this._logger.debug(`JwtAuthGuard skipped — public route handler "${handler}"`, 'app-workflow');
       return true;
     }
 
     const token = this._extractToken(context);
     if (!token) {
-      this._logger.warn('Unauthorized: no token provided');
+      this._logger.warn(`JwtAuthGuard rejected — no Bearer token on handler "${handler}"`, 'app-workflow');
       throw new UnauthorizedException();
     }
 
     try {
       const payload = this._jwtService.verify<JwtPayload>(token);
       context.switchToHttp().getRequest()['user'] = payload;
+      this._logger.debug(
+        `JwtAuthGuard accepted — user "${payload.email}" role "${payload.role}" on handler "${handler}"`,
+        'app-workflow',
+      );
       return true;
     } catch {
-      this._logger.warn(`Unauthorized: invalid or expired token for user attempt`);
+      this._logger.warn(`JwtAuthGuard rejected — invalid/expired token on handler "${handler}"`, 'app-workflow');
       throw new UnauthorizedException();
     }
   }

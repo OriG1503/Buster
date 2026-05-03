@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { LoggerService } from '../../../../../shared/services/logger/logger.service';
 import { EntityServiceRegistry } from '../../../../../shared/services/entity-service-registry.service';
 import { FK_FIELD_TO_TABLE } from '../../../../../shared/consts/fk-field-to-table.const';
 import { RELATIONAL_CONFLICT_TYPE } from '../consts/relational-conflict-type.const';
@@ -11,10 +12,15 @@ export class RelationalConflictResolverService {
   public constructor(
     private readonly _relationalConflictRepository: RelationalConflictRepository,
     private readonly _registry: EntityServiceRegistry,
+    private readonly _logger: LoggerService,
   ) {}
 
   public async resolve(dto: ResolveRelationalConflictDto): Promise<RelationalConflictEntity> {
     const { conflictIds, winnerRelatedId, winnerChildId, winnerChildFkField, conflictResolver, resolutionNotes } = dto;
+    this._logger.info(
+      `RelationalConflictResolverService.resolve — conflictIds=[${conflictIds.join(', ')}], winnerRelatedId="${winnerRelatedId}", winnerChildId="${winnerChildId ?? 'none'}", resolver="${conflictResolver}"`,
+      'app-workflow',
+    );
 
     const conflicts = await Promise.all(conflictIds.map((id) => this._relationalConflictRepository.findById(id)));
     const primaryConflict = conflicts[0];
@@ -36,13 +42,32 @@ export class RelationalConflictResolverService {
     }
 
     if (primaryConflict.conflictType === RELATIONAL_CONFLICT_TYPE.TWO_CHILDS) {
-      await this._resolveTwoChilds(primaryForWinner, winnerRelatedId, winnerChildId ?? null, winnerChildFkField ?? null);
+      this._logger.debug(
+        `RelationalConflictResolverService.resolve — branch TWO_CHILDS for "${primaryForWinner.anchorTable}/${primaryForWinner.anchorId}"`,
+        'app-workflow',
+      );
+      await this._resolveTwoChilds(
+        primaryForWinner,
+        winnerRelatedId,
+        winnerChildId ?? null,
+        winnerChildFkField ?? null,
+      );
     } else {
+      this._logger.debug(
+        `RelationalConflictResolverService.resolve — branch TWO_FATHERS for "${primaryForWinner.anchorTable}/${primaryForWinner.anchorId}"`,
+        'app-workflow',
+      );
       await this._resolveTwoFathers(primaryForWinner, winnerRelatedId);
     }
 
     await Promise.all(
-      conflictIds.map((id) => this._relationalConflictRepository.resolve(id, conflictResolver, resolutionNotes ?? null)),
+      conflictIds.map((id) =>
+        this._relationalConflictRepository.resolve(id, conflictResolver, resolutionNotes ?? null),
+      ),
+    );
+    this._logger.info(
+      `RelationalConflictResolverService.resolve — closed ${conflictIds.length} relational conflict(s)`,
+      'app-workflow',
     );
 
     return this._relationalConflictRepository.findById(conflictIds[0]) as Promise<RelationalConflictEntity>;
@@ -64,7 +89,8 @@ export class RelationalConflictResolverService {
     const { anchorId, anchorTable, oldRelatedId, newRelatedId, relatedTable } = conflict;
     const winnerSource = winnerRelatedId === oldRelatedId ? conflict.oldRelatedSource : conflict.newRelatedSource;
     const winnerNotes = winnerRelatedId === oldRelatedId ? conflict.oldRelatedNotes : conflict.newRelatedNotes;
-    const winnerSourceTime = winnerRelatedId === oldRelatedId ? conflict.oldRelatedSourceTime : conflict.newRelatedSourceTime;
+    const winnerSourceTime =
+      winnerRelatedId === oldRelatedId ? conflict.oldRelatedSourceTime : conflict.newRelatedSourceTime;
 
     const anchorFkField = `${relatedTable.slice(0, -1)}Id`; // 'communications' → 'communicationId'
     const anchorService = this._registry.get(anchorTable);
@@ -120,16 +146,18 @@ export class RelationalConflictResolverService {
     if (childTable) {
       const currentOwner = await winnerService.findByFkValue(winnerChildFkField, winnerChildId, winnerRelatedId);
       if (currentOwner) {
-        await this._registry.get(relatedTable).update(
-          currentOwner.id as string,
-          { [winnerChildFkField]: null },
-          {},
-          currentOwner.source,
-          {},
-          currentOwner.notes,
-          {},
-          currentOwner.sourceTime,
-        );
+        await this._registry
+          .get(relatedTable)
+          .update(
+            currentOwner.id,
+            { [winnerChildFkField]: null },
+            {},
+            currentOwner.source,
+            {},
+            currentOwner.notes,
+            {},
+            currentOwner.sourceTime,
+          );
       }
     }
 
@@ -183,7 +211,8 @@ export class RelationalConflictResolverService {
       if (winnerRecord[childFkField] !== anchorId) {
         const winnerSource = winnerRelatedId === oldRelatedId ? conflict.oldRelatedSource : conflict.newRelatedSource;
         const winnerNotes = winnerRelatedId === oldRelatedId ? conflict.oldRelatedNotes : conflict.newRelatedNotes;
-        const winnerSourceTime = winnerRelatedId === oldRelatedId ? conflict.oldRelatedSourceTime : conflict.newRelatedSourceTime;
+        const winnerSourceTime =
+          winnerRelatedId === oldRelatedId ? conflict.oldRelatedSourceTime : conflict.newRelatedSourceTime;
 
         await relatedService.update(
           winnerRelatedId,

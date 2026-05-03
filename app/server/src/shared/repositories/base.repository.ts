@@ -10,7 +10,10 @@ export abstract class BaseRepository<T extends { id: TId }, TId extends string |
   }
 
   public findById(id: TId): Promise<T | null> {
-    return this._repository.findOne({ where: { id } as FindOptionsWhere<T>, loadRelationIds: { relations: this._owningRelationNames() } });
+    return this._repository.findOne({
+      where: { id } as FindOptionsWhere<T>,
+      loadRelationIds: { relations: this._owningRelationNames() },
+    });
   }
 
   public async insert(entity: Record<string, EntityValue>, orIgnore = false): Promise<void> {
@@ -24,7 +27,9 @@ export abstract class BaseRepository<T extends { id: TId }, TId extends string |
   }
 
   public async insertMany(entities: Record<string, EntityValue>[], orIgnore = false): Promise<TId[]> {
-    const values = entities.map((entity) => this._resolveRelationIdFields(entity as object as QueryDeepPartialEntity<T>));
+    const values = entities.map((entity) =>
+      this._resolveRelationIdFields(entity as object as QueryDeepPartialEntity<T>),
+    );
     const result = await this._repository
       .createQueryBuilder()
       .insert()
@@ -80,9 +85,7 @@ export abstract class BaseRepository<T extends { id: TId }, TId extends string |
 
   /** Returns property names of owning-side relations (those with a physical FK column on this table). */
   private _owningRelationNames(): string[] {
-    return this._repository.metadata.relations
-      .filter((r) => r.isOwning)
-      .map((r) => r.propertyName);
+    return this._repository.metadata.relations.filter((r) => r.isOwning).map((r) => r.propertyName);
   }
 
   /**

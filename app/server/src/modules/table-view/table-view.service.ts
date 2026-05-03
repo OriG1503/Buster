@@ -3,6 +3,7 @@ import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 
 import { FK_FIELD_TO_TABLE } from '../../shared/consts/fk-field-to-table.const';
+import { LoggerService } from '../../shared/services/logger/logger.service';
 import { ALLOWED_COLUMNS, ALLOWED_TABLES } from './consts/allowed-entities.consts';
 import { JOIN_ORDER, PARENT_JOIN } from './consts/join-chain.consts';
 import { TableViewQueryDto } from './dto/table-view-query.dto';
@@ -15,15 +16,27 @@ import { TableRow, TableViewResponse } from './types/table-view-response.type';
 
 @Injectable()
 export class TableViewService {
-  public constructor(@InjectDataSource() private readonly _dataSource: DataSource) {}
+  public constructor(
+    @InjectDataSource() private readonly _dataSource: DataSource,
+    private readonly _logger: LoggerService,
+  ) {}
 
   public async query(dto: TableViewQueryDto): Promise<TableViewResponse> {
+    const filterKeys = Object.keys(dto.filters);
+    this._logger.info(
+      `TableViewService.query — table "${dto.tableName}", page=${dto.page}, pageSize=${dto.pageSize}, columns=${dto.columns.length}, filters=[${filterKeys.join(', ')}]`,
+      'app-workflow',
+    );
     this._validateInput(dto);
 
     const { tableName, columns, filters, page, pageSize } = dto;
     const tablesInvolved = this._computeTablesInvolved(tableName, columns, Object.keys(filters));
     const joinClauses = this._buildJoinClauses(tableName, tablesInvolved);
     const { whereClauses, whereParams } = this._buildWhereClauses(filters);
+    this._logger.debug(
+      `TableViewService.query — tablesInvolved=[${[...tablesInvolved].join(', ')}], joins=${joinClauses.length}, whereClauses=${whereClauses.length}`,
+      'app-workflow',
+    );
 
     const fromFragment = `FROM "${tableName}" ${joinClauses.join(' ')}`;
     const whereFragment = `WHERE "${tableName}"."deletedAt" IS NULL${whereClauses.length > 0 ? ` AND (${whereClauses.join(' AND ')})` : ''}`;
@@ -41,21 +54,28 @@ export class TableViewService {
 
     const countSql = `SELECT COUNT(*) AS total ${fromFragment} ${whereFragment}`;
 
+    this._logger.debug(`TableViewService.query — running data + count SQL queries`, 'app-workflow');
     const [rows, countResult] = await Promise.all([
       this._dataSource.query(dataSql, dataParams) as Promise<Record<string, unknown>[]>,
       this._dataSource.query(countSql, whereParams) as Promise<[{ total: string }]>,
     ]);
 
+    const total = parseInt(countResult[0].total, 10);
+    this._logger.info(
+      `TableViewService.query — returned ${rows.length} rows of ${total} total for "${tableName}"`,
+      'app-workflow',
+    );
     const { conflictMap, nullConflictMap } = await this._buildConflictMap(tablesInvolved, rows);
 
     return {
       rows: rows.map((row) => this._buildResponseRow(columns, row, conflictMap, nullConflictMap, tableName)),
-      total: parseInt(countResult[0].total, 10),
+      total,
     };
   }
 
   private _validateInput({ tableName, columns, filters }: TableViewQueryDto): void {
     if (!ALLOWED_TABLES.has(tableName)) {
+      this._logger.warn(`TableViewService._validateInput — rejected invalid table "${tableName}"`, 'app-workflow');
       throw new BadRequestException(`Invalid table: ${tableName}`);
     }
 
@@ -63,6 +83,7 @@ export class TableViewService {
     allKeys.forEach((col) => {
       const [table, column] = col.split('.');
       if (!ALLOWED_COLUMNS[table]?.has(column)) {
+        this._logger.warn(`TableViewService._validateInput — rejected invalid column "${col}"`, 'app-workflow');
         throw new BadRequestException(`Invalid column: ${col}`);
       }
     });
@@ -75,7 +96,9 @@ export class TableViewService {
       tables.add(table);
       // Also include the FK target table so conflicts on the referenced entity are fetched.
       const fkTargetTable = FK_FIELD_TO_TABLE[column];
-      if (fkTargetTable) { tables.add(fkTargetTable); }
+      if (fkTargetTable) {
+        tables.add(fkTargetTable);
+      }
     });
     return this._expandAncestors(tables, rootTable);
   }
@@ -85,7 +108,9 @@ export class TableViewService {
     const sizeBefore = tables.size;
     tables.forEach((table) => {
       const parent = PARENT_JOIN[table];
-      if (parent && !tables.has(parent.parentTable)) { tables.add(parent.parentTable); }
+      if (parent && !tables.has(parent.parentTable)) {
+        tables.add(parent.parentTable);
+      }
     });
     return tables.size === sizeBefore ? tables : this._expandAncestors(tables, rootTable);
   }
@@ -102,9 +127,13 @@ export class TableViewService {
 
   /** Recursively resolves join clauses, processing tables whose parent is already available each pass. */
   private _resolveJoinClauses(remaining: string[], available: Set<string>, clauses: string[]): string[] {
-    if (remaining.length === 0) { return clauses; }
+    if (remaining.length === 0) {
+      return clauses;
+    }
     const nextRemaining = remaining.filter((table) => !this._tryJoinTable(table, available, clauses));
-    if (nextRemaining.length === remaining.length) { return clauses; } // No progress — stop.
+    if (nextRemaining.length === remaining.length) {
+      return clauses;
+    } // No progress — stop.
     return this._resolveJoinClauses(nextRemaining, available, clauses);
   }
 
@@ -112,13 +141,17 @@ export class TableViewService {
   private _tryJoinTable(table: string, available: Set<string>, clauses: string[]): boolean {
     const joinDef = PARENT_JOIN[table];
     if (joinDef && available.has(joinDef.parentTable)) {
-      clauses.push(`LEFT JOIN "${table}" ON "${joinDef.parentTable}"."${joinDef.fkColumn}" = "${table}"."id" AND "${table}"."deletedAt" IS NULL`);
+      clauses.push(
+        `LEFT JOIN "${table}" ON "${joinDef.parentTable}"."${joinDef.fkColumn}" = "${table}"."id" AND "${table}"."deletedAt" IS NULL`,
+      );
       available.add(table);
       return true;
     }
     const child = [...available].find((t) => PARENT_JOIN[t]?.parentTable === table);
     if (child) {
-      clauses.push(`LEFT JOIN "${table}" ON "${table}"."${PARENT_JOIN[child].fkColumn}" = "${child}"."id" AND "${table}"."deletedAt" IS NULL`);
+      clauses.push(
+        `LEFT JOIN "${table}" ON "${table}"."${PARENT_JOIN[child].fkColumn}" = "${child}"."id" AND "${table}"."deletedAt" IS NULL`,
+      );
       available.add(table);
       return true;
     }
@@ -155,7 +188,9 @@ export class TableViewService {
     const whereParams: unknown[] = [];
 
     Object.entries(filters).forEach(([colKey, value]) => {
-      if (!value) { return; }
+      if (!value) {
+        return;
+      }
       const [table, column] = colKey.split('.');
       whereClauses.push(`"${table}"."${column}"::text ILIKE $${whereParams.length + 1}`);
       whereParams.push(`%${value}%`);
@@ -173,15 +208,18 @@ export class TableViewService {
 
     const entityIdsByTable: Record<string, string[]> = {};
     tablesInvolved.forEach((table) => {
-      const ids = rows
-        .map((row) => row[`${table}__id`])
-        .filter((id): id is string => typeof id === 'string');
-      if (ids.length > 0) { entityIdsByTable[table] = [...new Set(ids)]; }
+      const ids = rows.map((row) => row[`${table}__id`]).filter((id): id is string => typeof id === 'string');
+      if (ids.length > 0) {
+        entityIdsByTable[table] = [...new Set(ids)];
+      }
     });
 
-    if (Object.keys(entityIdsByTable).length === 0) { return { conflictMap, nullConflictMap }; }
+    if (Object.keys(entityIdsByTable).length === 0) {
+      return { conflictMap, nullConflictMap };
+    }
 
-    const [valueConflicts, relByAnchor, relByRelated, crossEntityConflicts] = await this._fetchConflicts(entityIdsByTable);
+    const [valueConflicts, relByAnchor, relByRelated, crossEntityConflicts] =
+      await this._fetchConflicts(entityIdsByTable);
 
     valueConflicts.forEach(({ tableName, entityId, columnName, isSolved, id }) => {
       this._markCell(conflictMap, tableName, entityId, columnName, this._toValueEntry(isSolved, id));
@@ -226,30 +264,34 @@ export class TableViewService {
     const wiringIds = entityIdsByTable['wirings'] ?? [];
     const hasCrossEntityTables = robotIds.length > 0 || wiringIds.length > 0;
     const crossEntityQuery = hasCrossEntityTables
-      ? (this._dataSource.query(
+      ? this._dataSource.query(
           `SELECT "id", "robotId", "wiringId", "fieldName", "isSolved" FROM cross_entity_conflicts WHERE "deletedAt" IS NULL AND ("robotId" = ANY($1) OR "wiringId" = ANY($2))`,
           [robotIds.length > 0 ? robotIds : [''], wiringIds.length > 0 ? wiringIds : ['']],
-        ) as Promise<CrossEntityConflictRow[]>)
+        )
       : Promise.resolve<CrossEntityConflictRow[]>([]);
 
     return Promise.all([
       this._dataSource.query(
         `SELECT "tableName", "entityId", "columnName", "isSolved", "id" FROM value_conflicts WHERE "deletedAt" IS NULL AND (${valueConditions.join(' OR ')})`,
         valueParams,
-      ) as Promise<ConflictRow[]>,
+      ),
       this._dataSource.query(
         `SELECT "anchorTable", "anchorId", "relatedTable", "conflictType", "oldRelatedId", "newRelatedId", "isSolved", "id" FROM relational_conflicts WHERE "deletedAt" IS NULL AND (${anchorConditions.join(' OR ')})`,
         anchorParams,
-      ) as Promise<RelationalConflictRow[]>,
+      ),
       this._dataSource.query(
         `SELECT "anchorTable", "anchorId", "relatedTable", "conflictType", "oldRelatedId", "newRelatedId", "isSolved", "id" FROM relational_conflicts WHERE "deletedAt" IS NULL AND (${relatedConditions.join(' OR ')})`,
         relatedParams,
-      ) as Promise<RelationalConflictRow[]>,
+      ),
       crossEntityQuery,
     ]);
   }
 
-  private _applyRelationalConflict(rc: RelationalConflictRow, conflictMap: ConflictMap, nullConflictMap: NullConflictMap): void {
+  private _applyRelationalConflict(
+    rc: RelationalConflictRow,
+    conflictMap: ConflictMap,
+    nullConflictMap: NullConflictMap,
+  ): void {
     const entry = this._toRelationalEntry(rc.isSolved, rc.id, rc.anchorTable, rc.anchorId, rc.relatedTable);
 
     if (rc.conflictType === 'TWO_CHILDS') {
@@ -257,7 +299,9 @@ export class TableViewService {
       // Use PARENT_JOIN to get the exact FK column name — avoids the naive slice approach
       // which breaks for irregular plurals like 'batteries' → 'batterieId' instead of 'batteryId'.
       const fkColumn = PARENT_JOIN[rc.relatedTable]?.fkColumn;
-      if (fkColumn) { this._markCell(conflictMap, rc.anchorTable, rc.anchorId, fkColumn, entry); }
+      if (fkColumn) {
+        this._markCell(conflictMap, rc.anchorTable, rc.anchorId, fkColumn, entry);
+      }
       // Both competing related entities' id cells.
       this._markCell(conflictMap, rc.relatedTable, rc.oldRelatedId, 'id', entry);
       this._markCell(conflictMap, rc.relatedTable, rc.newRelatedId, 'id', entry);
@@ -273,13 +317,19 @@ export class TableViewService {
       this._markCell(conflictMap, rc.relatedTable, rc.oldRelatedId, 'id', entry);
       // New related entity's FK field that was nulled out.
       const fkField = Object.keys(FK_FIELD_TO_TABLE).find((k) => FK_FIELD_TO_TABLE[k] === rc.anchorTable);
-      if (fkField) { this._markCell(conflictMap, rc.relatedTable, rc.newRelatedId, fkField, entry); }
+      if (fkField) {
+        this._markCell(conflictMap, rc.relatedTable, rc.newRelatedId, fkField, entry);
+      }
     }
   }
 
   private _markCell(map: ConflictMap, table: string, entityId: string, column: string, entry: ConflictEntry): void {
-    if (!map[table]) { map[table] = {}; }
-    if (!map[table][entityId]) { map[table][entityId] = {}; }
+    if (!map[table]) {
+      map[table] = {};
+    }
+    if (!map[table][entityId]) {
+      map[table][entityId] = {};
+    }
     const existing = map[table][entityId][column];
     // Open conflicts take priority over resolved — never downgrade an open conflict.
     if (!existing || (entry.status === 'open' && existing.status !== 'open')) {
@@ -287,9 +337,19 @@ export class TableViewService {
     }
   }
 
-  private _markNull(nullConflictMap: NullConflictMap, relatedTable: string, relatedId: string, colKey: string, entry: ConflictEntry): void {
-    if (!nullConflictMap[relatedTable]) { nullConflictMap[relatedTable] = {}; }
-    if (!nullConflictMap[relatedTable][relatedId]) { nullConflictMap[relatedTable][relatedId] = {}; }
+  private _markNull(
+    nullConflictMap: NullConflictMap,
+    relatedTable: string,
+    relatedId: string,
+    colKey: string,
+    entry: ConflictEntry,
+  ): void {
+    if (!nullConflictMap[relatedTable]) {
+      nullConflictMap[relatedTable] = {};
+    }
+    if (!nullConflictMap[relatedTable][relatedId]) {
+      nullConflictMap[relatedTable][relatedId] = {};
+    }
     const existing = nullConflictMap[relatedTable][relatedId][colKey];
     if (!existing || (entry.status === 'open' && existing.status !== 'open')) {
       nullConflictMap[relatedTable][relatedId][colKey] = entry;
@@ -318,7 +378,13 @@ export class TableViewService {
     };
   }
 
-  private _toRelationalEntry(isSolved: boolean | null, id: number, anchorTable: string, anchorId: string, relatedTable: string): ConflictEntry {
+  private _toRelationalEntry(
+    isSolved: boolean | null,
+    id: number,
+    anchorTable: string,
+    anchorId: string,
+    relatedTable: string,
+  ): ConflictEntry {
     return {
       status: isSolved === false ? 'open' : 'resolved',
       conflictId: isSolved === false ? id : null,
@@ -348,14 +414,16 @@ export class TableViewService {
         const createdAt = row[`${table}__createdAt`];
         const idConflictEntry = entityId
           ? conflictMap[table]?.[entityId]?.['id']
-          : (rootEntityId ? nullConflictMap[rootTableName]?.[rootEntityId]?.[idKey] : undefined);
+          : rootEntityId
+            ? nullConflictMap[rootTableName]?.[rootEntityId]?.[idKey]
+            : undefined;
         result[idKey] = {
           value: entityId,
           status: idConflictEntry?.status ?? 'raw',
           source: null,
           notes: null,
           sourceTime: null,
-          uploadedAt: createdAt instanceof Date ? createdAt.toISOString() : (createdAt as string | null) ?? null,
+          uploadedAt: createdAt instanceof Date ? createdAt.toISOString() : ((createdAt as string | null) ?? null),
           conflictId: idConflictEntry?.conflictId ?? null,
           anchorTable: idConflictEntry?.anchorTable ?? null,
           anchorId: idConflictEntry?.anchorId ?? null,
@@ -376,7 +444,9 @@ export class TableViewService {
       // Fallback for null joined entity: by (rootTable, rootEntityId, colKey) in nullConflictMap.
       let conflictEntry = entityId
         ? conflictMap[table]?.[entityId]?.[column]
-        : (rootEntityId ? nullConflictMap[rootTableName]?.[rootEntityId]?.[colKey] : undefined);
+        : rootEntityId
+          ? nullConflictMap[rootTableName]?.[rootEntityId]?.[colKey]
+          : undefined;
 
       // For FK columns, also check if the pointed-to entity has any conflict (e.g. a value conflict
       // on the battery fields should color the plastics.batteryId cell red too).
@@ -405,7 +475,7 @@ export class TableViewService {
         source: sourceMap?.[column] ?? null,
         notes: notesMap?.[column] ?? null,
         sourceTime: sourceTimeMap?.[column] ?? null,
-        uploadedAt: createdAt instanceof Date ? createdAt.toISOString() : (createdAt as string | null) ?? null,
+        uploadedAt: createdAt instanceof Date ? createdAt.toISOString() : ((createdAt as string | null) ?? null),
         conflictId: conflictEntry?.conflictId ?? null,
         anchorTable: conflictEntry?.anchorTable ?? null,
         anchorId: conflictEntry?.anchorId ?? null,

@@ -1,9 +1,10 @@
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Logger } from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { LoggerService } from '../services/logger/logger.service';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
-  private readonly _logger = new Logger(GlobalExceptionFilter.name);
+  public constructor(private readonly _logger: LoggerService) {}
 
   public catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
@@ -12,12 +13,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     const status = exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    const message =
-      exception instanceof HttpException
-        ? exception.getResponse()
-        : 'Internal server error';
+    const message = exception instanceof HttpException ? exception.getResponse() : 'Internal server error';
 
-    this._logger.error(`[${request.method}] ${request.url} → ${status}`, exception instanceof Error ? exception.stack : String(exception));
+    const detail =
+      exception instanceof Error ? `${exception.message} | stack: ${exception.stack ?? ''}` : String(exception);
+    this._logger.error(
+      `Unhandled exception — [${request.method}] ${request.url} → ${status}: ${detail}`,
+      'app-workflow',
+    );
 
     response.status(status).json({
       statusCode: status,

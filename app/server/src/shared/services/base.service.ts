@@ -2,7 +2,10 @@ import { EntityValue } from '../types/entity-value.type';
 import { BaseEntity } from '../entities/base.entity';
 import { BaseRepository } from '../repositories/base.repository';
 
-export abstract class BaseService<T extends BaseEntity, TInsertData extends { id: string } & Record<string, EntityValue>> {
+export abstract class BaseService<
+  T extends BaseEntity,
+  TInsertData extends { id: string } & Record<string, EntityValue>,
+> {
   public abstract readonly tableName: string;
 
   public constructor(protected readonly _repository: BaseRepository<T>) {}
@@ -23,7 +26,12 @@ export abstract class BaseService<T extends BaseEntity, TInsertData extends { id
     return this._repository.findByFkValue(column, value, excludeId);
   }
 
-  public async insert(data: TInsertData, source: string, notes: string | null, sourceTime: string | null): Promise<void> {
+  public async insert(
+    data: TInsertData,
+    source: string,
+    notes: string | null,
+    sourceTime: string | null,
+  ): Promise<void> {
     const { id, ...fields } = data;
     await this._repository.insert({
       id,
@@ -64,7 +72,10 @@ export abstract class BaseService<T extends BaseEntity, TInsertData extends { id
    * Builds a per-field tracking map: each field gets the tracking value if it has data, otherwise null.
    * This records which source/notes value applies to each specific field in the row.
    */
-  private _buildFieldTracking(fields: Record<string, EntityValue>, trackingValue: string | null): Record<string, string | null> {
+  private _buildFieldTracking(
+    fields: Record<string, EntityValue>,
+    trackingValue: string | null,
+  ): Record<string, string | null> {
     return {
       id: trackingValue,
       ...Object.fromEntries(

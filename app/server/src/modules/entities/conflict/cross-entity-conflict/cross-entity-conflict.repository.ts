@@ -28,8 +28,17 @@ export class CrossEntityConflictRepository extends BaseConflictRepository<CrossE
     await Promise.all(open.map((c) => this.softDelete(c.id)));
   }
 
-  public async resolveByWiringField(wiringId: string, fieldName: string, conflictResolver: string, resolutionNotes: string | null): Promise<void> {
-    await this._markResolved({ wiringId, fieldName, isSolved: false } as FindOptionsWhere<CrossEntityConflictEntity>, conflictResolver, resolutionNotes);
+  public async resolveByWiringField(
+    wiringId: string,
+    fieldName: string,
+    conflictResolver: string,
+    resolutionNotes: string | null,
+  ): Promise<void> {
+    await this._markResolved(
+      { wiringId, fieldName, isSolved: false } as FindOptionsWhere<CrossEntityConflictEntity>,
+      conflictResolver,
+      resolutionNotes,
+    );
   }
 
   public findSolvedByRobotField(robotId: string, fieldName: string): Promise<CrossEntityConflictEntity[]> {

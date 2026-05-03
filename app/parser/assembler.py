@@ -12,6 +12,7 @@ from hierarchies.communication_hierarchy import CommunicationHierarchy
 from hierarchies.plastic_hierarchy import PlasticHierarchy
 from hierarchies.wiring_hierarchy import WiringHierarchy
 from hierarchies.robot_hierarchy import RobotHierarchy
+from shared.logger_service import logger_service
 
 # Maps each entity class to the Excel column name used as its primary key.
 # A missing or empty UUID means that entity is absent from this row.
@@ -111,7 +112,22 @@ def assemble(rows):
 
     Skips rows where all values are None (e.g. trailing empty lines in the CSV).
     """
-    
+
+    row_index = 0
+    yielded = 0
     for row in rows:
         if any(v is not None for v in row.values()):
+            robot_uuid = row.get("robot_UUID") or "<no-uuid>"
+            logger_service.debug(
+                f"assemble — building hierarchy for row {row_index} (robot_UUID=\"{robot_uuid}\")",
+                "app-workflow",
+            )
             yield _build_hierarchy_from_row(row)
+            yielded += 1
+        else:
+            logger_service.debug(f"assemble — skipping empty row {row_index}", "app-workflow")
+        row_index += 1
+    logger_service.info(
+        f"assemble — produced {yielded} hierarchies from {row_index} row(s)",
+        "app-workflow",
+    )

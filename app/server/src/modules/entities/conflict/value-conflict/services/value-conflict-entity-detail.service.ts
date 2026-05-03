@@ -32,7 +32,7 @@ export class ValueConflictEntityDetailService {
     const source = (entityRecord['source'] as Record<string, string | null>) ?? {};
     const notes = (entityRecord['notes'] as Record<string, string | null>) ?? {};
     const sourceTime = (entityRecord['sourceTime'] as Record<string, string | null>) ?? {};
-    const currentDate = (entity.updatedAt as Date).toISOString();
+    const currentDate = entity.updatedAt.toISOString();
 
     return entityService
       .getColumnNames()
@@ -52,8 +52,20 @@ export class ValueConflictEntityDetailService {
           conflictValues: isConflicted
             ? conflicts
                 .flatMap((c) => [
-                  { value: c.oldValue, source: c.oldSource, notes: c.oldNotes, sourceTime: c.oldSourceTime, createdAt: c.createdAt.toISOString() },
-                  { value: c.newValue, source: c.newSource, notes: c.newNotes, sourceTime: c.newSourceTime, createdAt: c.createdAt.toISOString() },
+                  {
+                    value: c.oldValue,
+                    source: c.oldSource,
+                    notes: c.oldNotes,
+                    sourceTime: c.oldSourceTime,
+                    createdAt: c.createdAt.toISOString(),
+                  },
+                  {
+                    value: c.newValue,
+                    source: c.newSource,
+                    notes: c.newNotes,
+                    sourceTime: c.newSourceTime,
+                    createdAt: c.createdAt.toISOString(),
+                  },
                 ])
                 .filter((entry, index, arr) => arr.findIndex((e) => e.value === entry.value) === index)
             : [],

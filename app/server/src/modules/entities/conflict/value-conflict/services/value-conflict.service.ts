@@ -1,10 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { LoggerService } from '../../../../../shared/services/logger/logger.service';
 import { EntityValue } from '../../../../../shared/types/entity-value.type';
 import { ValueConflictDetectionResult } from '../types/value-conflict-detection-result.type';
 
 @Injectable()
 export class ValueConflictService {
-  private readonly _logger = new Logger(ValueConflictService.name);
+  public constructor(private readonly _logger: LoggerService) {}
 
   /**
    * Compares incoming field values against stored ones and classifies each non-FK field as:
@@ -15,13 +16,16 @@ export class ValueConflictService {
    * Returns all queued changes without persisting anything.
    */
   public detectConflicts(
-    tableName: string, entityId: string,
+    tableName: string,
+    entityId: string,
     storedRecord: Record<string, EntityValue>,
     storedSources: Record<string, string | null> | null,
     storedNotes: Record<string, string | null> | null,
     storedSourceTimes: Record<string, string | null> | null,
     incomingFields: Record<string, EntityValue>,
-    incomingSource: string, conflictCreator: string, incomingNotes: string | null,
+    incomingSource: string,
+    conflictCreator: string,
+    incomingNotes: string | null,
     incomingSourceTime: string | null,
   ): ValueConflictDetectionResult {
     const conflictsToCreate: Record<string, EntityValue>[] = [];
@@ -49,23 +53,34 @@ export class ValueConflictService {
 
       if (storedValue !== incomingValue && !field.endsWith('Id')) {
         conflictsToCreate.push({
-          tableName, columnName: field, entityId,
+          tableName,
+          columnName: field,
+          entityId,
           newValue: String(incomingValue as string | number | boolean),
-          newSource: incomingSource, newNotes: incomingNotes, newSourceTime: incomingSourceTime,
+          newSource: incomingSource,
+          newNotes: incomingNotes,
+          newSourceTime: incomingSourceTime,
           oldValue: String(storedValue as string | number | boolean),
           oldSource: storedSources?.[field] ?? null,
           oldNotes: storedNotes?.[field] ?? null,
           oldSourceTime: storedSourceTimes?.[field] ?? null,
-          conflictCreator, isSolved: false,
+          conflictCreator,
+          isSolved: false,
         });
       }
     });
 
     if (conflictsToCreate.length > 0) {
-      this._logger.warn(`${tableName}/${entityId}: ${conflictsToCreate.length} conflict(s) on [${conflictsToCreate.map((c) => c['columnName']).join(', ')}]`);
+      this._logger.warn(
+        `ValueConflictService.detectConflicts — "${tableName}/${entityId}" produced ${conflictsToCreate.length} conflict(s) on [${conflictsToCreate.map((c) => c['columnName']).join(', ')}] by "${conflictCreator}"`,
+        'app-workflow',
+      );
     }
     if (Object.keys(fieldsToUpdate).length > 0) {
-      this._logger.log(`${tableName}/${entityId}: ${Object.keys(fieldsToUpdate).length} gap-fill(s) on [${Object.keys(fieldsToUpdate).join(', ')}]`);
+      this._logger.info(
+        `ValueConflictService.detectConflicts — "${tableName}/${entityId}" queued ${Object.keys(fieldsToUpdate).length} gap-fill(s) on [${Object.keys(fieldsToUpdate).join(', ')}]`,
+        'app-workflow',
+      );
     }
 
     return { conflictsToCreate, fieldsToUpdate, sourceUpdates, notesUpdates, sourceTimeUpdates };

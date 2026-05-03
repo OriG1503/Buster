@@ -1,5 +1,6 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { BaseEntity } from '../../../../shared/entities/base.entity';
+import { LoggerService } from '../../../../shared/services/logger/logger.service';
 import { EntityService } from '../../../../shared/types/entity-service.type';
 import { EntityServiceRegistry } from '../../../../shared/services/entity-service-registry.service';
 import { ValueConflictRepository } from '../value-conflict.repository';
@@ -7,11 +8,10 @@ import { RevertValueConflictDto } from '../value-conflict/dto/revert-value-confl
 
 @Injectable()
 export class RevertService {
-  private readonly _logger = new Logger(RevertService.name);
-
   public constructor(
     private readonly _valueConflictRepository: ValueConflictRepository,
     private readonly _registry: EntityServiceRegistry,
+    private readonly _logger: LoggerService,
   ) {}
 
   /**
@@ -20,9 +20,17 @@ export class RevertService {
    */
   public async revert(dto: RevertValueConflictDto): Promise<BaseEntity> {
     const { tableName, entityId, columnName, revertValue, revertedBy, resolutionNotes } = dto;
-    this._logger.log(`Reverting: ${tableName}/${entityId}/${columnName} → "${revertValue}" by ${revertedBy}`);
+    this._logger.info(
+      `ConflictRevertService.revert — "${tableName}/${entityId}/${columnName}" → revert to "${revertValue}" by "${revertedBy}"${resolutionNotes ? ` notes="${resolutionNotes}"` : ''}`,
+      'app-workflow',
+    );
 
-    const originalConflict = await this._valueConflictRepository.findResolvedByGroupValue(tableName, entityId, columnName, revertValue);
+    const originalConflict = await this._valueConflictRepository.findResolvedByGroupValue(
+      tableName,
+      entityId,
+      columnName,
+      revertValue,
+    );
 
     if (!originalConflict) {
       throw new BadRequestException('No resolved conflict found for the specified revert value');
@@ -35,40 +43,71 @@ export class RevertService {
       throw new NotFoundException(`Entity not found: ${tableName}/${entityId}`);
     }
 
-    const currentValue = String(((entity as unknown) as Record<string, unknown>)[columnName] ?? '');
+    const currentValue = String((entity as unknown as Record<string, unknown>)[columnName] ?? '');
 
     if (currentValue === revertValue) {
       return entity;
     }
 
-    const revertSource = originalConflict.newValue === revertValue ? originalConflict.newSource : originalConflict.oldSource;
-    const revertNotes = originalConflict.newValue === revertValue ? originalConflict.newNotes : originalConflict.oldNotes;
-    const revertSourceTime = originalConflict.newValue === revertValue ? originalConflict.newSourceTime : originalConflict.oldSourceTime;
+    const revertSource =
+      originalConflict.newValue === revertValue ? originalConflict.newSource : originalConflict.oldSource;
+    const revertNotes =
+      originalConflict.newValue === revertValue ? originalConflict.newNotes : originalConflict.oldNotes;
+    const revertSourceTime =
+      originalConflict.newValue === revertValue ? originalConflict.newSourceTime : originalConflict.oldSourceTime;
 
-    const mostRecentResolved = await this._valueConflictRepository.findMostRecentResolved(tableName, entityId, columnName);
+    const mostRecentResolved = await this._valueConflictRepository.findMostRecentResolved(
+      tableName,
+      entityId,
+      columnName,
+    );
     const cascadedNotes = [mostRecentResolved?.resolutionNotes, resolutionNotes].filter(Boolean).join('\n');
 
     await this._valueConflictRepository.insertRevertConflict({
-      tableName, entityId, columnName,
+      tableName,
+      entityId,
+      columnName,
       oldValue: currentValue,
       oldSource: entity.source?.[columnName] ?? null,
       oldNotes: entity.notes?.[columnName] ?? null,
       oldSourceTime: entity.sourceTime?.[columnName] ?? null,
-      newValue: revertValue, newSource: revertSource, newNotes: revertNotes, newSourceTime: revertSourceTime,
-      conflictCreator: revertedBy, conflictResolver: revertedBy,
-      resolutionNotes: cascadedNotes, isSolved: true,
+      newValue: revertValue,
+      newSource: revertSource,
+      newNotes: revertNotes,
+      newSourceTime: revertSourceTime,
+      conflictCreator: revertedBy,
+      conflictResolver: revertedBy,
+      resolutionNotes: cascadedNotes,
+      isSolved: true,
     });
 
-    await this._applyFieldRevert(entityService, entityId, entity, columnName, revertValue, revertSource, revertNotes, revertSourceTime);
-    this._logger.log(`Reverted: ${tableName}/${entityId}/${columnName}`);
+    await this._applyFieldRevert(
+      entityService,
+      entityId,
+      entity,
+      columnName,
+      revertValue,
+      revertSource,
+      revertNotes,
+      revertSourceTime,
+    );
+    this._logger.info(
+      `ConflictRevertService.revert — applied revert "${tableName}/${entityId}/${columnName}" → "${revertValue}"`,
+      'app-workflow',
+    );
 
     return this._fetchUpdatedEntity(entityService, entityId, tableName);
   }
 
   /** Reverts a plain field value on the entity. */
   private async _applyFieldRevert(
-    entityService: EntityService<{ id: string }>, entityId: string, entity: BaseEntity,
-    columnName: string, revertValue: string, revertSource: string | null, revertNotes: string | null,
+    entityService: EntityService<{ id: string }>,
+    entityId: string,
+    entity: BaseEntity,
+    columnName: string,
+    revertValue: string,
+    revertSource: string | null,
+    revertNotes: string | null,
     revertSourceTime: string | null,
   ): Promise<void> {
     await entityService.update(
@@ -84,7 +123,11 @@ export class RevertService {
   }
 
   /** Fetches the entity after the revert is applied and throws if it is missing. */
-  private async _fetchUpdatedEntity(entityService: EntityService<{ id: string }>, entityId: string, tableName: string): Promise<BaseEntity> {
+  private async _fetchUpdatedEntity(
+    entityService: EntityService<{ id: string }>,
+    entityId: string,
+    tableName: string,
+  ): Promise<BaseEntity> {
     const updatedEntity = await entityService.findById(entityId);
 
     if (!updatedEntity) {

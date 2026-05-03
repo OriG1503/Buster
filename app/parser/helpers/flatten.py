@@ -1,5 +1,7 @@
 import dataclasses
 
+from shared.logger_service import logger_service
+
 
 def flatten_hierarchy(obj):
     """
@@ -21,6 +23,10 @@ def flatten_hierarchy(obj):
         return dataclasses.asdict(obj)
 
     primary_field = type(obj).__name__.removesuffix("Hierarchy").lower()
+    logger_service.debug(
+        f"flatten_hierarchy — flattening \"{type(obj).__name__}\" with primary field \"{primary_field}\"",
+        "app-workflow",
+    )
     result = {}
 
     for field in dataclasses.fields(obj):
