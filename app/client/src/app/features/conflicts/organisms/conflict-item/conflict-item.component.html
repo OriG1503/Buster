@@ -112,7 +112,7 @@
                               [$isSelected]="isSubtreeLevelSelected(col.columnName, fkField, childId)"
                               [$isDisabled]="!_$canEdit()"
                               [$isYellow]="isIdOpen(childId)"
-                              (selected)="selectSubtreeLevel(col.columnName, fkField, childId)"
+                              (selected)="selectSubtreeLevel(col.columnName, col.relationalConflict!, fkField, childId)"
                             />
                           }
                         </div>

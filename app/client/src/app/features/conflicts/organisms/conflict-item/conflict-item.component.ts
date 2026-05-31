@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 
-import { ConflictColumnDetail, ConflictEntityDetail, CrossEntityConflictEntry, RelationalConflictDetail, TwoFathersConflictDetail } from '../../../../shared/types/conflict-entity-detail.type';
+import { ConflictColumnDetail, ConflictEntityDetail, CrossEntityConflictEntry, RelationalConflictDetail, RelationalConflictOption, TwoFathersConflictDetail } from '../../../../shared/types/conflict-entity-detail.type';
 import { ConflictGroup } from '../../../../shared/types/conflict-group.type';
 import { ConflictsService } from '../../../../core/services/conflicts/conflicts.service';
 import { ConflictsStore } from '../../../../core/store/conflicts.store';
@@ -76,7 +76,7 @@ export class ConflictItemComponent {
     const resolution = this._$pendingResolution();
     if (!resolution || !this._$notes().trim()) { return false; }
     if (resolution.type === 'value' || resolution.type === 'twoFathers' || resolution.type === 'crossEntity') { return true; }
-    return [...resolution.subtreeLevels.values()].every((v) => !!v);
+    return !!resolution.winnerRelatedId && [...resolution.subtreeLevels.values()].every((v) => !!v);
   });
   protected readonly _$canEdit = computed(() => this._permissionsService.canEdit());
   protected readonly _$sourceLabel = computed(() => this._displayNames.getColumnLabel(this.$group().tableName, 'source'));
@@ -159,18 +159,7 @@ export class ConflictItemComponent {
   // --- TWO_CHILDS ---
 
   protected selectTwoChildsWinner(columnName: string, rc: RelationalConflictDetail, winnerId: string): void {
-    this._$pendingResolution.update((prev) => {
-      const relPrev = prev as PendingRelationalResolution | null;
-      if (relPrev?.type === 'twoChilds' && relPrev.columnName === columnName && relPrev.winnerRelatedId === winnerId) { return null; }
-      const subtreeFields = this.getSubtreeFkFields(rc);
-      return {
-        type: 'twoChilds',
-        columnName,
-        conflictIds: rc.conflictIds,
-        winnerRelatedId: winnerId,
-        subtreeLevels: new Map(subtreeFields.map((f) => [f, ''] as [string, string])),
-      };
-    });
+    this._$pendingResolution.update((prev) => this._applyChainSelection(prev, columnName, rc, null, winnerId));
   }
 
   protected isTwoChildsWinnerSelected(columnName: string, id: string): boolean {
@@ -179,14 +168,73 @@ export class ConflictItemComponent {
       (res as PendingRelationalResolution).winnerRelatedId === id;
   }
 
-  protected selectSubtreeLevel(columnName: string, fkField: string, childId: string): void {
-    this._$pendingResolution.update((prev) => {
-      const relPrev = prev as PendingRelationalResolution | null;
-      if (!relPrev || relPrev.type !== 'twoChilds' || relPrev.columnName !== columnName) { return prev; }
-      const newLevels = new Map(relPrev.subtreeLevels);
-      newLevels.set(fkField, newLevels.get(fkField) === childId ? '' : childId);
-      return { ...relPrev, subtreeLevels: newLevels };
-    });
+  protected selectSubtreeLevel(columnName: string, rc: RelationalConflictDetail, fkField: string, childId: string): void {
+    this._$pendingResolution.update((prev) => this._applyChainSelection(prev, columnName, rc, fkField, childId));
+  }
+
+  /**
+   * Applies a click on any node of a TWO_CHILDS chain. The clicked node (the parent option when
+   * `fkField` is null, otherwise the subtree child for that FK field) is set explicitly, then the
+   * rest of the chain is auto-filled from the option that owns the clicked node — but only for slots
+   * the user hasn't already chosen. This lets a single click select the whole chain while still
+   * allowing manual cross-chain mixes (e.g. child1 + subchild2). Clicking an already-selected node
+   * deselects just that node without re-filling.
+   */
+  private _applyChainSelection(
+    prev: PendingResolution | null,
+    columnName: string,
+    rc: RelationalConflictDetail,
+    fkField: string | null,
+    valueId: string,
+  ): PendingResolution | null {
+    const base = this._asTwoChilds(prev, columnName, rc);
+    const subtreeLevels = new Map(base.subtreeLevels);
+    let winnerRelatedId = base.winnerRelatedId;
+    let isDeselect = false;
+
+    if (fkField === null) {
+      if (winnerRelatedId === valueId) {
+        winnerRelatedId = '';
+        isDeselect = true;
+      } else {
+        winnerRelatedId = valueId;
+      }
+    } else if (subtreeLevels.get(fkField) === valueId) {
+      subtreeLevels.set(fkField, '');
+      isDeselect = true;
+    } else {
+      subtreeLevels.set(fkField, valueId);
+    }
+
+    if (!isDeselect) {
+      const owner = this._findOwningOption(rc, fkField, valueId);
+      if (owner) {
+        if (!winnerRelatedId) { winnerRelatedId = owner.id; }
+        this.getSubtreeFkFields(rc).forEach((field) => {
+          if (!subtreeLevels.get(field)) { subtreeLevels.set(field, owner.childData[field] ?? ''); }
+        });
+      }
+    }
+
+    if (!winnerRelatedId && [...subtreeLevels.values()].every((v) => !v)) { return null; }
+    return { type: 'twoChilds', columnName, conflictIds: rc.conflictIds, winnerRelatedId, subtreeLevels };
+  }
+
+  private _asTwoChilds(prev: PendingResolution | null, columnName: string, rc: RelationalConflictDetail): PendingRelationalResolution {
+    const relPrev = prev as PendingRelationalResolution | null;
+    if (relPrev?.type === 'twoChilds' && relPrev.columnName === columnName) { return relPrev; }
+    return {
+      type: 'twoChilds',
+      columnName,
+      conflictIds: rc.conflictIds,
+      winnerRelatedId: '',
+      subtreeLevels: new Map(this.getSubtreeFkFields(rc).map((f) => [f, ''] as [string, string])),
+    };
+  }
+
+  private _findOwningOption(rc: RelationalConflictDetail, fkField: string | null, valueId: string): RelationalConflictOption | undefined {
+    if (fkField === null) { return rc.options.find((opt) => opt.id === valueId); }
+    return rc.options.find((opt) => opt.childData[fkField] === valueId);
   }
 
   protected isSubtreeLevelSelected(columnName: string, fkField: string, childId: string): boolean {
